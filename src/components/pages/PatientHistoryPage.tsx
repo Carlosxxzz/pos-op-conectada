@@ -1,0 +1,269 @@
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Activity, ArrowLeft, TrendingUp, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BaseCrudService } from '@/integrations';
+import type { ChecklistsDirios } from '@/entities';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+export default function PatientHistoryPage() {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
+  const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    const patientId = localStorage.getItem('patientId');
+    if (!patientId) {
+      navigate('/patient-login');
+      return;
+    }
+
+    try {
+      const { items } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
+      setChecklists(items.sort((a, b) => 
+        new Date(a.checklistDate || 0).getTime() - new Date(b.checklistDate || 0).getTime()
+      ));
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const chartData = checklists.map(c => ({
+    date: new Date(c.checklistDate || '').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+    dor: c.painLevel || 0,
+    temperatura: c.bodyTemperature || 36.5,
+  }));
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-white border-b border-secondary/30">
+        <div className="max-w-[120rem] mx-auto px-8 py-6">
+          <div className="flex items-center justify-between">
+            <Link to="/patient-dashboard" className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                <Activity className="w-7 h-7 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
+                <p className="font-paragraph text-sm text-foreground/60">Histórico de Recuperação</p>
+              </div>
+            </Link>
+            <Link to="/patient-dashboard">
+              <Button variant="outline" className="flex items-center gap-2 font-paragraph">
+                <ArrowLeft className="w-4 h-4" />
+                Voltar
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-[120rem] mx-auto px-8 py-12">
+        <div className="mb-8">
+          <h2 className="font-heading text-4xl font-bold text-foreground mb-2">
+            Histórico de Recuperação
+          </h2>
+          <p className="font-paragraph text-lg text-foreground/70">
+            Acompanhe sua evolução ao longo do tempo
+          </p>
+        </div>
+
+        {checklists.length > 0 ? (
+          <>
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+              {/* Pain Chart */}
+              <div className="bg-white rounded-2xl p-8 border border-secondary/20">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-xl font-bold text-foreground">Evolução da Dor</h3>
+                    <p className="font-paragraph text-sm text-foreground/60">Últimos registros</p>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ADD8E6" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fill: '#333333', fontSize: 12 }}
+                      stroke="#ADD8E6"
+                    />
+                    <YAxis 
+                      domain={[0, 10]}
+                      tick={{ fill: '#333333', fontSize: 12 }}
+                      stroke="#ADD8E6"
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#FFFFFF', 
+                        border: '1px solid #ADD8E6',
+                        borderRadius: '8px',
+                        fontFamily: 'nunito sans'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="dor" 
+                      stroke="#00BFFF" 
+                      strokeWidth={3}
+                      dot={{ fill: '#00BFFF', r: 5 }}
+                      name="Nível de Dor"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Temperature Chart */}
+              <div className="bg-white rounded-2xl p-8 border border-secondary/20">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Activity className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading text-xl font-bold text-foreground">Temperatura Corporal</h3>
+                    <p className="font-paragraph text-sm text-foreground/60">Últimos registros</p>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={250}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ADD8E6" />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fill: '#333333', fontSize: 12 }}
+                      stroke="#ADD8E6"
+                    />
+                    <YAxis 
+                      domain={[35, 40]}
+                      tick={{ fill: '#333333', fontSize: 12 }}
+                      stroke="#ADD8E6"
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#FFFFFF', 
+                        border: '1px solid #ADD8E6',
+                        borderRadius: '8px',
+                        fontFamily: 'nunito sans'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="temperatura" 
+                      stroke="#00BFFF" 
+                      strokeWidth={3}
+                      dot={{ fill: '#00BFFF', r: 5 }}
+                      name="Temperatura (°C)"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Checklist History */}
+            <div className="bg-white rounded-2xl p-8 border border-secondary/20">
+              <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
+                Checklists Anteriores
+              </h3>
+              <div className="space-y-4">
+                {checklists.slice().reverse().map((checklist) => (
+                  <div key={checklist._id} className="border border-secondary/20 rounded-xl p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-5 h-5 text-primary" />
+                        <div>
+                          <p className="font-paragraph text-base font-semibold text-foreground">
+                            {new Date(checklist.checklistDate || '').toLocaleDateString('pt-BR', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </p>
+                          <p className="font-paragraph text-sm text-foreground/60">
+                            {new Date(checklist.checklistDate || '').toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <span className={`font-paragraph text-sm font-semibold px-3 py-1 rounded-full ${
+                        checklist.riskLevel === 'critical' 
+                          ? 'bg-critical/10 text-critical'
+                          : checklist.riskLevel === 'attention'
+                          ? 'bg-attention/10 text-attention-foreground'
+                          : 'bg-stable/10 text-stable'
+                      }`}>
+                        {checklist.riskLevel === 'critical' 
+                          ? 'Crítico'
+                          : checklist.riskLevel === 'attention'
+                          ? 'Atenção'
+                          : 'Estável'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <p className="font-paragraph text-xs text-foreground/60 mb-1">Dor</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.painLevel}/10
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-xs text-foreground/60 mb-1">Temperatura</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.bodyTemperature}°C
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-xs text-foreground/60 mb-1">Febre</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.hasFever ? 'Sim' : 'Não'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-xs text-foreground/60 mb-1">Medicação</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.takingMedicationCorrectly ? 'Correta' : 'Incorreta'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="bg-white rounded-2xl p-16 border border-secondary/20 text-center">
+            <Calendar className="w-16 h-16 text-foreground/20 mx-auto mb-4" />
+            <p className="font-paragraph text-lg text-foreground/60 mb-4">
+              Nenhum checklist preenchido ainda
+            </p>
+            <Link to="/patient-checklist">
+              <Button className="bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold">
+                Preencher primeiro checklist
+              </Button>
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
