@@ -92,9 +92,15 @@ export default function AdminDashboardPage() {
               </div>
             </Link>
             <Link to="/">
-              <Button variant="outline" className="font-paragraph">
-                Voltar ao Início
-              </Button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('professionalId');
+                  localStorage.removeItem('professionalProfile');
+                }}
+                className="px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Sair
+              </button>
             </Link>
           </div>
         </div>

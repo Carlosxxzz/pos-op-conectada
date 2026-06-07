@@ -26,7 +26,7 @@ export default function NursingDashboardPage() {
       const { items: allChecklists } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
 
       const patientsWithChecklists: PatientWithChecklist[] = allPatients.map(patient => {
-        const patientChecklists = allChecklists.filter(c => c._id);
+        const patientChecklists = allChecklists.filter(c => c.patientId === patient._id);
         const latestChecklist = patientChecklists.length > 0
           ? patientChecklists.sort((a, b) => 
               new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
@@ -79,9 +79,15 @@ export default function NursingDashboardPage() {
               </div>
             </Link>
             <Link to="/">
-              <Button variant="outline" className="font-paragraph">
-                Voltar ao Início
-              </Button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('professionalId');
+                  localStorage.removeItem('professionalProfile');
+                }}
+                className="px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Sair
+              </button>
             </Link>
           </div>
         </div>

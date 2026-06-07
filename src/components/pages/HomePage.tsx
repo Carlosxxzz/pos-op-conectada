@@ -99,9 +99,7 @@ function Header({ scrollYProgress }: { scrollYProgress: any }) {
         <nav className="hidden lg:flex items-center gap-8">
           {[
             { name: 'Área do Paciente', path: '/patient-login' },
-            { name: 'Área da Enfermagem', path: '/nursing-dashboard' },
-            { name: 'Área Médica', path: '/medical-dashboard' },
-            { name: 'Administrativo', path: '/admin-dashboard' }
+            { name: 'Acesso Profissional', path: '/professional-login' }
           ].map((link) => (
             <Link 
               key={link.name} 
@@ -176,7 +174,7 @@ function HeroSection() {
               </span>
             </Link>
             <Link
-              to="/nursing-dashboard"
+              to="/professional-login"
               className="inline-flex items-center justify-center px-8 py-4 bg-transparent text-foreground border-2 border-secondary/50 font-bold rounded-xl hover:bg-secondary/10 hover:border-primary/50 transition-all"
             >
               Acesso Profissional
@@ -509,9 +507,7 @@ function Footer() {
             <h5 className="font-heading text-sm font-bold text-foreground uppercase tracking-wider mb-6">Acesso Rápido</h5>
             <ul className="space-y-4">
               <li><Link to="/patient-login" className="text-sm text-foreground/60 hover:text-primary transition-colors">Área do Paciente</Link></li>
-              <li><Link to="/nursing-dashboard" className="text-sm text-foreground/60 hover:text-primary transition-colors">Área da Enfermagem</Link></li>
-              <li><Link to="/medical-dashboard" className="text-sm text-foreground/60 hover:text-primary transition-colors">Área Médica</Link></li>
-              <li><Link to="/admin-dashboard" className="text-sm text-foreground/60 hover:text-primary transition-colors">Administrativo</Link></li>
+              <li><Link to="/professional-login" className="text-sm text-foreground/60 hover:text-primary transition-colors">Acesso Profissional</Link></li>
             </ul>
           </div>
 

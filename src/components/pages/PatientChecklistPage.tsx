@@ -75,11 +75,18 @@ export default function PatientChecklistPage() {
     setIsSaving(true);
 
     try {
+      const patientId = localStorage.getItem('patientId');
+      if (!patientId) {
+        navigate('/patient-login');
+        return;
+      }
+
       const riskLevel = calculateRiskLevel();
       
       const newChecklist: ChecklistsDirios = {
         _id: crypto.randomUUID(),
         checklistDate: new Date().toISOString(),
+        patientId: patientId,
         ...formData,
         riskLevel,
       };

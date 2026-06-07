@@ -8,11 +8,13 @@ import PatientDashboardPage from '@/components/pages/PatientDashboardPage';
 import PatientChecklistPage from '@/components/pages/PatientChecklistPage';
 import PatientPhotosPage from '@/components/pages/PatientPhotosPage';
 import PatientHistoryPage from '@/components/pages/PatientHistoryPage';
+import ProfessionalLoginPage from '@/components/pages/ProfessionalLoginPage';
 import NursingDashboardPage from '@/components/pages/NursingDashboardPage';
 import NursingEvaluationPage from '@/components/pages/NursingEvaluationPage';
 import MedicalDashboardPage from '@/components/pages/MedicalDashboardPage';
 import MedicalEvaluationPage from '@/components/pages/MedicalEvaluationPage';
 import AdminDashboardPage from '@/components/pages/AdminDashboardPage';
+import { ProfessionalProtectedRoute } from '@/components/ProfessionalProtectedRoute';
 
 // Layout component that includes ScrollToTop
 function Layout() {
@@ -58,24 +60,48 @@ const router = createBrowserRouter([
         element: <PatientHistoryPage />,
       },
       {
+        path: "professional-login",
+        element: <ProfessionalLoginPage />,
+      },
+      {
         path: "nursing-dashboard",
-        element: <NursingDashboardPage />,
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Enfermeiro']}>
+            <NursingDashboardPage />
+          </ProfessionalProtectedRoute>
+        ),
       },
       {
         path: "nursing-evaluation/:id",
-        element: <NursingEvaluationPage />,
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Enfermeiro']}>
+            <NursingEvaluationPage />
+          </ProfessionalProtectedRoute>
+        ),
       },
       {
         path: "medical-dashboard",
-        element: <MedicalDashboardPage />,
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Médico']}>
+            <MedicalDashboardPage />
+          </ProfessionalProtectedRoute>
+        ),
       },
       {
         path: "medical-evaluation/:id",
-        element: <MedicalEvaluationPage />,
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Médico']}>
+            <MedicalEvaluationPage />
+          </ProfessionalProtectedRoute>
+        ),
       },
       {
         path: "admin-dashboard",
-        element: <AdminDashboardPage />,
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Administrador']}>
+            <AdminDashboardPage />
+          </ProfessionalProtectedRoute>
+        ),
       },
       {
         path: "*",

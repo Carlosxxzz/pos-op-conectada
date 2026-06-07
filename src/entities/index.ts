@@ -14,6 +14,8 @@ export interface AvaliaesdeEnfermagem {
   /** @wixFieldType date */
   checklistDate?: Date | string;
   /** @wixFieldType text */
+  patientId?: string;
+  /** @wixFieldType text */
   nurseName?: string;
   /** @wixFieldType text */
   clinicalObservations?: string;
@@ -37,6 +39,8 @@ export interface AvaliaesMdicas {
   /** @wixFieldType text */
   nursingEvaluationId?: string;
   /** @wixFieldType text */
+  patientId?: string;
+  /** @wixFieldType text */
   doctorName?: string;
   /** @wixFieldType text */
   clinicalRecommendations?: string;
@@ -59,6 +63,8 @@ export interface ChecklistsDirios {
   _updatedDate?: Date;
   /** @wixFieldType datetime */
   checklistDate?: Date | string;
+  /** @wixFieldType text */
+  patientId?: string;
   /** @wixFieldType number */
   painLevel?: number;
   /** @wixFieldType boolean */
@@ -143,4 +149,29 @@ export interface Pacientes {
   email?: string;
   /** @wixFieldType text */
   password?: string;
+}
+
+
+/**
+ * Collection ID: profissionais
+ * Interface for Profissionais
+ */
+export interface Profissionais {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  fullName?: string;
+  /** @wixFieldType text */
+  email?: string;
+  /** @wixFieldType text */
+  password?: string;
+  /** @wixFieldType text */
+  profile?: string;
+  /** @wixFieldType text */
+  hospital?: string;
+  /** @wixFieldType text */
+  specialty?: string;
+  /** @wixFieldType text */
+  status?: string;
 }
