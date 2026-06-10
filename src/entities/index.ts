@@ -126,6 +126,8 @@ export interface Pacientes {
   /** @wixFieldType text */
   fullName?: string;
   /** @wixFieldType text */
+  hospital?: string;
+  /** @wixFieldType text */
   cpf?: string;
   /** @wixFieldType date */
   dateOfBirth?: Date | string;

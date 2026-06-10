@@ -28,6 +28,7 @@ export default function ProfessionalLoginPage() {
       if (professional) {
         localStorage.setItem('professionalId', professional._id);
         localStorage.setItem('professionalProfile', professional.profile || '');
+        localStorage.setItem('professionalHospital', professional.hospital || '');
         
         // Redirect based on profile
         if (professional.profile === 'Enfermeiro') {

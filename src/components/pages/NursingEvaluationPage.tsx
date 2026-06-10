@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { BaseCrudService } from '@/integrations';
-import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem } from '@/entities';
+import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 
@@ -17,6 +17,7 @@ export default function NursingEvaluationPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [patient, setPatient] = useState<Pacientes | null>(null);
   const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
+  const [professional, setProfessional] = useState<Profissionais | null>(null);
   
   const [formData, setFormData] = useState({
     nurseName: '',
@@ -34,7 +35,24 @@ export default function NursingEvaluationPage() {
     if (!id) return;
 
     try {
+      // Get professional info
+      const professionalId = localStorage.getItem('professionalId');
+      if (!professionalId) {
+        navigate('/professional-login');
+        return;
+      }
+
+      const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
+      setProfessional(professionalData);
+
       const patientData = await BaseCrudService.getById<Pacientes>('pacientes', id);
+      
+      // Verify patient belongs to same hospital
+      if (patientData?.hospital !== professionalData?.hospital) {
+        navigate('/nursing-dashboard');
+        return;
+      }
+
       setPatient(patientData);
 
       const { items } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');

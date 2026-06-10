@@ -31,6 +31,7 @@ export default function PatientLoginPage() {
     emergencyContact: '',
     email: '',
     password: '',
+    hospital: '',
   });
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -81,6 +82,7 @@ export default function PatientLoginPage() {
         emergencyContact: '',
         email: '',
         password: '',
+        hospital: '',
       });
     } catch (error) {
       alert('Erro ao realizar cadastro');
@@ -340,6 +342,22 @@ export default function PatientLoginPage() {
                           value={formData.responsibleDoctorName}
                           onChange={(e) => setFormData({ ...formData, responsibleDoctorName: e.target.value })}
                           placeholder="Dr(a). Nome"
+                          className="pl-11 font-paragraph"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="font-paragraph text-sm font-semibold text-foreground">
+                        Hospital
+                      </Label>
+                      <div className="relative">
+                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40" />
+                        <Input
+                          value={formData.hospital}
+                          onChange={(e) => setFormData({ ...formData, hospital: e.target.value })}
+                          placeholder="Nome do hospital"
                           className="pl-11 font-paragraph"
                           required
                         />
