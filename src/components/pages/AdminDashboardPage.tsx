@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Activity, Users, AlertCircle, CheckCircle, TrendingDown, BarChart3 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Activity, Users, AlertCircle, CheckCircle, TrendingDown, BarChart3, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
-import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas } from '@/entities';
+import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function AdminDashboardPage() {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [professional, setProfessional] = useState<Profissionais | null>(null);
   const [stats, setStats] = useState({
     totalPatients: 0,
     criticalPatients: 0,
@@ -27,6 +29,16 @@ export default function AdminDashboardPage() {
 
   const loadData = async () => {
     try {
+      // Get professional info from localStorage
+      const professionalId = localStorage.getItem('professionalId');
+      if (!professionalId) {
+        navigate('/professional-login');
+        return;
+      }
+
+      const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
+      setProfessional(professionalData);
+
       const { items: patients } = await BaseCrudService.getAll<Pacientes>('pacientes');
       const { items: checklists } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
       const { items: nursingEvals } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
@@ -54,6 +66,12 @@ export default function AdminDashboardPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('professionalId');
+    localStorage.removeItem('professionalProfile');
+    navigate('/professional-login');
   };
 
   const riskDistributionData = [
@@ -89,19 +107,20 @@ export default function AdminDashboardPage() {
               <div>
                 <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
                 <p className="font-paragraph text-sm text-foreground/60">Dashboard Administrativo</p>
+                {professional && (
+                  <p className="font-paragraph text-xs text-foreground/50 mt-1">
+                    Hospital: {professional.hospital}
+                  </p>
+                )}
               </div>
             </Link>
-            <Link to="/">
-              <button
-                onClick={() => {
-                  localStorage.removeItem('professionalId');
-                  localStorage.removeItem('professionalProfile');
-                }}
-                className="px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Sair
-              </button>
-            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
+            >
+              <LogOut className="w-4 h-4" />
+              Sair
+            </button>
           </div>
         </div>
       </header>
@@ -257,32 +276,21 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Key Metrics */}
-        <div className="bg-dark-background rounded-3xl p-12">
-          <h3 className="font-heading text-3xl font-bold text-dark-foreground mb-8 text-center">
-            Impacto do Sistema
+        {/* Summary Section */}
+        <div className="bg-white rounded-2xl p-8 border border-secondary/20">
+          <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
+            Resumo do Sistema
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-stable/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-stable" />
-              </div>
-              <p className="font-heading text-4xl font-bold text-dark-foreground mb-2">98%</p>
-              <p className="font-paragraph text-base text-dark-foreground/80">Taxa de Recuperação</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <p className="font-paragraph text-sm text-foreground/60 mb-2">Total de Profissionais</p>
+              <p className="font-heading text-3xl font-bold text-foreground">-</p>
+              <p className="font-paragraph text-xs text-foreground/50 mt-1">Gestão de profissionais em desenvolvimento</p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrendingDown className="w-8 h-8 text-primary" />
-              </div>
-              <p className="font-heading text-4xl font-bold text-dark-foreground mb-2">45%</p>
-              <p className="font-paragraph text-base text-dark-foreground/80">Redução de Reinternações</p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-attention/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Activity className="w-8 h-8 text-attention" />
-              </div>
-              <p className="font-heading text-4xl font-bold text-dark-foreground mb-2">24/7</p>
-              <p className="font-paragraph text-base text-dark-foreground/80">Monitoramento Contínuo</p>
+            <div>
+              <p className="font-paragraph text-sm text-foreground/60 mb-2">Total de Hospitais</p>
+              <p className="font-heading text-3xl font-bold text-foreground">-</p>
+              <p className="font-paragraph text-xs text-foreground/50 mt-1">Gestão de hospitais em desenvolvimento</p>
             </div>
           </div>
         </div>

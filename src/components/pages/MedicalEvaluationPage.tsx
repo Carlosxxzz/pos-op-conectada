@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { BaseCrudService } from '@/integrations';
-import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas } from '@/entities';
+import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 
@@ -35,7 +35,22 @@ export default function MedicalEvaluationPage() {
     if (!id) return;
 
     try {
+      // Get professional info to verify hospital access
+      const professionalId = localStorage.getItem('professionalId');
+      if (!professionalId) {
+        navigate('/professional-login');
+        return;
+      }
+
+      const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
       const patientData = await BaseCrudService.getById<Pacientes>('pacientes', id);
+      
+      // Verify patient belongs to same hospital
+      if (patientData?.hospital !== professionalData?.hospital) {
+        navigate('/medical-dashboard');
+        return;
+      }
+
       setPatient(patientData);
 
       const { items: checklistItems } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');

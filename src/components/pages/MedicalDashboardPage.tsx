@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Activity, Stethoscope, AlertCircle, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Activity, Stethoscope, AlertCircle, ArrowRight, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
-import type { AvaliaesdeEnfermagem, Pacientes } from '@/entities';
+import type { AvaliaesdeEnfermagem, Pacientes, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 
@@ -13,8 +13,10 @@ interface ReferredCase {
 }
 
 export default function MedicalDashboardPage() {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [referredCases, setReferredCases] = useState<ReferredCase[]>([]);
+  const [professional, setProfessional] = useState<Profissionais | null>(null);
 
   useEffect(() => {
     loadData();
@@ -22,6 +24,16 @@ export default function MedicalDashboardPage() {
 
   const loadData = async () => {
     try {
+      // Get professional info from localStorage
+      const professionalId = localStorage.getItem('professionalId');
+      if (!professionalId) {
+        navigate('/professional-login');
+        return;
+      }
+
+      const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
+      setProfessional(professionalData);
+
       const { items: evaluations } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
       const { items: patients } = await BaseCrudService.getAll<Pacientes>('pacientes');
 
@@ -31,6 +43,8 @@ export default function MedicalDashboardPage() {
           const patient = patients.find(p => p._id === evaluation.patientId);
           return { evaluation, patient: patient || null };
         })
+        // Filter by hospital: only show patients from the same hospital
+        .filter(item => item.patient?.hospital === professionalData?.hospital)
         .sort((a, b) => 
           new Date(b.evaluation.checklistDate || 0).getTime() - new Date(a.evaluation.checklistDate || 0).getTime()
         );
@@ -43,6 +57,12 @@ export default function MedicalDashboardPage() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('professionalId');
+    localStorage.removeItem('professionalProfile');
+    navigate('/professional-login');
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -50,6 +70,9 @@ export default function MedicalDashboardPage() {
       </div>
     );
   }
+
+  const criticalCases = referredCases.filter(c => c.evaluation.patientStatus === 'critical');
+  const observationCases = referredCases.filter(c => c.evaluation.patientStatus === 'observation');
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,170 +87,212 @@ export default function MedicalDashboardPage() {
               <div>
                 <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
                 <p className="font-paragraph text-sm text-foreground/60">Dashboard Médico</p>
+                {professional && (
+                  <p className="font-paragraph text-xs text-foreground/50 mt-1">
+                    Hospital: {professional.hospital}
+                  </p>
+                )}
               </div>
             </Link>
-            <Link to="/">
-              <button
-                onClick={() => {
-                  localStorage.removeItem('professionalId');
-                  localStorage.removeItem('professionalProfile');
-                }}
-                className="px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Sair
-              </button>
-            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
+            >
+              <LogOut className="w-4 h-4" />
+              Sair
+            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <div className="max-w-[120rem] mx-auto px-8 py-12">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl p-6 border border-secondary/20"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Stethoscope className="w-6 h-6 text-primary" />
-              </div>
-              <span className="font-heading text-3xl font-bold text-foreground">{referredCases.length}</span>
-            </div>
-            <p className="font-paragraph text-sm text-foreground/70">Casos Encaminhados</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-critical/10 rounded-2xl p-6 border border-critical/20"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-critical rounded-lg flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-critical-foreground" />
-              </div>
-              <span className="font-heading text-3xl font-bold text-critical">
-                {referredCases.filter(c => c.evaluation.patientStatus === 'critical').length}
-              </span>
-            </div>
-            <p className="font-paragraph text-sm text-foreground/70">Casos Críticos</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-attention/10 rounded-2xl p-6 border border-attention/20"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-attention rounded-lg flex items-center justify-center">
-                <Activity className="w-6 h-6 text-attention-foreground" />
-              </div>
-              <span className="font-heading text-3xl font-bold text-attention-foreground">
-                {referredCases.filter(c => c.evaluation.patientStatus === 'observation').length}
-              </span>
-            </div>
-            <p className="font-paragraph text-sm text-foreground/70">Em Observação</p>
-          </motion.div>
-        </div>
-
-        {/* Referred Cases */}
-        <div>
-          <div className="flex items-center gap-3 mb-6">
-            <Stethoscope className="w-6 h-6 text-primary" />
-            <h2 className="font-heading text-3xl font-bold text-foreground">
-              Casos Encaminhados pela Enfermagem
+        {/* Empty State */}
+        {referredCases.length === 0 ? (
+          <div className="text-center py-16">
+            <Stethoscope className="w-16 h-16 text-foreground/20 mx-auto mb-4" />
+            <h2 className="font-heading text-2xl font-bold text-foreground mb-2">
+              Nenhum paciente encaminhado
             </h2>
+            <p className="font-paragraph text-lg text-foreground/70 mb-8">
+              Os pacientes encaminhados pela enfermagem aparecerão aqui quando forem referenciados.
+            </p>
           </div>
+        ) : (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl p-6 border border-secondary/20"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Stethoscope className="w-6 h-6 text-primary" />
+                  </div>
+                  <span className="font-heading text-3xl font-bold text-foreground">{referredCases.length}</span>
+                </div>
+                <p className="font-paragraph text-sm text-foreground/70">Casos Encaminhados</p>
+              </motion.div>
 
-          {referredCases.length > 0 ? (
-            <div className="space-y-4">
-              {referredCases.map((item, index) => (
-                <motion.div
-                  key={item.evaluation._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Link
-                    to={`/medical-evaluation/${item.patient?._id}`}
-                    className={`block rounded-2xl p-6 border-2 hover:opacity-80 transition-opacity ${
-                      item.evaluation.patientStatus === 'critical'
-                        ? 'bg-critical/10 border-critical'
-                        : item.evaluation.patientStatus === 'observation'
-                        ? 'bg-attention/10 border-attention/30'
-                        : 'bg-white border-secondary/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-3">
-                          <span className="font-heading text-xl font-bold text-foreground">
-                            {item.patient?.fullName || 'Paciente'}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-critical/10 rounded-2xl p-6 border border-critical/20"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-critical rounded-lg flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-critical-foreground" />
+                  </div>
+                  <span className="font-heading text-3xl font-bold text-critical">{criticalCases.length}</span>
+                </div>
+                <p className="font-paragraph text-sm text-foreground/70">Casos Críticos</p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-attention/10 rounded-2xl p-6 border border-attention/20"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-attention rounded-lg flex items-center justify-center">
+                    <Activity className="w-6 h-6 text-attention-foreground" />
+                  </div>
+                  <span className="font-heading text-3xl font-bold text-attention-foreground">{observationCases.length}</span>
+                </div>
+                <p className="font-paragraph text-sm text-foreground/70">Em Observação</p>
+              </motion.div>
+            </div>
+
+            {/* Critical Cases Section */}
+            {criticalCases.length > 0 && (
+              <div className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <AlertCircle className="w-6 h-6 text-critical" />
+                  <h2 className="font-heading text-3xl font-bold text-foreground">
+                    Casos Críticos - Prioridade Máxima
+                  </h2>
+                </div>
+                <div className="space-y-4">
+                  {criticalCases.map((item, index) => (
+                    <motion.div
+                      key={item.evaluation._id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Link
+                        to={`/medical-evaluation/${item.patient?._id}`}
+                        className="block bg-critical/10 border-2 border-critical rounded-2xl p-6 hover:bg-critical/20 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                              <span className="font-heading text-xl font-bold text-foreground">
+                                {item.patient?.fullName}
+                              </span>
+                              <span className="bg-critical text-critical-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                                CRÍTICO
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div>
+                                <p className="font-paragraph text-xs text-foreground/60 mb-1">Cirurgia</p>
+                                <p className="font-paragraph text-sm font-semibold text-foreground">
+                                  {item.patient?.surgeryType}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="font-paragraph text-xs text-foreground/60 mb-1">Enfermeiro(a)</p>
+                                <p className="font-paragraph text-sm font-semibold text-foreground">
+                                  {item.evaluation.nurseName}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="font-paragraph text-xs text-foreground/60 mb-1">Data da Avaliação</p>
+                                <p className="font-paragraph text-sm font-semibold text-foreground">
+                                  {item.evaluation.checklistDate 
+                                    ? new Date(item.evaluation.checklistDate).toLocaleDateString('pt-BR')
+                                    : '-'}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="font-paragraph text-xs text-foreground/60 mb-1">Hospital</p>
+                                <p className="font-paragraph text-sm font-semibold text-foreground">
+                                  {item.patient?.hospital}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <ArrowRight className="w-6 h-6 text-critical flex-shrink-0 ml-4" />
+                        </div>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Observation Cases Section */}
+            {observationCases.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <Activity className="w-6 h-6 text-attention-foreground" />
+                  <h2 className="font-heading text-3xl font-bold text-foreground">
+                    Casos em Observação
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {observationCases.map((item, index) => (
+                    <motion.div
+                      key={item.evaluation._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Link
+                        to={`/medical-evaluation/${item.patient?._id}`}
+                        className="block bg-white border border-attention/30 rounded-2xl p-6 hover:bg-attention/5 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="font-heading text-lg font-bold text-foreground">
+                            {item.patient?.fullName}
                           </span>
-                          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                            item.evaluation.patientStatus === 'critical'
-                              ? 'bg-critical text-critical-foreground'
-                              : item.evaluation.patientStatus === 'observation'
-                              ? 'bg-attention text-attention-foreground'
-                              : 'bg-stable text-stable-foreground'
-                          }`}>
-                            {item.evaluation.patientStatus === 'critical'
-                              ? 'CRÍTICO'
-                              : item.evaluation.patientStatus === 'observation'
-                              ? 'OBSERVAÇÃO'
-                              : 'ESTÁVEL'}
+                          <span className="bg-attention/20 text-attention-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                            OBSERVAÇÃO
                           </span>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                          <div>
-                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Cirurgia</p>
-                            <p className="font-paragraph text-sm font-semibold text-foreground">
-                              {item.patient?.surgeryType || '-'}
-                            </p>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="font-paragraph text-sm text-foreground/60">Cirurgia:</span>
+                            <span className="font-paragraph text-sm font-semibold text-foreground">
+                              {item.patient?.surgeryType}
+                            </span>
                           </div>
-                          <div>
-                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Enfermeiro(a)</p>
-                            <p className="font-paragraph text-sm font-semibold text-foreground">
+                          <div className="flex justify-between">
+                            <span className="font-paragraph text-sm text-foreground/60">Enfermeiro(a):</span>
+                            <span className="font-paragraph text-sm font-semibold text-foreground">
                               {item.evaluation.nurseName}
-                            </p>
+                            </span>
                           </div>
-                          <div>
-                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Data da Avaliação</p>
-                            <p className="font-paragraph text-sm font-semibold text-foreground">
-                              {item.evaluation.checklistDate
-                                ? new Date(item.evaluation.checklistDate).toLocaleDateString('pt-BR')
-                                : '-'}
-                            </p>
+                          <div className="flex justify-between">
+                            <span className="font-paragraph text-sm text-foreground/60">Hospital:</span>
+                            <span className="font-paragraph text-sm font-semibold text-foreground">
+                              {item.patient?.hospital}
+                            </span>
                           </div>
                         </div>
-
-                        <div className="bg-background/50 rounded-xl p-4">
-                          <p className="font-paragraph text-xs text-foreground/60 mb-2">Observações Clínicas:</p>
-                          <p className="font-paragraph text-sm text-foreground line-clamp-2">
-                            {item.evaluation.clinicalObservations}
-                          </p>
-                        </div>
-                      </div>
-                      <ArrowRight className="w-6 h-6 text-primary flex-shrink-0 ml-4" />
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl p-16 border border-secondary/20 text-center">
-              <Stethoscope className="w-16 h-16 text-foreground/20 mx-auto mb-4" />
-              <p className="font-paragraph text-lg text-foreground/60">
-                Nenhum caso encaminhado no momento
-              </p>
-            </div>
-          )}
-        </div>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
