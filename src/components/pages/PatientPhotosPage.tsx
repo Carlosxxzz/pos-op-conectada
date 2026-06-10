@@ -29,7 +29,8 @@ export default function PatientPhotosPage() {
 
     try {
       const { items } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
-      const checklistsWithPhotos = items.filter(c => c.scarPhoto);
+      // Filter checklists by patient ID and that have photos
+      const checklistsWithPhotos = items.filter(c => c.patientId === patientId && c.scarPhoto);
       setChecklists(checklistsWithPhotos.sort((a, b) => 
         new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
       ));
@@ -62,23 +63,40 @@ export default function PatientPhotosPage() {
     setIsSaving(true);
 
     try {
-      const photoUrl = 'https://static.wixstatic.com/media/2621fb_918d61134adb41a3ad5a4261e4bc9778~mv2.png?originWidth=768&originHeight=576';
-      
-      const newChecklist: ChecklistsDirios = {
-        _id: crypto.randomUUID(),
-        checklistDate: new Date().toISOString(),
-        scarPhoto: photoUrl,
-        riskLevel: 'stable',
-      };
+      const patientId = localStorage.getItem('patientId');
+      if (!patientId) {
+        alert('Erro: Paciente não identificado');
+        return;
+      }
 
-      await BaseCrudService.create('checklistsdiarios', newChecklist);
-      alert('Foto enviada com sucesso!');
-      setSelectedFile(null);
-      setPreviewUrl('');
-      loadData();
+      // Convert file to base64 data URL
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const photoUrl = reader.result as string;
+        
+        const newChecklist: ChecklistsDirios = {
+          _id: crypto.randomUUID(),
+          checklistDate: new Date().toISOString(),
+          patientId: patientId,
+          scarPhoto: photoUrl,
+          riskLevel: 'stable',
+        };
+
+        try {
+          await BaseCrudService.create('checklistsdiarios', newChecklist);
+          alert('Foto enviada com sucesso!');
+          setSelectedFile(null);
+          setPreviewUrl('');
+          loadData();
+        } catch (error) {
+          alert('Erro ao enviar foto');
+        } finally {
+          setIsSaving(false);
+        }
+      };
+      reader.readAsDataURL(selectedFile);
     } catch (error) {
-      alert('Erro ao enviar foto');
-    } finally {
+      alert('Erro ao processar foto');
       setIsSaving(false);
     }
   };
@@ -200,21 +218,25 @@ export default function PatientPhotosPage() {
               Histórico de Fotos
             </h3>
             {checklists.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 {checklists.map((checklist) => (
                   <div key={checklist._id} className="border border-secondary/20 rounded-xl overflow-hidden">
-                    <Image
-                      src={checklist.scarPhoto || ''}
-                      alt="Foto da cicatriz"
-                      width={400}
-                      className="w-full h-64 object-cover"
-                    />
+                    {checklist.scarPhoto && (
+                      <Image
+                        src={checklist.scarPhoto}
+                        alt="Foto da cicatriz"
+                        width={400}
+                        className="w-full h-64 object-cover"
+                      />
+                    )}
                     <div className="p-4 bg-background">
                       <p className="font-paragraph text-sm text-foreground/70">
                         {new Date(checklist.checklistDate || '').toLocaleDateString('pt-BR', {
                           day: '2-digit',
                           month: 'long',
-                          year: 'numeric'
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
                         })}
                       </p>
                     </div>

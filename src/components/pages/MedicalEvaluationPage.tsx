@@ -39,12 +39,16 @@ export default function MedicalEvaluationPage() {
       setPatient(patientData);
 
       const { items: checklistItems } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
-      setChecklists(checklistItems.sort((a, b) => 
+      // Filter checklists by patient ID only
+      const patientChecklists = checklistItems.filter(c => c.patientId === id);
+      setChecklists(patientChecklists.sort((a, b) => 
         new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
       ));
 
       const { items: evaluations } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
-      const latestEvaluation = evaluations.sort((a, b) => 
+      // Filter evaluations by patient ID
+      const patientEvaluations = evaluations.filter(e => e.patientId === id);
+      const latestEvaluation = patientEvaluations.sort((a, b) => 
         new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
       )[0];
       setNursingEvaluation(latestEvaluation || null);
@@ -62,6 +66,7 @@ export default function MedicalEvaluationPage() {
     try {
       const evaluation: AvaliaesMdicas = {
         _id: crypto.randomUUID(),
+        patientId: id,
         nursingEvaluationId: nursingEvaluation?._id || '',
         ...formData,
       };
@@ -199,62 +204,98 @@ export default function MedicalEvaluationPage() {
               </div>
             )}
 
-            {/* Latest Checklist */}
-            {latestChecklist && (
-              <div className="bg-white rounded-2xl p-8 border border-secondary/20">
-                <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
-                  Último Checklist do Paciente
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Data</p>
-                    <p className="font-paragraph text-base font-semibold text-foreground">
-                      {new Date(latestChecklist.checklistDate || '').toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Nível de Dor</p>
-                    <p className="font-paragraph text-base font-semibold text-foreground">
-                      {latestChecklist.painLevel}/10
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Temperatura</p>
-                    <p className="font-paragraph text-base font-semibold text-foreground">
-                      {latestChecklist.bodyTemperature}°C
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Febre</p>
-                    <p className="font-paragraph text-base font-semibold text-foreground">
-                      {latestChecklist.hasFever ? 'Sim' : 'Não'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Secreção</p>
-                    <p className="font-paragraph text-base font-semibold text-foreground">
-                      {latestChecklist.hasSecretion ? 'Sim' : 'Não'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Falta de Ar</p>
-                    <p className="font-paragraph text-base font-semibold text-foreground">
-                      {latestChecklist.shortnessOfBreath ? 'Sim' : 'Não'}
-                    </p>
-                  </div>
-                </div>
+            {/* Checklists History */}
+            {checklists.length > 0 ? (
+              <div className="space-y-8">
+                {checklists.map((checklist, index) => (
+                  <div key={checklist._id} className="bg-white rounded-2xl p-8 border border-secondary/20">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="font-heading text-2xl font-bold text-foreground">
+                          {index === 0 ? 'Último Checklist' : `Checklist ${checklists.length - index}`}
+                        </h2>
+                        <p className="font-paragraph text-sm text-foreground/60 mt-1">
+                          {new Date(checklist.checklistDate || '').toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      <span className={`font-paragraph text-sm font-semibold px-4 py-2 rounded-full ${
+                        checklist.riskLevel === 'critical' 
+                          ? 'bg-critical/10 text-critical'
+                          : checklist.riskLevel === 'attention'
+                          ? 'bg-attention/10 text-attention-foreground'
+                          : 'bg-stable/10 text-stable'
+                      }`}>
+                        {checklist.riskLevel === 'critical' 
+                          ? 'CRÍTICO'
+                          : checklist.riskLevel === 'attention'
+                          ? 'ATENÇÃO'
+                          : 'ESTÁVEL'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Nível de Dor</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.painLevel}/10
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Temperatura</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.bodyTemperature}°C
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Febre</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.hasFever ? 'Sim' : 'Não'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Vermelhidão</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.scarRedness ? 'Sim' : 'Não'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Secreção</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.hasSecretion ? 'Sim' : 'Não'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Falta de Ar</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {checklist.shortnessOfBreath ? 'Sim' : 'Não'}
+                        </p>
+                      </div>
+                    </div>
 
-                {latestChecklist.scarPhoto && (
-                  <div className="mt-6">
-                    <p className="font-paragraph text-sm font-semibold text-foreground mb-3">Foto da Cicatriz</p>
-                    <Image
-                      src={latestChecklist.scarPhoto}
-                      alt="Foto da cicatriz"
-                      width={400}
-                      className="rounded-xl border border-secondary/20"
-                    />
+                    {checklist.scarPhoto && (
+                      <div className="mt-6">
+                        <p className="font-paragraph text-sm font-semibold text-foreground mb-3">Foto da Cicatriz</p>
+                        <Image
+                          src={checklist.scarPhoto}
+                          alt="Foto da cicatriz"
+                          width={400}
+                          className="rounded-xl border border-secondary/20 max-w-md"
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-8 border border-secondary/20 text-center">
+                <p className="font-paragraph text-base text-foreground/60">
+                  Nenhum checklist do paciente disponível
+                </p>
               </div>
             )}
           </div>
