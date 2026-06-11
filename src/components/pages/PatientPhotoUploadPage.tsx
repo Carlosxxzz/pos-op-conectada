@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Activity, ArrowLeft, Camera, Upload, AlertCircle, CheckCircle } from 'lucide-react';
+import { Activity, ArrowLeft, Camera, Upload, AlertCircle, CheckCircle, X, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { BaseCrudService } from '@/integrations';
@@ -14,12 +14,27 @@ export default function PatientPhotoUploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadMethod, setUploadMethod] = useState<'gallery' | 'camera' | null>(null);
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setErrorMessage('Por favor, selecione um arquivo de imagem válido.');
+        return;
+      }
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setErrorMessage('A imagem deve ter no máximo 10MB.');
+        return;
+      }
+
+      setErrorMessage('');
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -33,45 +48,73 @@ export default function PatientPhotoUploadPage() {
     e.preventDefault();
     
     if (!selectedFile) {
-      alert('É necessário enviar uma foto para concluir o acompanhamento diário.');
+      setErrorMessage('É necessário enviar uma foto para concluir o acompanhamento diário.');
       return;
     }
 
     if (!checklistId) {
-      alert('Erro: Checklist não identificado');
+      setErrorMessage('Erro: Checklist não identificado. Por favor, volte e tente novamente.');
       return;
     }
 
     setIsSaving(true);
+    setErrorMessage('');
 
     try {
       const reader = new FileReader();
+      reader.onerror = () => {
+        setErrorMessage('Erro ao ler o arquivo. Por favor, tente novamente.');
+        setIsSaving(false);
+      };
       reader.onloadend = async () => {
-        const photoUrl = reader.result as string;
-        
         try {
+          const photoUrl = reader.result as string;
+          
           // Update the checklist with the photo
           await BaseCrudService.update<ChecklistsDirios>('checklistsdiarios', {
             _id: checklistId,
             scarPhoto: photoUrl,
           });
 
-          alert('Acompanhamento diário concluído com sucesso!');
+          alert('Acompanhamento enviado com sucesso!');
           navigate('/patient-dashboard');
-        } catch (error) {
-          alert('Erro ao enviar foto');
+        } catch (error: any) {
+          const errorMsg = error?.message || 'Erro desconhecido ao enviar foto';
+          setErrorMessage(`Erro ao enviar foto: ${errorMsg}. Por favor, verifique sua conexão e tente novamente.`);
+          console.error('Erro ao salvar foto:', error);
           setIsSaving(false);
         }
       };
       reader.readAsDataURL(selectedFile);
-    } catch (error) {
-      alert('Erro ao processar foto');
+    } catch (error: any) {
+      const errorMsg = error?.message || 'Erro desconhecido';
+      setErrorMessage(`Erro ao processar foto: ${errorMsg}`);
+      console.error('Erro ao processar foto:', error);
       setIsSaving(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Fullscreen Image Modal */}
+      {isFullscreenOpen && previewUrl && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+          <div className="relative w-full h-full flex items-center justify-center">
+            <button
+              onClick={() => setIsFullscreenOpen(false)}
+              className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+            <Image
+              src={previewUrl}
+              alt="Visualização em tela cheia"
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-white border-b border-secondary/30">
         <div className="max-w-[120rem] mx-auto px-8 py-6">
@@ -120,6 +163,21 @@ export default function PatientPhotoUploadPage() {
             </div>
           </div>
 
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6 mb-8 flex gap-4">
+              <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-paragraph font-semibold text-destructive mb-1">
+                  Erro
+                </p>
+                <p className="font-paragraph text-sm text-destructive/80">
+                  {errorMessage}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Upload Options */}
           {!uploadMethod ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -161,6 +219,7 @@ export default function PatientPhotoUploadPage() {
                     setUploadMethod(null);
                     setPreviewUrl('');
                     setSelectedFile(null);
+                    setErrorMessage('');
                   }}
                   className="text-primary hover:underline font-paragraph text-sm"
                 >
@@ -191,30 +250,47 @@ export default function PatientPhotoUploadPage() {
                   <Label className="font-paragraph text-base font-semibold text-foreground mb-4 block">
                     {uploadMethod === 'camera' ? 'Tirar Foto' : 'Selecionar Foto'}
                   </Label>
-                  <div className="border-2 border-dashed border-secondary rounded-xl p-8 text-center">
+                  <div className="border-2 border-dashed border-secondary rounded-xl p-8 text-center bg-background/50">
                     {previewUrl ? (
                       <div className="space-y-4">
-                        <Image 
-                          src={previewUrl} 
-                          alt="Preview da foto" 
-                          className="max-w-md mx-auto rounded-lg max-h-96 object-cover"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedFile(null);
-                            setPreviewUrl('');
-                            if (uploadMethod === 'camera') {
-                              cameraInputRef.current?.click();
-                            } else {
-                              fileInputRef.current?.click();
-                            }
-                          }}
-                          className="font-paragraph"
-                        >
-                          Trocar foto
-                        </Button>
+                        {/* Image Preview Container - Centered and Responsive */}
+                        <div className="flex items-center justify-center bg-white rounded-lg p-4 min-h-64 max-h-96">
+                          <Image 
+                            src={previewUrl} 
+                            alt="Preview da foto" 
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setIsFullscreenOpen(true)}
+                            className="font-paragraph flex items-center justify-center gap-2"
+                          >
+                            <Maximize2 className="w-4 h-4" />
+                            Visualizar em Tela Cheia
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedFile(null);
+                              setPreviewUrl('');
+                              setErrorMessage('');
+                              if (uploadMethod === 'camera') {
+                                cameraInputRef.current?.click();
+                              } else {
+                                fileInputRef.current?.click();
+                              }
+                            }}
+                            className="font-paragraph"
+                          >
+                            Trocar Foto
+                          </Button>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-4">
