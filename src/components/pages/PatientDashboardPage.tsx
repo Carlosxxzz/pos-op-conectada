@@ -123,7 +123,7 @@ export default function PatientDashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
           <Link
             to="/patient-checklist"
             className="bg-primary rounded-2xl p-8 hover:opacity-90 transition-opacity"
@@ -135,22 +135,7 @@ export default function PatientDashboardPage() {
               Checklist Diário
             </h3>
             <p className="font-paragraph text-sm text-primary-foreground/80">
-              Responda seu questionário de hoje
-            </p>
-          </Link>
-
-          <Link
-            to="/patient-photos"
-            className="bg-white rounded-2xl p-8 border border-secondary/20 hover:bg-background transition-colors"
-          >
-            <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-              <Camera className="w-7 h-7 text-primary" />
-            </div>
-            <h3 className="font-heading text-xl font-bold text-foreground mb-2">
-              Enviar Foto
-            </h3>
-            <p className="font-paragraph text-sm text-foreground/70">
-              Envie foto da sua cicatriz
+              Responda seu questionário e envie foto
             </p>
           </Link>
 

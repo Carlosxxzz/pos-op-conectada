@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, Save, Smile, Meh, Frown } from 'lucide-react';
+import { Activity, ArrowLeft, Save, Smile, Meh, Frown, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ export default function PatientChecklistPage() {
   const [patient, setPatient] = useState<Pacientes | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [checklistId, setChecklistId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     painLevel: 0,
@@ -92,11 +93,10 @@ export default function PatientChecklistPage() {
       };
 
       await BaseCrudService.create('checklistsdiarios', newChecklist);
-      alert('Checklist enviado com sucesso!');
-      navigate('/patient-dashboard');
+      setChecklistId(newChecklist._id);
+      // Don't navigate yet - show the "Continue to Photo" button
     } catch (error) {
       alert('Erro ao enviar checklist');
-    } finally {
       setIsSaving(false);
     }
   };
@@ -105,6 +105,63 @@ export default function PatientChecklistPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Show success screen with photo upload option
+  if (checklistId) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="bg-white border-b border-secondary/30">
+          <div className="max-w-[120rem] mx-auto px-8 py-6">
+            <div className="flex items-center justify-between">
+              <Link to="/patient-dashboard" className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                  <Activity className="w-7 h-7 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
+                  <p className="font-paragraph text-sm text-foreground/60">Próxima Etapa</p>
+                </div>
+              </Link>
+              <Link to="/patient-dashboard">
+                <Button variant="outline" className="flex items-center gap-2 font-paragraph">
+                  <ArrowLeft className="w-4 h-4" />
+                  Voltar
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <div className="max-w-[120rem] mx-auto px-8 py-12">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-2xl p-12 border border-secondary/20 text-center">
+              <div className="w-20 h-20 bg-stable/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Save className="w-10 h-10 text-stable" />
+              </div>
+              <h2 className="font-heading text-3xl font-bold text-foreground mb-4">
+                Checklist Enviado com Sucesso!
+              </h2>
+              <p className="font-paragraph text-lg text-foreground/70 mb-8">
+                Agora é necessário enviar uma foto da cicatriz para completar o acompanhamento diário.
+              </p>
+              
+              <Link
+                to={`/patient-photo-upload/${checklistId}`}
+                className="inline-block"
+              >
+                <Button className="bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 px-8 text-lg flex items-center gap-2">
+                  Continuar para Envio de Foto
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

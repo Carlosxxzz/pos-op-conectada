@@ -6,6 +6,7 @@ import HomePage from '@/components/pages/HomePage';
 import PatientLoginPage from '@/components/pages/PatientLoginPage';
 import PatientDashboardPage from '@/components/pages/PatientDashboardPage';
 import PatientChecklistPage from '@/components/pages/PatientChecklistPage';
+import PatientPhotoUploadPage from '@/components/pages/PatientPhotoUploadPage';
 import PatientPhotosPage from '@/components/pages/PatientPhotosPage';
 import PatientHistoryPage from '@/components/pages/PatientHistoryPage';
 import ProfessionalLoginPage from '@/components/pages/ProfessionalLoginPage';
@@ -50,6 +51,10 @@ const router = createBrowserRouter([
       {
         path: "patient-checklist",
         element: <PatientChecklistPage />,
+      },
+      {
+        path: "patient-photo-upload/:checklistId",
+        element: <PatientPhotoUploadPage />,
       },
       {
         path: "patient-photos",
