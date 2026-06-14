@@ -112,53 +112,63 @@ export default function PatientChecklistPage() {
   // Show success screen with photo upload option
   if (checklistId) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         {/* Header */}
-        <header className="bg-white border-b border-secondary/30">
-          <div className="max-w-[120rem] mx-auto px-8 py-6">
-            <div className="flex items-center justify-between">
-              <Link to="/patient-dashboard" className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                  <Activity className="w-7 h-7 text-primary-foreground" />
+        <header className="bg-white border-b border-secondary/30 flex-shrink-0">
+          <div className="max-w-[120rem] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex items-center justify-between gap-4">
+              <Link to="/patient-dashboard" className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Activity className="w-5 h-5 sm:w-7 sm:h-7 text-primary-foreground" />
                 </div>
-                <div>
-                  <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
-                  <p className="font-paragraph text-sm text-foreground/60">Próxima Etapa</p>
+                <div className="hidden sm:block">
+                  <h1 className="font-heading text-lg sm:text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
+                  <p className="font-paragraph text-xs sm:text-sm text-foreground/60">Próxima Etapa</p>
                 </div>
               </Link>
-              <Link to="/patient-dashboard">
-                <Button variant="outline" className="flex items-center gap-2 font-paragraph">
-                  <ArrowLeft className="w-4 h-4" />
-                  Voltar
+              <Link to="/patient-dashboard" className="flex-shrink-0">
+                <Button variant="outline" className="flex items-center gap-1 sm:gap-2 font-paragraph text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-2">
+                  <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Voltar</span>
                 </Button>
               </Link>
             </div>
           </div>
         </header>
 
-        {/* Main Content */}
-        <div className="max-w-[120rem] mx-auto px-8 py-12">
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-2xl p-12 border border-secondary/20 text-center">
-              <div className="w-20 h-20 bg-stable/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Save className="w-10 h-10 text-stable" />
+        {/* Main Content - Centered */}
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="w-full max-w-md">
+            {/* Success Card */}
+            <div className="bg-white rounded-2xl border border-secondary/20 shadow-sm overflow-hidden">
+              {/* Card Content */}
+              <div className="p-6 sm:p-8 lg:p-10 flex flex-col items-center text-center space-y-6 sm:space-y-8">
+                {/* Success Icon */}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-stable/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Save className="w-8 h-8 sm:w-10 sm:h-10 text-stable" />
+                </div>
+
+                {/* Title */}
+                <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground leading-tight">
+                  Checklist Enviado com Sucesso!
+                </h2>
+
+                {/* Description */}
+                <p className="font-paragraph text-base sm:text-lg text-foreground/70 leading-relaxed">
+                  Agora é necessário enviar uma foto da cicatriz para completar o acompanhamento diário.
+                </p>
+
+                {/* Button */}
+                <Link
+                  to={`/patient-photo-upload/${checklistId}`}
+                  className="w-full pt-2"
+                >
+                  <Button className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-3 sm:py-4 px-4 sm:px-6 text-base sm:text-lg flex items-center justify-center gap-2 rounded-lg transition-opacity">
+                    Continuar para Envio de Foto
+                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                  </Button>
+                </Link>
               </div>
-              <h2 className="font-heading text-3xl font-bold text-foreground mb-4">
-                Checklist Enviado com Sucesso!
-              </h2>
-              <p className="font-paragraph text-lg text-foreground/70 mb-8">
-                Agora é necessário enviar uma foto da cicatriz para completar o acompanhamento diário.
-              </p>
-              
-              <Link
-                to={`/patient-photo-upload/${checklistId}`}
-                className="inline-block"
-              >
-                <Button className="bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 px-8 text-lg flex items-center gap-2">
-                  Continuar para Envio de Foto
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
