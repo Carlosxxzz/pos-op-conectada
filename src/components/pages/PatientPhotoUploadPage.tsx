@@ -1,46 +1,78 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Activity, ArrowLeft, Camera, Upload, AlertCircle, CheckCircle, X, Maximize2 } from 'lucide-react';
+import { Activity, ArrowLeft, Camera, Upload, AlertCircle, CheckCircle, X, Maximize2, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { BaseCrudService } from '@/integrations';
 import type { ChecklistsDirios } from '@/entities';
 import { Image } from '@/components/ui/image';
+import { validateImage, compressImage, formatFileSize } from '@/lib/imageCompression';
+import { useChecklistFlow } from '@/hooks/useChecklistFlow';
 
 export default function PatientPhotoUploadPage() {
   const { checklistId } = useParams<{ checklistId: string }>();
   const navigate = useNavigate();
+  const { tempChecklistData, clearChecklistFlow } = useChecklistFlow();
+  
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [uploadMethod, setUploadMethod] = useState<'gallery' | 'camera' | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [uploadProgress, setUploadProgress] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Validate that we have checklist data
+  useEffect(() => {
+    if (!checklistId || !tempChecklistData) {
+      navigate('/patient-checklist');
+    }
+  }, [checklistId, tempChecklistData, navigate]);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrorMessage('Por favor, selecione um arquivo de imagem válido.');
-        return;
-      }
-      
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setErrorMessage('A imagem deve ter no máximo 10MB.');
+      setErrorMessage('');
+      setSuccessMessage('');
+      setUploadProgress('');
+
+      // Validate file
+      const validation = validateImage(file);
+      if (!validation.isValid) {
+        setErrorMessage(validation.error || 'Erro ao validar imagem');
         return;
       }
 
-      setErrorMessage('');
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // Start compression
+      setIsCompressing(true);
+      setUploadProgress('Processando imagem...');
+
+      try {
+        const compression = await compressImage(file);
+
+        // Check if compressed size is still too large
+        if (compression.compressedSize > 5 * 1024 * 1024) {
+          setErrorMessage('Imagem ainda muito grande após compressão. Tente uma foto diferente.');
+          setIsCompressing(false);
+          return;
+        }
+
+        setSelectedFile(file);
+        setPreviewUrl(compression.compressedBase64);
+        setSuccessMessage(
+          `Imagem processada com sucesso. Reduzida em ${compression.compressionRatio}%.`
+        );
+        setUploadProgress('');
+      } catch (error) {
+        setErrorMessage('Erro ao processar imagem. Por favor, tente novamente.');
+        console.error('Compression error:', error);
+      } finally {
+        setIsCompressing(false);
+      }
     }
   };
 
@@ -52,57 +84,64 @@ export default function PatientPhotoUploadPage() {
       return;
     }
 
-    if (!checklistId) {
+    if (!checklistId || !tempChecklistData) {
       setErrorMessage('Erro: Checklist não identificado. Por favor, volte e tente novamente.');
       return;
     }
 
     setIsSaving(true);
     setErrorMessage('');
+    setSuccessMessage('');
+    setUploadProgress('Enviando imagem...');
 
     try {
-      const reader = new FileReader();
-      reader.onerror = () => {
-        setErrorMessage('Erro ao ler o arquivo. Por favor, tente novamente.');
-        setIsSaving(false);
+      // Create the complete checklist with photo
+      const completeChecklist: ChecklistsDirios = {
+        ...tempChecklistData,
+        _id: checklistId,
+        scarPhoto: previewUrl,
       };
-      reader.onloadend = async () => {
-        try {
-          const photoUrl = reader.result as string;
-          
-          // Update the checklist with the photo
-          await BaseCrudService.update<ChecklistsDirios>('checklistsdiarios', {
-            _id: checklistId,
-            scarPhoto: photoUrl,
-          });
 
-          alert('Acompanhamento enviado com sucesso!');
-          navigate('/patient-dashboard');
-        } catch (error: any) {
-          const errorMsg = error?.message || 'Erro desconhecido ao enviar foto';
-          setErrorMessage(`Erro ao enviar foto: ${errorMsg}. Por favor, verifique sua conexão e tente novamente.`);
-          console.error('Erro ao salvar foto:', error);
-          setIsSaving(false);
-        }
-      };
-      reader.readAsDataURL(selectedFile);
+      // Save the complete checklist to database
+      await BaseCrudService.create('checklistsdiarios', completeChecklist);
+
+      setUploadProgress('');
+      setSuccessMessage('Acompanhamento enviado com sucesso!');
+      
+      // Clear the temporary data
+      clearChecklistFlow();
+      
+      // Navigate after a short delay to show success message
+      setTimeout(() => {
+        navigate('/patient-dashboard');
+      }, 1500);
     } catch (error: any) {
-      const errorMsg = error?.message || 'Erro desconhecido';
-      setErrorMessage(`Erro ao processar foto: ${errorMsg}`);
-      console.error('Erro ao processar foto:', error);
+      const errorMsg = error?.message || 'Erro desconhecido ao enviar foto';
+      
+      // Handle specific error codes
+      if (errorMsg.includes('WDE0109') || errorMsg.includes('Payload is too large')) {
+        setErrorMessage('Imagem muito grande. Tente novamente com uma foto menor.');
+      } else if (errorMsg.includes('network') || errorMsg.includes('connection')) {
+        setErrorMessage('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else {
+        setErrorMessage('Erro ao enviar foto. Por favor, tente novamente.');
+      }
+      
+      console.error('Upload error:', error);
+      setUploadProgress('');
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Fullscreen Image Modal */}
       {isFullscreenOpen && previewUrl && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
           <div className="relative w-full h-full flex items-center justify-center">
             <button
               onClick={() => setIsFullscreenOpen(false)}
-              className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
+              className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors z-10"
             >
               <X className="w-6 h-6 text-white" />
             </button>
@@ -116,22 +155,22 @@ export default function PatientPhotoUploadPage() {
       )}
 
       {/* Header */}
-      <header className="bg-white border-b border-secondary/30">
-        <div className="max-w-[120rem] mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <Link to="/patient-dashboard" className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                <Activity className="w-7 h-7 text-primary-foreground" />
+      <header className="bg-white border-b border-secondary/30 flex-shrink-0">
+        <div className="max-w-[120rem] mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-center justify-between gap-4">
+            <Link to="/patient-dashboard" className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                <Activity className="w-5 h-5 sm:w-7 sm:h-7 text-primary-foreground" />
               </div>
-              <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
-                <p className="font-paragraph text-sm text-foreground/60">Envio de Foto</p>
+              <div className="hidden sm:block">
+                <h1 className="font-heading text-lg sm:text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
+                <p className="font-paragraph text-xs sm:text-sm text-foreground/60">Envio de Foto</p>
               </div>
             </Link>
-            <Link to="/patient-dashboard">
-              <Button variant="outline" className="flex items-center gap-2 font-paragraph">
-                <ArrowLeft className="w-4 h-4" />
-                Voltar
+            <Link to="/patient-dashboard" className="flex-shrink-0">
+              <Button variant="outline" className="flex items-center gap-1 sm:gap-2 font-paragraph text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-2">
+                <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Voltar</span>
               </Button>
             </Link>
           </div>
@@ -139,80 +178,105 @@ export default function PatientPhotoUploadPage() {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-[120rem] mx-auto px-8 py-12">
-        <div className="max-w-2xl mx-auto">
-          <div className="mb-8">
-            <h2 className="font-heading text-4xl font-bold text-foreground mb-2">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="w-full max-w-2xl">
+          <div className="mb-6 sm:mb-8 text-center">
+            <h2 className="font-heading text-3xl sm:text-4xl font-bold text-foreground mb-2">
               Enviar Foto da Cicatriz
             </h2>
-            <p className="font-paragraph text-lg text-foreground/70">
-              Etapa 3 de 3: Finalize seu acompanhamento diário enviando uma foto
+            <p className="font-paragraph text-base sm:text-lg text-foreground/70">
+              Etapa 3 de 3: Finalize seu acompanhamento diário
             </p>
           </div>
 
           {/* Info Alert */}
-          <div className="bg-primary/10 border border-primary/20 rounded-xl p-6 mb-8 flex gap-4">
-            <AlertCircle className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
+          <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 flex gap-3 sm:gap-4">
+            <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-paragraph font-semibold text-foreground mb-1">
+              <p className="font-paragraph font-semibold text-foreground mb-1 text-sm sm:text-base">
                 Foto Obrigatória
               </p>
-              <p className="font-paragraph text-sm text-foreground/70">
-                É necessário enviar uma foto para concluir o acompanhamento diário. A foto será vinculada ao seu checklist de hoje.
+              <p className="font-paragraph text-xs sm:text-sm text-foreground/70">
+                É necessário enviar uma foto para concluir o acompanhamento diário.
               </p>
             </div>
           </div>
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-6 mb-8 flex gap-4">
-              <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
+            <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 flex gap-3 sm:gap-4">
+              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-destructive flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-paragraph font-semibold text-destructive mb-1">
+                <p className="font-paragraph font-semibold text-destructive mb-1 text-sm sm:text-base">
                   Erro
                 </p>
-                <p className="font-paragraph text-sm text-destructive/80">
+                <p className="font-paragraph text-xs sm:text-sm text-destructive/80">
                   {errorMessage}
                 </p>
               </div>
             </div>
           )}
 
+          {/* Success Message */}
+          {successMessage && (
+            <div className="bg-stable/10 border border-stable/20 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 flex gap-3 sm:gap-4">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-stable flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-paragraph font-semibold text-stable mb-1 text-sm sm:text-base">
+                  Sucesso
+                </p>
+                <p className="font-paragraph text-xs sm:text-sm text-stable/80">
+                  {successMessage}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Upload Progress */}
+          {uploadProgress && (
+            <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8 flex gap-3 sm:gap-4 items-center">
+              <Loader className="w-5 h-5 sm:w-6 sm:h-6 text-primary flex-shrink-0 animate-spin" />
+              <p className="font-paragraph text-sm sm:text-base text-primary">
+                {uploadProgress}
+              </p>
+            </div>
+          )}
+
           {/* Upload Options */}
           {!uploadMethod ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
               <button
                 onClick={() => setUploadMethod('camera')}
-                className="bg-white rounded-2xl p-8 border border-secondary/20 hover:border-primary/50 hover:bg-primary/5 transition-all text-left"
+                className="bg-white rounded-2xl p-6 sm:p-8 border border-secondary/20 hover:border-primary/50 hover:bg-primary/5 transition-all text-center"
               >
-                <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                  <Camera className="w-8 h-8 text-primary" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                  <Camera className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
                 </div>
-                <h3 className="font-heading text-xl font-bold text-foreground mb-2">
+                <h3 className="font-heading text-lg sm:text-xl font-bold text-foreground mb-2">
                   Tirar Foto Agora
                 </h3>
-                <p className="font-paragraph text-sm text-foreground/70">
-                  Abra a câmera do seu dispositivo para registrar uma foto em tempo real
+                <p className="font-paragraph text-xs sm:text-sm text-foreground/70">
+                  Use a câmera do seu dispositivo
                 </p>
               </button>
 
               <button
                 onClick={() => setUploadMethod('gallery')}
-                className="bg-white rounded-2xl p-8 border border-secondary/20 hover:border-primary/50 hover:bg-primary/5 transition-all text-left"
+                className="bg-white rounded-2xl p-6 sm:p-8 border border-secondary/20 hover:border-primary/50 hover:bg-primary/5 transition-all text-center"
               >
-                <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                  <Upload className="w-8 h-8 text-primary" />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                  <Upload className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
                 </div>
-                <h3 className="font-heading text-xl font-bold text-foreground mb-2">
+                <h3 className="font-heading text-lg sm:text-xl font-bold text-foreground mb-2">
                   Escolher da Galeria
                 </h3>
-                <p className="font-paragraph text-sm text-foreground/70">
-                  Selecione uma foto existente no seu celular ou computador
+                <p className="font-paragraph text-xs sm:text-sm text-foreground/70">
+                  Selecione uma foto existente
                 </p>
               </button>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl p-8 border border-secondary/20 mb-8">
+            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-secondary/20 mb-8">
               <div className="flex items-center gap-3 mb-6">
                 <button
                   onClick={() => {
@@ -220,6 +284,7 @@ export default function PatientPhotoUploadPage() {
                     setPreviewUrl('');
                     setSelectedFile(null);
                     setErrorMessage('');
+                    setSuccessMessage('');
                   }}
                   className="text-primary hover:underline font-paragraph text-sm"
                 >
@@ -235,6 +300,7 @@ export default function PatientPhotoUploadPage() {
                   accept="image/*"
                   onChange={handleFileChange}
                   className="hidden"
+                  disabled={isCompressing || isSaving}
                 />
                 <input
                   ref={cameraInputRef}
@@ -243,18 +309,19 @@ export default function PatientPhotoUploadPage() {
                   capture="environment"
                   onChange={handleFileChange}
                   className="hidden"
+                  disabled={isCompressing || isSaving}
                 />
 
                 {/* Upload Area */}
                 <div>
-                  <Label className="font-paragraph text-base font-semibold text-foreground mb-4 block">
+                  <Label className="font-paragraph text-sm sm:text-base font-semibold text-foreground mb-4 block text-center">
                     {uploadMethod === 'camera' ? 'Tirar Foto' : 'Selecionar Foto'}
                   </Label>
-                  <div className="border-2 border-dashed border-secondary rounded-xl p-8 text-center bg-background/50">
+                  <div className="border-2 border-dashed border-secondary rounded-xl p-6 sm:p-8 text-center bg-background/50">
                     {previewUrl ? (
-                      <div className="space-y-4">
+                      <div className="space-y-4 sm:space-y-6">
                         {/* Image Preview Container - Centered and Responsive */}
-                        <div className="flex items-center justify-center bg-white rounded-lg p-4 min-h-64 max-h-96">
+                        <div className="flex items-center justify-center bg-white rounded-lg p-3 sm:p-4 min-h-64 sm:min-h-80 max-h-96">
                           <Image 
                             src={previewUrl} 
                             alt="Preview da foto" 
@@ -262,13 +329,14 @@ export default function PatientPhotoUploadPage() {
                           />
                         </div>
                         
-                        {/* Action Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        {/* Action Buttons - Centered and Stacked on Mobile */}
+                        <div className="flex flex-col gap-3 sm:gap-4 justify-center">
                           <Button
                             type="button"
                             variant="outline"
                             onClick={() => setIsFullscreenOpen(true)}
-                            className="font-paragraph flex items-center justify-center gap-2"
+                            disabled={isCompressing || isSaving}
+                            className="font-paragraph flex items-center justify-center gap-2 w-full sm:w-auto sm:mx-auto"
                           >
                             <Maximize2 className="w-4 h-4" />
                             Visualizar em Tela Cheia
@@ -280,13 +348,15 @@ export default function PatientPhotoUploadPage() {
                               setSelectedFile(null);
                               setPreviewUrl('');
                               setErrorMessage('');
+                              setSuccessMessage('');
                               if (uploadMethod === 'camera') {
                                 cameraInputRef.current?.click();
                               } else {
                                 fileInputRef.current?.click();
                               }
                             }}
-                            className="font-paragraph"
+                            disabled={isCompressing || isSaving}
+                            className="font-paragraph w-full sm:w-auto sm:mx-auto"
                           >
                             Trocar Foto
                           </Button>
@@ -294,16 +364,16 @@ export default function PatientPhotoUploadPage() {
                       </div>
                     ) : (
                       <div className="flex flex-col items-center gap-4">
-                        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center">
-                          <Camera className="w-10 h-10 text-primary" />
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center">
+                          <Camera className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
                         </div>
                         <div>
-                          <p className="font-paragraph text-base font-semibold text-foreground mb-1">
+                          <p className="font-paragraph text-sm sm:text-base font-semibold text-foreground mb-1">
                             {uploadMethod === 'camera' 
                               ? 'Clique para tirar uma foto' 
                               : 'Clique para selecionar uma foto'}
                           </p>
-                          <p className="font-paragraph text-sm text-foreground/60">
+                          <p className="font-paragraph text-xs sm:text-sm text-foreground/60">
                             {uploadMethod === 'camera'
                               ? 'Use a câmera do seu dispositivo'
                               : 'Escolha uma foto da sua galeria'}
@@ -318,9 +388,17 @@ export default function PatientPhotoUploadPage() {
                               fileInputRef.current?.click();
                             }
                           }}
+                          disabled={isCompressing || isSaving}
                           className="bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold"
                         >
-                          {uploadMethod === 'camera' ? 'Abrir Câmera' : 'Abrir Galeria'}
+                          {isCompressing ? (
+                            <>
+                              <Loader className="w-4 h-4 mr-2 animate-spin" />
+                              Processando...
+                            </>
+                          ) : (
+                            uploadMethod === 'camera' ? 'Abrir Câmera' : 'Abrir Galeria'
+                          )}
                         </Button>
                       </div>
                     )}
@@ -330,14 +408,17 @@ export default function PatientPhotoUploadPage() {
                 {/* Submit Button */}
                 <Button
                   type="submit"
-                  disabled={!selectedFile || isSaving}
-                  className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 rounded-lg text-lg disabled:opacity-50"
+                  disabled={!selectedFile || isSaving || isCompressing}
+                  className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-4 sm:py-6 rounded-lg text-base sm:text-lg disabled:opacity-50"
                 >
                   {isSaving ? (
-                    'Finalizando...'
+                    <>
+                      <Loader className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
+                      Finalizando...
+                    </>
                   ) : (
                     <>
-                      <CheckCircle className="w-5 h-5 mr-2" />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       Finalizar Acompanhamento
                     </>
                   )}

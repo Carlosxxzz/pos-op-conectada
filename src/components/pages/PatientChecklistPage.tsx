@@ -8,9 +8,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useChecklistFlow } from '@/hooks/useChecklistFlow';
 
 export default function PatientChecklistPage() {
   const navigate = useNavigate();
+  const { setTempChecklistData, setSavedChecklistId } = useChecklistFlow();
   const [patient, setPatient] = useState<Pacientes | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -84,16 +86,21 @@ export default function PatientChecklistPage() {
 
       const riskLevel = calculateRiskLevel();
       
+      const newChecklistId = crypto.randomUUID();
       const newChecklist: ChecklistsDirios = {
-        _id: crypto.randomUUID(),
+        _id: newChecklistId,
         checklistDate: new Date().toISOString(),
         patientId: patientId,
         ...formData,
         riskLevel,
+        // Photo will be added after upload
+        scarPhoto: '',
       };
 
-      await BaseCrudService.create('checklistsdiarios', newChecklist);
-      setChecklistId(newChecklist._id);
+      // Store temporary checklist data (not saved yet)
+      setTempChecklistData(newChecklist);
+      setSavedChecklistId(newChecklistId);
+      setChecklistId(newChecklistId);
       // Don't navigate yet - show the "Continue to Photo" button
     } catch (error) {
       alert('Erro ao enviar checklist');
