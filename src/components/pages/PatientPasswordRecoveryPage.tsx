@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Activity, Mail, Lock, AlertCircle, CheckCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,8 @@ export default function PatientPasswordRecoveryPage() {
     validatePassword,
     getPasswordStrength,
     reset,
+    setStep,
+    setError,
   } = usePasswordRecovery();
 
   const [emailInput, setEmailInput] = useState('');
@@ -56,6 +58,12 @@ export default function PatientPasswordRecoveryPage() {
 
   const handleResendCode = async () => {
     await resendCode();
+  };
+
+  const handleBackFromCode = () => {
+    setCode('');
+    setError('');
+    setStep('email');
   };
 
   const passwordValidation = validatePassword(newPassword);
@@ -110,15 +118,6 @@ export default function PatientPasswordRecoveryPage() {
                     </p>
                   </div>
 
-                  {/* Important Notice */}
-                  <div className="p-4 bg-attention/10 border border-attention/30 rounded-lg flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-attention flex-shrink-0 mt-0.5" />
-                    <div className="font-paragraph text-sm text-foreground/80">
-                      <p className="font-semibold mb-1">Informação importante:</p>
-                      <p>O código de recuperação será exibido na tela. Verifique o console do navegador (F12) para visualizar o código gerado.</p>
-                    </div>
-                  </div>
-
                   {error && (
                     <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
                       <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
@@ -164,32 +163,24 @@ export default function PatientPasswordRecoveryPage() {
                 </form>
               )}
 
-                  {/* Step 2: Code Verification */}
-                  {step === 'code' && (
-                    <form onSubmit={handleVerifyCode} className="space-y-6">
-                      <div className="text-center mb-8">
-                        <h2 className="font-heading text-3xl font-bold text-foreground mb-2">
-                          Verificar Código
-                        </h2>
-                        <p className="font-paragraph text-base text-foreground/70">
-                          Digite o código enviado para<br />
-                          <span className="font-semibold text-foreground">{email}</span>
-                        </p>
-                      </div>
+              {/* Step 2: Code Verification */}
+              {step === 'code' && (
+                <form onSubmit={handleVerifyCode} className="space-y-6">
+                  <div className="text-center mb-8">
+                    <h2 className="font-heading text-3xl font-bold text-foreground mb-2">
+                      Verificar Código
+                    </h2>
+                    <p className="font-paragraph text-base text-foreground/70">
+                      Digite o código enviado para seu e-mail para continuar a recuperação da senha.
+                    </p>
+                  </div>
 
-                      {/* Debug Info */}
-                      <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg">
-                        <p className="font-paragraph text-xs text-foreground/70">
-                          <span className="font-semibold">💡 Dica:</span> Abra o console do navegador (F12) para ver o código gerado.
-                        </p>
-                      </div>
-
-                      {error && (
-                        <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
-                          <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                          <p className="font-paragraph text-sm text-destructive">{error}</p>
-                        </div>
-                      )}
+                  {error && (
+                    <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                      <p className="font-paragraph text-sm text-destructive">{error}</p>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="code" className="font-paragraph text-sm font-semibold text-foreground">
@@ -215,16 +206,26 @@ export default function PatientPasswordRecoveryPage() {
                     {isLoading ? 'Verificando...' : 'Verificar Código'}
                   </Button>
 
-                  <div className="text-center">
+                  <div className="space-y-3">
                     <button
                       type="button"
                       onClick={handleResendCode}
                       disabled={resendCountdown > 0 || isLoading}
-                      className="font-paragraph text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full font-paragraph text-sm text-primary hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {resendCountdown > 0
                         ? `Reenviar em ${resendCountdown}s`
                         : 'Reenviar Código'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleBackFromCode}
+                      disabled={isLoading}
+                      className="w-full flex items-center justify-center gap-2 font-paragraph text-sm text-foreground/70 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Voltar
                     </button>
                   </div>
                 </form>

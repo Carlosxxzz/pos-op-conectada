@@ -304,6 +304,7 @@ export function usePasswordRecovery() {
 
   return {
     step,
+    setStep,
     email,
     code,
     setCode,
@@ -312,6 +313,7 @@ export function usePasswordRecovery() {
     confirmPassword,
     setConfirmPassword,
     error,
+    setError,
     isLoading,
     resendCountdown,
     patientName,
