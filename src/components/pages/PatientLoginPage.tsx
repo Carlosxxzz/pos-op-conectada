@@ -191,9 +191,14 @@ export default function PatientLoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="font-paragraph text-sm font-semibold text-foreground">
-                      Senha
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password" className="font-paragraph text-sm font-semibold text-foreground">
+                        Senha
+                      </Label>
+                      <Link to="/patient-password-recovery" className="font-paragraph text-xs text-primary hover:underline">
+                        Esqueceu sua senha?
+                      </Link>
+                    </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40" />
                       <Input

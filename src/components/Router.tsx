@@ -4,6 +4,7 @@ import { ScrollToTop } from '@/lib/scroll-to-top';
 import ErrorPage from '@/integrations/errorHandlers/ErrorPage';
 import HomePage from '@/components/pages/HomePage';
 import PatientLoginPage from '@/components/pages/PatientLoginPage';
+import PatientPasswordRecoveryPage from '@/components/pages/PatientPasswordRecoveryPage';
 import PatientDashboardPage from '@/components/pages/PatientDashboardPage';
 import PatientChecklistPage from '@/components/pages/PatientChecklistPage';
 import PatientPhotoUploadPage from '@/components/pages/PatientPhotoUploadPage';
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
       {
         path: "patient-login",
         element: <PatientLoginPage />,
+      },
+      {
+        path: "patient-password-recovery",
+        element: <PatientPasswordRecoveryPage />,
       },
       {
         path: "patient-dashboard",
