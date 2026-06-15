@@ -110,6 +110,15 @@ export default function PatientPasswordRecoveryPage() {
                     </p>
                   </div>
 
+                  {/* Important Notice */}
+                  <div className="p-4 bg-attention/10 border border-attention/30 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-attention flex-shrink-0 mt-0.5" />
+                    <div className="font-paragraph text-sm text-foreground/80">
+                      <p className="font-semibold mb-1">Informação importante:</p>
+                      <p>O código de recuperação será exibido na tela. Verifique o console do navegador (F12) para visualizar o código gerado.</p>
+                    </div>
+                  </div>
+
                   {error && (
                     <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
                       <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
@@ -155,25 +164,32 @@ export default function PatientPasswordRecoveryPage() {
                 </form>
               )}
 
-              {/* Step 2: Code Verification */}
-              {step === 'code' && (
-                <form onSubmit={handleVerifyCode} className="space-y-6">
-                  <div className="text-center mb-8">
-                    <h2 className="font-heading text-3xl font-bold text-foreground mb-2">
-                      Verificar Código
-                    </h2>
-                    <p className="font-paragraph text-base text-foreground/70">
-                      Digite o código enviado para<br />
-                      <span className="font-semibold text-foreground">{email}</span>
-                    </p>
-                  </div>
+                  {/* Step 2: Code Verification */}
+                  {step === 'code' && (
+                    <form onSubmit={handleVerifyCode} className="space-y-6">
+                      <div className="text-center mb-8">
+                        <h2 className="font-heading text-3xl font-bold text-foreground mb-2">
+                          Verificar Código
+                        </h2>
+                        <p className="font-paragraph text-base text-foreground/70">
+                          Digite o código enviado para<br />
+                          <span className="font-semibold text-foreground">{email}</span>
+                        </p>
+                      </div>
 
-                  {error && (
-                    <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                      <p className="font-paragraph text-sm text-destructive">{error}</p>
-                    </div>
-                  )}
+                      {/* Debug Info */}
+                      <div className="p-4 bg-primary/10 border border-primary/30 rounded-lg">
+                        <p className="font-paragraph text-xs text-foreground/70">
+                          <span className="font-semibold">💡 Dica:</span> Abra o console do navegador (F12) para ver o código gerado.
+                        </p>
+                      </div>
+
+                      {error && (
+                        <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
+                          <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                          <p className="font-paragraph text-sm text-destructive">{error}</p>
+                        </div>
+                      )}
 
                   <div className="space-y-2">
                     <Label htmlFor="code" className="font-paragraph text-sm font-semibold text-foreground">

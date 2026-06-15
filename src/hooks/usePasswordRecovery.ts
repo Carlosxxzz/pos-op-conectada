@@ -76,24 +76,37 @@ export function usePasswordRecovery() {
 
     try {
       if (isEmailBlocked(emailAddress)) {
-        setError('Muitas tentativas. Tente novamente em 15 minutos.');
-        logger.warn('PasswordRecovery', 'requestRecovery', 'Email blocked due to too many attempts', { email: emailAddress });
+        const errorMsg = 'Muitas tentativas. Tente novamente em 15 minutos.';
+        setError(errorMsg);
+        logger.warn('PasswordRecovery', 'requestRecovery', 'Email blocked due to too many attempts', { 
+          email: emailAddress,
+          blockedUntil: new Date(BLOCKED_EMAILS.get(emailAddress) || 0).toISOString()
+        });
         return false;
       }
 
-      logger.info('PasswordRecovery', 'requestRecovery', 'Searching for patient', { email: emailAddress });
+      logger.info('PasswordRecovery', 'requestRecovery', 'Starting password recovery process', { email: emailAddress });
 
       const { items } = await BaseCrudService.getAll<Pacientes>('pacientes');
       const patient = items.find(p => p.email === emailAddress);
 
       if (!patient) {
-        setError('Não encontramos uma conta vinculada a este e-mail.');
+        const errorMsg = 'Não encontramos uma conta vinculada a este e-mail.';
+        setError(errorMsg);
         logger.warn('PasswordRecovery', 'requestRecovery', 'Patient not found', { email: emailAddress });
         return false;
       }
 
       const recoveryCode = generateCode();
       const expiresAt = Date.now() + CODE_EXPIRY;
+
+      logger.info('PasswordRecovery', 'requestRecovery', 'Recovery code generated successfully', {
+        email: emailAddress,
+        code: recoveryCode,
+        expiresAt: new Date(expiresAt).toISOString(),
+        patientName: patient.fullName,
+        codeExpiryMinutes: CODE_EXPIRY / 60000,
+      });
 
       RECOVERY_TOKENS.set(emailAddress, {
         code: recoveryCode,
@@ -106,21 +119,28 @@ export function usePasswordRecovery() {
       setEmail(emailAddress);
       setResendCooldown(emailAddress);
 
-      // Simulate email sending
-      logger.info('PasswordRecovery', 'requestRecovery', 'Recovery code generated and would be sent', {
+      // Log email sending attempt
+      logger.info('PasswordRecovery', 'requestRecovery', 'Attempting to send recovery code via email', {
         email: emailAddress,
-        code: recoveryCode,
-        expiresAt: new Date(expiresAt).toISOString(),
+        recipientName: patient.fullName,
+        timestamp: new Date().toISOString(),
       });
 
-      // In a real app, this would call an email service
-      console.log(`[SIMULATED EMAIL] Recovery code for ${emailAddress}: ${recoveryCode}`);
+      // NOTE: Email sending is not supported in the current Wix Vibe environment
+      // In production, this would integrate with:
+      // - Wix Automations API
+      // - Third-party email service (SendGrid, Mailgun, etc.)
+      // - Custom backend function
+      console.log(`[PASSWORD RECOVERY] Code generated for ${emailAddress}: ${recoveryCode}`);
+      console.log(`[PASSWORD RECOVERY] Code expires at: ${new Date(expiresAt).toISOString()}`);
+      console.log(`[PASSWORD RECOVERY] Patient: ${patient.fullName}`);
 
       setStep('code');
       return true;
     } catch (err) {
       logger.error('PasswordRecovery', 'requestRecovery', 'Error requesting recovery', err);
-      setError('Erro ao solicitar recuperação. Tente novamente.');
+      const errorMsg = 'Erro ao solicitar recuperação. Tente novamente.';
+      setError(errorMsg);
       return false;
     } finally {
       setIsLoading(false);
