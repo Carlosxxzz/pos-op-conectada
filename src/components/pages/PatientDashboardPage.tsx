@@ -5,38 +5,58 @@ import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { logger } from '@/lib/logger';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 
 export default function PatientDashboardPage() {
   const navigate = useNavigate();
   const [patient, setPatient] = useState<Pacientes | null>(null);
   const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+  
+  // Maintain session persistence
+  useSessionPersistence();
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    const patientId = localStorage.getItem('patientId');
-    if (!patientId) {
-      navigate('/patient-login');
-      return;
-    }
-
     try {
+      const patientId = localStorage.getItem('patientId');
+      if (!patientId) {
+        logger.warn('PatientDashboard', 'loadData', 'No patientId found in localStorage');
+        navigate('/patient-login');
+        return;
+      }
+
+      logger.info('PatientDashboard', 'loadData', 'Loading patient data', { patientId: patientId.substring(0, 8) });
+
       const patientData = await BaseCrudService.getById<Pacientes>('pacientes', patientId);
+      if (!patientData) {
+        logger.error('PatientDashboard', 'loadData', 'Patient data not found');
+        setError('Dados do paciente não encontrados. Por favor, faça login novamente.');
+        navigate('/patient-login');
+        return;
+      }
+      
       setPatient(patientData);
+      logger.info('PatientDashboard', 'loadData', 'Patient data loaded successfully');
 
       const { items } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
       setChecklists(items);
+      logger.info('PatientDashboard', 'loadData', 'Checklists loaded', { count: items.length });
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('PatientDashboard', 'loadData', 'Error loading data', error);
+      setError('Erro ao carregar dados. Por favor, tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleLogout = () => {
+    logger.info('PatientDashboard', 'handleLogout', 'User logging out');
     localStorage.removeItem('patientId');
     navigate('/patient-login');
   };
@@ -54,6 +74,29 @@ export default function PatientDashboardPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-secondary/20">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0" />
+            <h2 className="font-heading text-xl font-bold text-foreground">Erro</h2>
+          </div>
+          <p className="font-paragraph text-base text-foreground/70 mb-6">{error}</p>
+          <Button
+            onClick={() => {
+              setError('');
+              loadData();
+            }}
+            className="w-full bg-primary text-primary-foreground hover:opacity-90"
+          >
+            Tentar Novamente
+          </Button>
+        </div>
       </div>
     );
   }

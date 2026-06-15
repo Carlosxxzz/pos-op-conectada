@@ -8,6 +8,8 @@ import type { ChecklistsDirios } from '@/entities';
 import { Image } from '@/components/ui/image';
 import { validateImage, compressImage, formatFileSize } from '@/lib/imageCompression';
 import { useChecklistFlow } from '@/hooks/useChecklistFlow';
+import { logger } from '@/lib/logger';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 
 export default function PatientPhotoUploadPage() {
   const { checklistId } = useParams<{ checklistId: string }>();
@@ -25,11 +27,22 @@ export default function PatientPhotoUploadPage() {
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  
+  // Maintain session persistence
+  useSessionPersistence();
 
   // Validate that we have checklist data
   useEffect(() => {
     if (!checklistId || !tempChecklistData) {
+      logger.warn('PatientPhotoUpload', 'useEffect', 'Missing checklist data or ID', {
+        hasChecklistId: !!checklistId,
+        hasTempData: !!tempChecklistData,
+      });
       navigate('/patient-checklist');
+    } else {
+      logger.info('PatientPhotoUpload', 'useEffect', 'Photo upload page initialized', {
+        checklistId: checklistId.substring(0, 8),
+      });
     }
   }, [checklistId, tempChecklistData, navigate]);
 
@@ -40,10 +53,18 @@ export default function PatientPhotoUploadPage() {
       setSuccessMessage('');
       setUploadProgress('');
 
+      logger.info('PatientPhotoUpload', 'handleFileChange', 'File selected', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+      });
+
       // Validate file
       const validation = validateImage(file);
       if (!validation.isValid) {
-        setErrorMessage(validation.error || 'Erro ao validar imagem');
+        const errorMsg = validation.error || 'Erro ao validar imagem';
+        logger.warn('PatientPhotoUpload', 'handleFileChange', 'Image validation failed', { error: errorMsg });
+        setErrorMessage(errorMsg);
         return;
       }
 
@@ -52,11 +73,16 @@ export default function PatientPhotoUploadPage() {
       setUploadProgress('Processando imagem...');
 
       try {
+        logger.info('PatientPhotoUpload', 'handleFileChange', 'Starting image compression');
         const compression = await compressImage(file);
 
         // Check if compressed size is still too large
         if (compression.compressedSize > 5 * 1024 * 1024) {
-          setErrorMessage('Imagem ainda muito grande após compressão. Tente uma foto diferente.');
+          const errorMsg = 'Imagem ainda muito grande após compressão. Tente uma foto diferente.';
+          logger.warn('PatientPhotoUpload', 'handleFileChange', 'Compressed image too large', {
+            compressedSize: compression.compressedSize,
+          });
+          setErrorMessage(errorMsg);
           setIsCompressing(false);
           return;
         }
@@ -67,9 +93,16 @@ export default function PatientPhotoUploadPage() {
           `Imagem processada com sucesso. Reduzida em ${compression.compressionRatio}%.`
         );
         setUploadProgress('');
+        
+        logger.info('PatientPhotoUpload', 'handleFileChange', 'Image compressed successfully', {
+          compressionRatio: compression.compressionRatio,
+          originalSize: file.size,
+          compressedSize: compression.compressedSize,
+        });
       } catch (error) {
-        setErrorMessage('Erro ao processar imagem. Por favor, tente novamente.');
-        console.error('Compression error:', error);
+        const errorMsg = 'Erro ao processar imagem. Por favor, tente novamente.';
+        logger.error('PatientPhotoUpload', 'handleFileChange', 'Image compression error', error);
+        setErrorMessage(errorMsg);
       } finally {
         setIsCompressing(false);
       }
@@ -80,12 +113,19 @@ export default function PatientPhotoUploadPage() {
     e.preventDefault();
     
     if (!selectedFile) {
-      setErrorMessage('É necessário enviar uma foto para concluir o acompanhamento diário.');
+      const errorMsg = 'É necessário enviar uma foto para concluir o acompanhamento diário.';
+      logger.warn('PatientPhotoUpload', 'handleSubmit', errorMsg);
+      setErrorMessage(errorMsg);
       return;
     }
 
     if (!checklistId || !tempChecklistData) {
-      setErrorMessage('Erro: Checklist não identificado. Por favor, volte e tente novamente.');
+      const errorMsg = 'Erro: Checklist não identificado. Por favor, volte e tente novamente.';
+      logger.error('PatientPhotoUpload', 'handleSubmit', errorMsg, {
+        hasChecklistId: !!checklistId,
+        hasTempData: !!tempChecklistData,
+      });
+      setErrorMessage(errorMsg);
       return;
     }
 
@@ -95,6 +135,10 @@ export default function PatientPhotoUploadPage() {
     setUploadProgress('Enviando imagem...');
 
     try {
+      logger.info('PatientPhotoUpload', 'handleSubmit', 'Starting photo upload', {
+        checklistId: checklistId.substring(0, 8),
+      });
+
       // Create the complete checklist with photo
       const completeChecklist: ChecklistsDirios = {
         ...tempChecklistData,
@@ -108,6 +152,10 @@ export default function PatientPhotoUploadPage() {
       setUploadProgress('');
       setSuccessMessage('Acompanhamento enviado com sucesso!');
       
+      logger.info('PatientPhotoUpload', 'handleSubmit', 'Checklist saved successfully', {
+        checklistId: checklistId.substring(0, 8),
+      });
+      
       // Clear the temporary data
       clearChecklistFlow();
       
@@ -118,6 +166,11 @@ export default function PatientPhotoUploadPage() {
     } catch (error: any) {
       const errorMsg = error?.message || 'Erro desconhecido ao enviar foto';
       
+      logger.error('PatientPhotoUpload', 'handleSubmit', 'Error uploading photo', error, {
+        checklistId: checklistId?.substring(0, 8),
+        errorMessage: errorMsg,
+      });
+      
       // Handle specific error codes
       if (errorMsg.includes('WDE0109') || errorMsg.includes('Payload is too large')) {
         setErrorMessage('Imagem muito grande. Tente novamente com uma foto menor.');
@@ -127,7 +180,6 @@ export default function PatientPhotoUploadPage() {
         setErrorMessage('Erro ao enviar foto. Por favor, tente novamente.');
       }
       
-      console.error('Upload error:', error);
       setUploadProgress('');
       setIsSaving(false);
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, Save, Smile, Meh, Frown, ArrowRight } from 'lucide-react';
+import { Activity, ArrowLeft, Save, Smile, Meh, Frown, ArrowRight, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,8 @@ import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useChecklistFlow } from '@/hooks/useChecklistFlow';
+import { logger } from '@/lib/logger';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 
 export default function PatientChecklistPage() {
   const navigate = useNavigate();
@@ -17,6 +19,10 @@ export default function PatientChecklistPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [checklistId, setChecklistId] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
+  
+  // Maintain session persistence
+  useSessionPersistence();
 
   const [formData, setFormData] = useState({
     painLevel: 0,
@@ -37,17 +43,29 @@ export default function PatientChecklistPage() {
   }, []);
 
   const loadPatient = async () => {
-    const patientId = localStorage.getItem('patientId');
-    if (!patientId) {
-      navigate('/patient-login');
-      return;
-    }
-
     try {
+      const patientId = localStorage.getItem('patientId');
+      if (!patientId) {
+        logger.warn('PatientChecklist', 'loadPatient', 'No patientId found in localStorage');
+        navigate('/patient-login');
+        return;
+      }
+
+      logger.info('PatientChecklist', 'loadPatient', 'Loading patient data', { patientId: patientId.substring(0, 8) });
+
       const patientData = await BaseCrudService.getById<Pacientes>('pacientes', patientId);
+      if (!patientData) {
+        logger.error('PatientChecklist', 'loadPatient', 'Patient data not found');
+        setError('Dados do paciente não encontrados. Por favor, faça login novamente.');
+        navigate('/patient-login');
+        return;
+      }
+      
       setPatient(patientData);
+      logger.info('PatientChecklist', 'loadPatient', 'Patient data loaded successfully');
     } catch (error) {
-      console.error('Error loading patient:', error);
+      logger.error('PatientChecklist', 'loadPatient', 'Error loading patient', error);
+      setError('Erro ao carregar dados do paciente. Por favor, tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -76,10 +94,12 @@ export default function PatientChecklistPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
+    setError('');
 
     try {
       const patientId = localStorage.getItem('patientId');
       if (!patientId) {
+        logger.warn('PatientChecklist', 'handleSubmit', 'No patientId found during submit');
         navigate('/patient-login');
         return;
       }
@@ -93,17 +113,23 @@ export default function PatientChecklistPage() {
         patientId: patientId,
         ...formData,
         riskLevel,
-        // Photo will be added after upload
         scarPhoto: '',
       };
+
+      logger.info('PatientChecklist', 'handleSubmit', 'Checklist prepared', {
+        checklistId: newChecklistId.substring(0, 8),
+        riskLevel,
+      });
 
       // Store temporary checklist data (not saved yet)
       setTempChecklistData(newChecklist);
       setSavedChecklistId(newChecklistId);
       setChecklistId(newChecklistId);
-      // Don't navigate yet - show the "Continue to Photo" button
+      
+      logger.info('PatientChecklist', 'handleSubmit', 'Checklist saved to temporary storage');
     } catch (error) {
-      alert('Erro ao enviar checklist');
+      logger.error('PatientChecklist', 'handleSubmit', 'Error submitting checklist', error);
+      setError('Erro ao enviar checklist. Por favor, tente novamente.');
       setIsSaving(false);
     }
   };
@@ -112,6 +138,29 @@ export default function PatientChecklistPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error && !checklistId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-secondary/20">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0" />
+            <h2 className="font-heading text-xl font-bold text-foreground">Erro</h2>
+          </div>
+          <p className="font-paragraph text-base text-foreground/70 mb-6">{error}</p>
+          <Button
+            onClick={() => {
+              setError('');
+              loadPatient();
+            }}
+            className="w-full bg-primary text-primary-foreground hover:opacity-90"
+          >
+            Tentar Novamente
+          </Button>
+        </div>
       </div>
     );
   }
@@ -398,6 +447,14 @@ export default function PatientChecklistPage() {
                 )}
               </Button>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <p className="font-paragraph text-sm text-destructive">{error}</p>
+              </div>
+            )}
           </form>
         </div>
       </div>

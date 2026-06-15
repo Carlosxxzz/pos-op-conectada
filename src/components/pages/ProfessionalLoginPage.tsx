@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BaseCrudService } from '@/integrations';
 import type { Profissionais } from '@/entities';
+import { logger } from '@/lib/logger';
 
 export default function ProfessionalLoginPage() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export default function ProfessionalLoginPage() {
     setIsLoading(true);
 
     try {
+      logger.info('ProfessionalLogin', 'handleLogin', 'Attempting professional login', { email });
+
       const { items } = await BaseCrudService.getAll<Profissionais>('profissionais');
       const professional = items.find(
         p => p.email === email && p.password === password && p.status === 'Ativo'
@@ -30,6 +33,11 @@ export default function ProfessionalLoginPage() {
         localStorage.setItem('professionalProfile', professional.profile || '');
         localStorage.setItem('professionalHospital', professional.hospital || '');
         
+        logger.info('ProfessionalLogin', 'handleLogin', 'Login successful', {
+          professionalId: professional._id.substring(0, 8),
+          profile: professional.profile,
+        });
+        
         // Redirect based on profile
         if (professional.profile === 'Enfermeiro') {
           navigate('/nursing-dashboard');
@@ -39,11 +47,13 @@ export default function ProfessionalLoginPage() {
           navigate('/admin-dashboard');
         }
       } else {
-        setError('Email, senha incorretos ou profissional inativo');
+        const errorMsg = 'Email, senha incorretos ou profissional inativo';
+        logger.warn('ProfessionalLogin', 'handleLogin', errorMsg, { email });
+        setError(errorMsg);
       }
     } catch (err) {
+      logger.error('ProfessionalLogin', 'handleLogin', 'Login error', err);
       setError('Erro ao fazer login. Tente novamente.');
-      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }

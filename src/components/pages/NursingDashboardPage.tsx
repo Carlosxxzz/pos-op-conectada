@@ -6,6 +6,8 @@ import { BaseCrudService } from '@/integrations';
 import type { ChecklistsDirios, Pacientes, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
+import { logger } from '@/lib/logger';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 
 interface PatientWithChecklist {
   patient: Pacientes;
@@ -17,6 +19,10 @@ export default function NursingDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [patients, setPatients] = useState<PatientWithChecklist[]>([]);
   const [professional, setProfessional] = useState<Profissionais | null>(null);
+  const [error, setError] = useState<string>('');
+  
+  // Maintain session persistence
+  useSessionPersistence();
 
   useEffect(() => {
     loadData();
@@ -27,16 +33,36 @@ export default function NursingDashboardPage() {
       // Get professional info from localStorage
       const professionalId = localStorage.getItem('professionalId');
       if (!professionalId) {
+        logger.warn('NursingDashboard', 'loadData', 'No professionalId found in localStorage');
         navigate('/professional-login');
         return;
       }
 
+      logger.info('NursingDashboard', 'loadData', 'Loading professional data', {
+        professionalId: professionalId.substring(0, 8),
+      });
+
       const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
+      if (!professionalData) {
+        logger.error('NursingDashboard', 'loadData', 'Professional data not found');
+        setError('Dados do profissional não encontrados. Por favor, faça login novamente.');
+        navigate('/professional-login');
+        return;
+      }
+      
       setProfessional(professionalData);
+      logger.info('NursingDashboard', 'loadData', 'Professional data loaded', {
+        hospital: professionalData.hospital,
+      });
 
       // Get all patients and checklists
       const { items: allPatients } = await BaseCrudService.getAll<Pacientes>('pacientes');
       const { items: allChecklists } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
+
+      logger.info('NursingDashboard', 'loadData', 'Data fetched', {
+        totalPatients: allPatients.length,
+        totalChecklists: allChecklists.length,
+      });
 
       // Filter patients: only those with at least one checklist AND matching hospital
       const patientsWithChecklists: PatientWithChecklist[] = allPatients
@@ -65,14 +91,19 @@ export default function NursingDashboardPage() {
       });
 
       setPatients(sortedPatients);
+      logger.info('NursingDashboard', 'loadData', 'Patients loaded and sorted', {
+        count: sortedPatients.length,
+      });
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('NursingDashboard', 'loadData', 'Error loading data', error);
+      setError('Erro ao carregar dados. Por favor, tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleLogout = () => {
+    logger.info('NursingDashboard', 'handleLogout', 'Professional logging out');
     localStorage.removeItem('professionalId');
     localStorage.removeItem('professionalProfile');
     navigate('/professional-login');
@@ -86,6 +117,29 @@ export default function NursingDashboardPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-secondary/20">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0" />
+            <h2 className="font-heading text-xl font-bold text-foreground">Erro</h2>
+          </div>
+          <p className="font-paragraph text-base text-foreground/70 mb-6">{error}</p>
+          <Button
+            onClick={() => {
+              setError('');
+              loadData();
+            }}
+            className="w-full bg-primary text-primary-foreground hover:opacity-90"
+          >
+            Tentar Novamente
+          </Button>
+        </div>
       </div>
     );
   }

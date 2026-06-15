@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, Mail, Lock, User, Phone, MapPin, Calendar, Stethoscope, Building2, UserPlus } from 'lucide-react';
+import { Activity, Mail, Lock, User, Phone, MapPin, Calendar, Stethoscope, Building2, UserPlus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes } from '@/entities';
+import { logger } from '@/lib/logger';
 
 export default function PatientLoginPage() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
@@ -36,20 +38,27 @@ export default function PatientLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
 
     try {
+      logger.info('PatientLogin', 'handleLogin', 'Attempting patient login', { email: loginEmail });
+
       const { items } = await BaseCrudService.getAll<Pacientes>('pacientes');
       const patient = items.find(p => p.email === loginEmail && p.password === loginPassword);
 
       if (patient) {
         localStorage.setItem('patientId', patient._id);
+        logger.info('PatientLogin', 'handleLogin', 'Login successful', { patientId: patient._id.substring(0, 8) });
         navigate('/patient-dashboard');
       } else {
-        alert('Email ou senha incorretos');
+        const errorMsg = 'Email ou senha incorretos';
+        logger.warn('PatientLogin', 'handleLogin', errorMsg, { email: loginEmail });
+        setError(errorMsg);
       }
     } catch (error) {
-      alert('Erro ao fazer login');
+      logger.error('PatientLogin', 'handleLogin', 'Login error', error);
+      setError('Erro ao fazer login. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -57,16 +66,22 @@ export default function PatientLoginPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
 
     try {
+      logger.info('PatientLogin', 'handleRegister', 'Attempting patient registration', { email: formData.email });
+
       const newPatient: Pacientes = {
         _id: crypto.randomUUID(),
         ...formData,
       };
 
       await BaseCrudService.create('pacientes', newPatient);
-      alert('Cadastro realizado com sucesso! Faça login para continuar.');
+      
+      logger.info('PatientLogin', 'handleRegister', 'Registration successful', { patientId: newPatient._id.substring(0, 8) });
+      
+      setError('');
       setIsLogin(true);
       setFormData({
         fullName: '',
@@ -84,8 +99,12 @@ export default function PatientLoginPage() {
         password: '',
         hospital: '',
       });
+      
+      // Show success message
+      setError('');
     } catch (error) {
-      alert('Erro ao realizar cadastro');
+      logger.error('PatientLogin', 'handleRegister', 'Registration error', error);
+      setError('Erro ao realizar cadastro. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -146,6 +165,13 @@ export default function PatientLoginPage() {
                     </p>
                   </div>
 
+                  {error && (
+                    <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                      <p className="font-paragraph text-sm text-destructive">{error}</p>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="email" className="font-paragraph text-sm font-semibold text-foreground">
                       Email
@@ -198,6 +224,13 @@ export default function PatientLoginPage() {
                       Preencha seus dados para começar o acompanhamento
                     </p>
                   </div>
+
+                  {error && (
+                    <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                      <p className="font-paragraph text-sm text-destructive">{error}</p>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 md:col-span-2">
