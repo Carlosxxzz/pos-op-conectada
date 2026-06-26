@@ -76,6 +76,7 @@ export default function NursingEvaluationPage() {
       const evaluation: AvaliaesdeEnfermagem = {
         _id: crypto.randomUUID(),
         checklistDate: new Date().toISOString(),
+        patientId: id,
         ...formData,
       };
 

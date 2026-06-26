@@ -166,6 +166,25 @@ export default function PatientDashboardPage() {
           </Link>
 
           <Link
+            to="/patient-evaluations"
+            className="block bg-white rounded-3xl p-6 border-2 border-secondary/30 hover:bg-background transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <History className="w-8 h-8 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-heading text-2xl font-bold text-foreground mb-1">
+                  Avaliação da Equipe
+                </h3>
+                <p className="font-paragraph text-base text-foreground/70">
+                  Visualize as avaliações da equipe de saúde
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
             to="/patient-history"
             className="block bg-white rounded-3xl p-6 border-2 border-secondary/30 hover:bg-background transition-colors"
           >

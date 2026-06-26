@@ -39,6 +39,8 @@ export interface AvaliaesMdicas {
   /** @wixFieldType text */
   nursingEvaluationId?: string;
   /** @wixFieldType text */
+  followUpStatus?: string;
+  /** @wixFieldType text */
   patientId?: string;
   /** @wixFieldType text */
   doctorName?: string;

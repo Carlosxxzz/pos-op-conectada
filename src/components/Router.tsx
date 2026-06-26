@@ -10,6 +10,7 @@ import PatientChecklistPage from '@/components/pages/PatientChecklistPage';
 import PatientPhotoUploadPage from '@/components/pages/PatientPhotoUploadPage';
 import PatientPhotosPage from '@/components/pages/PatientPhotosPage';
 import PatientHistoryPage from '@/components/pages/PatientHistoryPage';
+import PatientEvaluationsPage from '@/components/pages/PatientEvaluationsPage';
 import ProfessionalLoginPage from '@/components/pages/ProfessionalLoginPage';
 import NursingDashboardPage from '@/components/pages/NursingDashboardPage';
 import NursingEvaluationPage from '@/components/pages/NursingEvaluationPage';
@@ -68,6 +69,10 @@ const router = createBrowserRouter([
       {
         path: "patient-history",
         element: <PatientHistoryPage />,
+      },
+      {
+        path: "patient-evaluations",
+        element: <PatientEvaluationsPage />,
       },
       {
         path: "professional-login",
