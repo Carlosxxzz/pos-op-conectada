@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, TrendingUp, Calendar, Image as ImageIcon } from 'lucide-react';
+import { Activity, ArrowLeft, TrendingUp, Calendar, Image as ImageIcon, Pill } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
-import type { ChecklistsDirios } from '@/entities';
+import type { ChecklistsDirios, MedicacoesChecklist } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Image } from '@/components/ui/image';
@@ -12,6 +12,7 @@ export default function PatientHistoryPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
+  const [medicationsByChecklist, setMedicationsByChecklist] = useState<{ [key: string]: MedicacoesChecklist[] }>({});
 
   useEffect(() => {
     loadData();
@@ -26,9 +27,24 @@ export default function PatientHistoryPage() {
 
     try {
       const { items } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
-      setChecklists(items.sort((a, b) => 
+      const patientChecklists = items.filter(c => c.patientId === patientId);
+      setChecklists(patientChecklists.sort((a, b) => 
         new Date(a.checklistDate || 0).getTime() - new Date(b.checklistDate || 0).getTime()
       ));
+
+      // Load medications for each checklist
+      const { items: allMedications } = await BaseCrudService.getAll<MedicacoesChecklist>('medicacoeschecklist');
+      const medsByChecklist: { [key: string]: MedicacoesChecklist[] } = {};
+      
+      patientChecklists.forEach(checklist => {
+        const checklistDateStr = new Date(checklist.checklistDate || '').toISOString().split('T')[0];
+        medsByChecklist[checklist._id] = allMedications.filter(med => {
+          const medDateStr = new Date(med.checklistDate || '').toISOString().split('T')[0];
+          return medDateStr === checklistDateStr;
+        });
+      });
+      
+      setMedicationsByChecklist(medsByChecklist);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -293,6 +309,35 @@ export default function PatientHistoryPage() {
                           )}
                         </div>
                       </div>
+
+                      {/* Medications Section */}
+                      {checklist.takingMedicationCorrectly && medicationsByChecklist[checklist._id]?.length > 0 && (
+                        <div className="pt-4 border-t border-secondary/20">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Pill className="w-4 h-4 text-primary" />
+                            <p className="font-paragraph text-xs text-foreground/60 font-semibold">MEDICAMENTOS INFORMADOS</p>
+                          </div>
+                          <div className="space-y-2">
+                            {medicationsByChecklist[checklist._id].map((med) => (
+                              <div key={med._id} className="text-xs bg-background rounded px-2 py-1 border border-secondary/10">
+                                <p className="font-paragraph font-semibold text-foreground">
+                                  {med.medicationName} — {med.timeTaken} — {med.doseQuantity}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Medication Not Taken Reason */}
+                      {!checklist.takingMedicationCorrectly && checklist.reasonNotTakingMedication && (
+                        <div className="pt-4 border-t border-secondary/20">
+                          <p className="font-paragraph text-xs text-foreground/60 font-semibold mb-2">MOTIVO - NÃO TOMOU MEDICAÇÃO</p>
+                          <p className="text-xs bg-attention/10 text-foreground px-2 py-1 rounded border border-attention/20">
+                            {checklist.reasonNotTakingMedication}
+                          </p>
+                        </div>
+                      )}
 
                       {/* Photo status */}
                       <div className="pt-4 border-t border-secondary/20 flex items-center gap-2">

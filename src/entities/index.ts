@@ -66,6 +66,8 @@ export interface ChecklistsDirios {
   /** @wixFieldType datetime */
   checklistDate?: Date | string;
   /** @wixFieldType text */
+  reasonNotTakingMedication?: string;
+  /** @wixFieldType text */
   patientId?: string;
   /** @wixFieldType number */
   painLevel?: number;
@@ -93,6 +95,50 @@ export interface ChecklistsDirios {
   scarPhoto?: string;
   /** @wixFieldType text */
   riskLevel?: string;
+}
+
+
+/**
+ * Collection ID: medicacoeschecklist
+ * Interface for MedicaesdoChecklist
+ */
+export interface MedicaesdoChecklist {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  medicationName?: string;
+  /** @wixFieldType time */
+  timeTaken?: any;
+  /** @wixFieldType text */
+  doseQuantity?: string;
+  /** @wixFieldType date */
+  checklistDate?: Date | string;
+  /** @wixFieldType text */
+  patientNotes?: string;
+}
+
+
+/**
+ * Collection ID: medicamentos
+ * Interface for Medicamentos
+ */
+export interface Medicamentos {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  medicationName?: string;
+  /** @wixFieldType text */
+  genericName?: string;
+  /** @wixFieldType text */
+  dosageForm?: string;
+  /** @wixFieldType text */
+  strength?: string;
+  /** @wixFieldType text */
+  routeOfAdministration?: string;
+  /** @wixFieldType boolean */
+  isApproved?: boolean;
 }
 
 

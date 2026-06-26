@@ -11,6 +11,14 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useChecklistFlow } from '@/hooks/useChecklistFlow';
 import { logger } from '@/lib/logger';
 import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import MedicationSection from '@/components/MedicationSection';
+
+interface MedicationEntry {
+  id: string;
+  medicationName: string;
+  timeTaken: string;
+  doseQuantity: string;
+}
 
 export default function PatientChecklistPage() {
   const navigate = useNavigate();
@@ -36,7 +44,17 @@ export default function PatientChecklistPage() {
     increasingPain: false,
     takingMedicationCorrectly: true,
     eatingNormally: true,
+    reasonNotTakingMedication: '',
   });
+
+  const [medications, setMedications] = useState<MedicationEntry[]>([
+    {
+      id: crypto.randomUUID(),
+      medicationName: '',
+      timeTaken: '',
+      doseQuantity: '',
+    },
+  ]);
 
   useEffect(() => {
     loadPatient();
@@ -104,6 +122,30 @@ export default function PatientChecklistPage() {
         return;
       }
 
+      // Validate medications if taking correctly
+      if (formData.takingMedicationCorrectly) {
+        const validMedications = medications.filter(m => m.medicationName.trim());
+        if (validMedications.length === 0) {
+          setError('Por favor, adicione pelo menos um medicamento.');
+          setIsSaving(false);
+          return;
+        }
+        for (const med of validMedications) {
+          if (!med.timeTaken || !med.doseQuantity.trim()) {
+            setError('Por favor, preencha horário e dose para todos os medicamentos.');
+            setIsSaving(false);
+            return;
+          }
+        }
+      } else {
+        // Validate reason if not taking medication
+        if (!formData.reasonNotTakingMedication.trim()) {
+          setError('Por favor, selecione um motivo.');
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const riskLevel = calculateRiskLevel();
       
       const newChecklistId = crypto.randomUUID();
@@ -111,7 +153,18 @@ export default function PatientChecklistPage() {
         _id: newChecklistId,
         checklistDate: new Date().toISOString(),
         patientId: patientId,
-        ...formData,
+        painLevel: formData.painLevel,
+        hasFever: formData.hasFever,
+        bodyTemperature: formData.bodyTemperature,
+        scarRedness: formData.scarRedness,
+        hasSecretion: formData.hasSecretion,
+        hasBadOdor: formData.hasBadOdor,
+        shortnessOfBreath: formData.shortnessOfBreath,
+        dizziness: formData.dizziness,
+        increasingPain: formData.increasingPain,
+        takingMedicationCorrectly: formData.takingMedicationCorrectly,
+        eatingNormally: formData.eatingNormally,
+        reasonNotTakingMedication: formData.reasonNotTakingMedication,
         riskLevel,
         scarPhoto: '',
       };
@@ -125,6 +178,21 @@ export default function PatientChecklistPage() {
       setTempChecklistData(newChecklist);
       setSavedChecklistId(newChecklistId);
       setChecklistId(newChecklistId);
+
+      // Save medications if taking correctly
+      if (formData.takingMedicationCorrectly) {
+        const validMedications = medications.filter(m => m.medicationName.trim());
+        for (const med of validMedications) {
+          await BaseCrudService.create('medicacoeschecklist', {
+            _id: crypto.randomUUID(),
+            medicationName: med.medicationName,
+            timeTaken: med.timeTaken,
+            doseQuantity: med.doseQuantity,
+            checklistDate: new Date().toISOString().split('T')[0],
+            patientNotes: '',
+          });
+        }
+      }
       
       logger.info('PatientChecklist', 'handleSubmit', 'Checklist saved to temporary storage');
     } catch (error) {
@@ -382,52 +450,14 @@ export default function PatientChecklistPage() {
           </div>
 
           {/* Medication and Diet */}
-          <div className="bg-white rounded-3xl p-6 border-2 border-secondary/30">
-            <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
-              Medicação e Alimentação
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-background rounded-2xl border-2 border-secondary/20">
-                <Label className="font-paragraph text-lg text-foreground font-semibold">
-                  Medicamentos corretos?
-                </Label>
-                <RadioGroup
-                  value={formData.takingMedicationCorrectly ? 'yes' : 'no'}
-                  onValueChange={(value) => setFormData({ ...formData, takingMedicationCorrectly: value === 'yes' })}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="medication-yes" className="w-6 h-6" />
-                    <Label htmlFor="medication-yes" className="font-paragraph text-lg cursor-pointer">Sim</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="medication-no" className="w-6 h-6" />
-                    <Label htmlFor="medication-no" className="font-paragraph text-lg cursor-pointer">Não</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-background rounded-2xl border-2 border-secondary/20">
-                <Label className="font-paragraph text-lg text-foreground font-semibold">
-                  Alimentando normalmente?
-                </Label>
-                <RadioGroup
-                  value={formData.eatingNormally ? 'yes' : 'no'}
-                  onValueChange={(value) => setFormData({ ...formData, eatingNormally: value === 'yes' })}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="yes" id="eating-yes" className="w-6 h-6" />
-                    <Label htmlFor="eating-yes" className="font-paragraph text-lg cursor-pointer">Sim</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="no" id="eating-no" className="w-6 h-6" />
-                    <Label htmlFor="eating-no" className="font-paragraph text-lg cursor-pointer">Não</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
-          </div>
+          <MedicationSection
+            takingMedicationCorrectly={formData.takingMedicationCorrectly}
+            onMedicationChange={(value) => setFormData({ ...formData, takingMedicationCorrectly: value })}
+            onMedicationsChange={setMedications}
+            onReasonChange={(reason) => setFormData({ ...formData, reasonNotTakingMedication: reason })}
+            medications={medications}
+            reasonNotTaking={formData.reasonNotTakingMedication}
+          />
 
           {/* Submit Button */}
           <Button

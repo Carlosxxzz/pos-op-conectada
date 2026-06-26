@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, Send, AlertTriangle, Image as ImageIcon } from 'lucide-react';
+import { Activity, ArrowLeft, Send, AlertTriangle, Image as ImageIcon, Pill } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { BaseCrudService } from '@/integrations';
-import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, Profissionais } from '@/entities';
+import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, Profissionais, MedicacoesChecklist } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 
@@ -18,6 +18,7 @@ export default function NursingEvaluationPage() {
   const [patient, setPatient] = useState<Pacientes | null>(null);
   const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
   const [professional, setProfessional] = useState<Profissionais | null>(null);
+  const [medicationsByChecklist, setMedicationsByChecklist] = useState<{ [key: string]: MedicacoesChecklist[] }>({});
   
   const [formData, setFormData] = useState({
     nurseName: '',
@@ -61,6 +62,20 @@ export default function NursingEvaluationPage() {
       setChecklists(patientChecklists.sort((a, b) => 
         new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
       ));
+
+      // Load medications for each checklist
+      const { items: allMedications } = await BaseCrudService.getAll<MedicacoesChecklist>('medicacoeschecklist');
+      const medsByChecklist: { [key: string]: MedicacoesChecklist[] } = {};
+      
+      patientChecklists.forEach(checklist => {
+        const checklistDateStr = new Date(checklist.checklistDate || '').toISOString().split('T')[0];
+        medsByChecklist[checklist._id] = allMedications.filter(med => {
+          const medDateStr = new Date(med.checklistDate || '').toISOString().split('T')[0];
+          return medDateStr === checklistDateStr;
+        });
+      });
+      
+      setMedicationsByChecklist(medsByChecklist);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -277,6 +292,49 @@ export default function NursingEvaluationPage() {
                         </p>
                       </div>
                     </div>
+
+                    {/* Medications Section */}
+                    {checklist.takingMedicationCorrectly && medicationsByChecklist[checklist._id]?.length > 0 && (
+                      <div className="mt-8 pt-8 border-t border-secondary/20">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Pill className="w-5 h-5 text-primary" />
+                          <h3 className="font-heading text-lg font-bold text-foreground">Medicamentos Tomados</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {medicationsByChecklist[checklist._id].map((med) => (
+                            <div key={med._id} className="bg-background rounded-lg p-4 border border-secondary/10">
+                              <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                  <p className="font-paragraph text-xs text-foreground/60 mb-1">Medicamento</p>
+                                  <p className="font-paragraph text-sm font-semibold text-foreground">{med.medicationName}</p>
+                                </div>
+                                <div>
+                                  <p className="font-paragraph text-xs text-foreground/60 mb-1">Horário</p>
+                                  <p className="font-paragraph text-sm font-semibold text-foreground">{med.timeTaken}</p>
+                                </div>
+                                <div>
+                                  <p className="font-paragraph text-xs text-foreground/60 mb-1">Dose</p>
+                                  <p className="font-paragraph text-sm font-semibold text-foreground">{med.doseQuantity}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Medication Not Taken Reason */}
+                    {!checklist.takingMedicationCorrectly && checklist.reasonNotTakingMedication && (
+                      <div className="mt-8 pt-8 border-t border-secondary/20">
+                        <div className="flex items-center gap-2 mb-4">
+                          <AlertTriangle className="w-5 h-5 text-attention" />
+                          <h3 className="font-heading text-lg font-bold text-foreground">Motivo - Não Tomou Medicação</h3>
+                        </div>
+                        <div className="bg-attention/10 rounded-lg p-4 border border-attention/20">
+                          <p className="font-paragraph text-sm text-foreground">{checklist.reasonNotTakingMedication}</p>
+                        </div>
+                      </div>
+                    )}
 
                     {checklist.scarPhoto && (
                       <div className="mt-6">
