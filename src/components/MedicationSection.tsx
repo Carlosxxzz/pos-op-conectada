@@ -137,11 +137,11 @@ export default function MedicationSection({
             Você tomou seus medicamentos conforme orientação?
           </Label>
           <RadioGroup
-            key={`medication-${takingMedicationCorrectly}`}
             value={takingMedicationCorrectly ? 'yes' : 'no'}
             onValueChange={(value) => {
-              onMedicationChange(value === 'yes');
-              if (value === 'yes') {
+              const isYes = value === 'yes';
+              onMedicationChange(isYes);
+              if (isYes) {
                 onReasonChange('');
                 setOtherReason('');
               }
@@ -149,14 +149,14 @@ export default function MedicationSection({
             className="flex gap-4"
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="yes" id="medication-yes" className="w-6 h-6" />
-              <Label htmlFor="medication-yes" className="font-paragraph text-lg cursor-pointer">
+              <RadioGroupItem value="yes" id="medication-yes-item" className="w-6 h-6" />
+              <Label htmlFor="medication-yes-item" className="font-paragraph text-lg cursor-pointer">
                 Sim
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="no" id="medication-no" className="w-6 h-6" />
-              <Label htmlFor="medication-no" className="font-paragraph text-lg cursor-pointer">
+              <RadioGroupItem value="no" id="medication-no-item" className="w-6 h-6" />
+              <Label htmlFor="medication-no-item" className="font-paragraph text-lg cursor-pointer">
                 Não
               </Label>
             </div>
@@ -363,7 +363,6 @@ export default function MedicationSection({
             Alimentando normalmente?
           </Label>
           <RadioGroup
-            key={`eating-${eatingNormally}`}
             value={eatingNormally ? 'yes' : 'no'}
             onValueChange={(value) => {
               onEatingNormallyChange(value === 'yes');
@@ -371,14 +370,14 @@ export default function MedicationSection({
             className="flex gap-4"
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="yes" id="eating-yes" className="w-6 h-6" />
-              <Label htmlFor="eating-yes" className="font-paragraph text-lg cursor-pointer">
+              <RadioGroupItem value="yes" id="eating-yes-item" className="w-6 h-6" />
+              <Label htmlFor="eating-yes-item" className="font-paragraph text-lg cursor-pointer">
                 Sim
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="no" id="eating-no" className="w-6 h-6" />
-              <Label htmlFor="eating-no" className="font-paragraph text-lg cursor-pointer">
+              <RadioGroupItem value="no" id="eating-no-item" className="w-6 h-6" />
+              <Label htmlFor="eating-no-item" className="font-paragraph text-lg cursor-pointer">
                 Não
               </Label>
             </div>
