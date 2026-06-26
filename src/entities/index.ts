@@ -14,6 +14,8 @@ export interface AvaliaesdeEnfermagem {
   /** @wixFieldType date */
   checklistDate?: Date | string;
   /** @wixFieldType text */
+  checklistId?: string;
+  /** @wixFieldType text */
   patientId?: string;
   /** @wixFieldType text */
   nurseName?: string;
@@ -65,6 +67,12 @@ export interface ChecklistsDirios {
   _updatedDate?: Date;
   /** @wixFieldType datetime */
   checklistDate?: Date | string;
+  /** @wixFieldType datetime */
+  dataAvaliacaoEnfermagem?: Date | string;
+  /** @wixFieldType boolean */
+  avaliadoEnfermagem?: boolean;
+  /** @wixFieldType text */
+  statusEnfermagem?: string;
   /** @wixFieldType text */
   statusMedico?: string;
   /** @wixFieldType text */

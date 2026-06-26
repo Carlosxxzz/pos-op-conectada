@@ -64,7 +64,7 @@ export default function NursingDashboardPage() {
         totalChecklists: allChecklists.length,
       });
 
-      // Filter patients: only those with at least one checklist AND matching hospital
+      // Filter patients: only those with at least one PENDING checklist AND matching hospital
       const patientsWithChecklists: PatientWithChecklist[] = allPatients
         .filter(patient => {
           // Only show patients from the same hospital
@@ -72,15 +72,19 @@ export default function NursingDashboardPage() {
         })
         .map(patient => {
           const patientChecklists = allChecklists.filter(c => c.patientId === patient._id);
-          const latestChecklist = patientChecklists.length > 0
-            ? patientChecklists.sort((a, b) => 
+          // Filter for PENDING checklists only (not evaluated, not completed, not referred)
+          const pendingChecklists = patientChecklists.filter(c => 
+            c.statusEnfermagem === 'Pendente' || !c.avaliadoEnfermagem
+          );
+          const latestChecklist = pendingChecklists.length > 0
+            ? pendingChecklists.sort((a, b) => 
                 new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
               )[0]
             : null;
           
           return { patient, latestChecklist };
         })
-        // Only show patients with at least one checklist
+        // Only show patients with at least one PENDING checklist
         .filter(item => item.latestChecklist !== null);
 
       const sortedPatients = patientsWithChecklists.sort((a, b) => {
