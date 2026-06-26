@@ -140,10 +140,12 @@ export default function PatientPhotoUploadPage() {
       });
 
       // Create the complete checklist with photo
-      const completeChecklist: ChecklistsDirios = {
+      const completeChecklist: any = {
         ...tempChecklistData,
         _id: checklistId,
         scarPhoto: previewUrl,
+        status: 'Aguardando Avaliação de Enfermagem',
+        encaminhadoMedico: false,
       };
 
       // Save the complete checklist to database
@@ -154,6 +156,8 @@ export default function PatientPhotoUploadPage() {
       
       logger.info('PatientPhotoUpload', 'handleSubmit', 'Checklist saved successfully', {
         checklistId: checklistId.substring(0, 8),
+        status: 'Aguardando Avaliação de Enfermagem',
+        encaminhadoMedico: false,
       });
       
       // Clear the temporary data

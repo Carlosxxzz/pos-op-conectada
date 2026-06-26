@@ -88,8 +88,8 @@ export default function NursingEvaluationPage() {
     setIsSaving(true);
 
     try {
-      if (!id || !patient) {
-        alert('Erro: Paciente não identificado');
+      if (!id || !patient || !professional) {
+        alert('Erro: Dados não identificados');
         return;
       }
 
@@ -104,19 +104,43 @@ export default function NursingEvaluationPage() {
       // Create the nursing evaluation
       await BaseCrudService.create('avaliacoesenfermagem', evaluation);
 
-      // If referring to doctor, update patient status to pending_medical
+      console.log('[NURSING] Avaliação criada', {
+        evaluationId: evaluationId.substring(0, 8),
+        patientId: id.substring(0, 8),
+        referredToDoctor: formData.referredToDoctor,
+      });
+
+      // If referring to doctor, update the latest checklist
       if (formData.referredToDoctor) {
-        await BaseCrudService.update('pacientes', {
-          _id: id,
-          followUpStatus: 'pending_medical',
-          nursingEvaluationId: evaluationId,
-        });
+        const { items: allChecklists } = await BaseCrudService.getAll<any>('checklistsdiarios');
+        const patientChecklists = allChecklists.filter(c => c.patientId === id);
+        const latestChecklist = patientChecklists.sort((a, b) => 
+          new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
+        )[0];
+
+        if (latestChecklist) {
+          await BaseCrudService.update('checklistsdiarios', {
+            _id: latestChecklist._id,
+            status: 'Aguardando Avaliação Médica',
+            encaminhadoMedico: true,
+            dataEncaminhamento: new Date().toISOString(),
+            enfermeiroResponsavel: professional.fullName || professional.email || '',
+            hospital: professional.hospital || '',
+          });
+
+          console.log('[NURSING] Checklist encaminhado ao médico', {
+            checklistId: latestChecklist._id.substring(0, 8),
+            status: 'Aguardando Avaliação Médica',
+            encaminhadoMedico: true,
+            hospital: professional.hospital,
+          });
+        }
       }
 
       alert('Avaliação enviada com sucesso!');
       navigate('/nursing-dashboard');
     } catch (error) {
-      console.error('Error submitting evaluation:', error);
+      console.error('[NURSING] Erro ao enviar avaliação:', error);
       alert('Erro ao enviar avaliação');
     } finally {
       setIsSaving(false);

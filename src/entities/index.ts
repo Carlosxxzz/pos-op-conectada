@@ -66,6 +66,20 @@ export interface ChecklistsDirios {
   /** @wixFieldType datetime */
   checklistDate?: Date | string;
   /** @wixFieldType text */
+  statusMedico?: string;
+  /** @wixFieldType text */
+  hospital?: string;
+  /** @wixFieldType text */
+  medicoResponsavel?: string;
+  /** @wixFieldType text */
+  enfermeiroResponsavel?: string;
+  /** @wixFieldType datetime */
+  dataEncaminhamento?: Date | string;
+  /** @wixFieldType boolean */
+  encaminhadoMedico?: boolean;
+  /** @wixFieldType text */
+  status?: string;
+  /** @wixFieldType text */
   reasonNotTakingMedication?: string;
   /** @wixFieldType text */
   patientId?: string;

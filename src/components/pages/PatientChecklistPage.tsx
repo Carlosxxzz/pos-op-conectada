@@ -149,7 +149,7 @@ export default function PatientChecklistPage() {
       const riskLevel = calculateRiskLevel();
       
       const newChecklistId = crypto.randomUUID();
-      const newChecklist: ChecklistsDirios = {
+      const newChecklist: any = {
         _id: newChecklistId,
         checklistDate: new Date().toISOString(),
         patientId: patientId,
@@ -167,11 +167,16 @@ export default function PatientChecklistPage() {
         reasonNotTakingMedication: formData.reasonNotTakingMedication,
         riskLevel,
         scarPhoto: '',
+        status: 'Aguardando Avaliação de Enfermagem',
+        encaminhadoMedico: false,
+        hospital: patient?.hospital || '',
       };
 
-      logger.info('PatientChecklist', 'handleSubmit', 'Checklist prepared', {
+      logger.info('PatientChecklist', 'handleSubmit', 'Checklist created', {
         checklistId: newChecklistId.substring(0, 8),
         riskLevel,
+        status: 'Aguardando Avaliação de Enfermagem',
+        hospital: patient?.hospital,
       });
 
       // Store temporary checklist data (not saved yet)

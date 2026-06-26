@@ -3,12 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Activity, Stethoscope, AlertCircle, ArrowRight, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
-import type { AvaliaesdeEnfermagem, Pacientes, Profissionais } from '@/entities';
+import type { ChecklistsDirios, Pacientes, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 
 interface ReferredCase {
-  evaluation: AvaliaesdeEnfermagem;
+  checklist: ChecklistsDirios;
   patient: Pacientes | null;
 }
 
@@ -34,34 +34,52 @@ export default function MedicalDashboardPage() {
       const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
       setProfessional(professionalData);
 
-      const { items: patients } = await BaseCrudService.getAll<Pacientes>('pacientes');
-      const { items: evaluations } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
+      console.log('[MEDICAL] Carregando dados do médico', {
+        professionalId: professionalId.substring(0, 8),
+        hospital: professionalData?.hospital,
+      });
 
-      // Filter patients: only those with pending_medical status AND matching hospital
-      const referred = patients
-        .filter(patient => {
-          // Only show patients from the same hospital with pending_medical status
-          return patient.hospital === professionalData?.hospital && 
-                 patient.followUpStatus === 'pending_medical';
+      // Get all checklists
+      const { items: allChecklists } = await BaseCrudService.getAll<any>('checklistsdiarios');
+      const { items: allPatients } = await BaseCrudService.getAll<Pacientes>('pacientes');
+
+      console.log('[MEDICAL] Total de checklists no banco:', allChecklists.length);
+
+      // Filter checklists: only those referred to doctor AND matching hospital AND with correct status
+      const referred = allChecklists
+        .filter(checklist => {
+          const isReferred = checklist.encaminhadoMedico === true;
+          const isCorrectStatus = checklist.status === 'Aguardando Avaliação Médica';
+          const isCorrectHospital = checklist.hospital === professionalData?.hospital;
+          
+          if (!isReferred || !isCorrectStatus || !isCorrectHospital) {
+            return false;
+          }
+          return true;
         })
-        .map(patient => {
-          // For each patient, find their latest nursing evaluation
-          const patientEvaluations = evaluations.filter(e => e.patientId === patient._id);
-          const latestEvaluation = patientEvaluations.sort((a, b) => 
-            new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
-          )[0];
-          return { evaluation: latestEvaluation || null, patient };
+        .map(checklist => {
+          // Find patient for this checklist
+          const patient = allPatients.find(p => p._id === checklist.patientId) || null;
+          return { checklist, patient };
         })
-        .filter(item => item.evaluation !== null)
         .sort((a, b) => {
-          const dateA = new Date(a.evaluation?.checklistDate || 0).getTime();
-          const dateB = new Date(b.evaluation?.checklistDate || 0).getTime();
+          const dateA = new Date(a.checklist.dataEncaminhamento || 0).getTime();
+          const dateB = new Date(b.checklist.dataEncaminhamento || 0).getTime();
           return dateB - dateA;
         });
 
+      console.log('[MEDICAL] Checklists encontrados para avaliação:', {
+        total: referred.length,
+        hospital: professionalData?.hospital,
+        filtros: {
+          encaminhadoMedico: true,
+          status: 'Aguardando Avaliação Médica',
+        },
+      });
+
       setReferredCases(referred as any);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('[MEDICAL] Erro ao carregar dados:', error);
     } finally {
       setIsLoading(false);
     }
@@ -81,8 +99,8 @@ export default function MedicalDashboardPage() {
     );
   }
 
-  const criticalCases = referredCases.filter(c => c.evaluation.patientStatus === 'critical');
-  const observationCases = referredCases.filter(c => c.evaluation.patientStatus === 'observation');
+  const criticalCases = referredCases.filter(c => c.checklist.riskLevel === 'critical');
+  const observationCases = referredCases.filter(c => c.checklist.riskLevel === 'attention');
 
   return (
     <div className="min-h-screen bg-background">
@@ -189,7 +207,7 @@ export default function MedicalDashboardPage() {
                 <div className="space-y-4">
                   {criticalCases.map((item, index) => (
                     <motion.div
-                      key={item.evaluation._id}
+                      key={item.checklist._id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
@@ -218,14 +236,14 @@ export default function MedicalDashboardPage() {
                               <div>
                                 <p className="font-paragraph text-xs text-foreground/60 mb-1">Enfermeiro(a)</p>
                                 <p className="font-paragraph text-sm font-semibold text-foreground">
-                                  {item.evaluation.nurseName}
+                                  {item.checklist.enfermeiroResponsavel}
                                 </p>
                               </div>
                               <div>
-                                <p className="font-paragraph text-xs text-foreground/60 mb-1">Data da Avaliação</p>
+                                <p className="font-paragraph text-xs text-foreground/60 mb-1">Data do Encaminhamento</p>
                                 <p className="font-paragraph text-sm font-semibold text-foreground">
-                                  {item.evaluation.checklistDate 
-                                    ? new Date(item.evaluation.checklistDate).toLocaleDateString('pt-BR')
+                                  {item.checklist.dataEncaminhamento 
+                                    ? new Date(item.checklist.dataEncaminhamento).toLocaleDateString('pt-BR')
                                     : '-'}
                                 </p>
                               </div>
@@ -258,7 +276,7 @@ export default function MedicalDashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {observationCases.map((item, index) => (
                     <motion.div
-                      key={item.evaluation._id}
+                      key={item.checklist._id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
@@ -285,7 +303,7 @@ export default function MedicalDashboardPage() {
                           <div className="flex justify-between">
                             <span className="font-paragraph text-sm text-foreground/60">Enfermeiro(a):</span>
                             <span className="font-paragraph text-sm font-semibold text-foreground">
-                              {item.evaluation.nurseName}
+                              {item.checklist.enfermeiroResponsavel}
                             </span>
                           </div>
                           <div className="flex justify-between">
