@@ -22,6 +22,8 @@ interface MedicationSectionProps {
   onReasonChange: (reason: string) => void;
   medications: MedicationEntry[];
   reasonNotTaking: string;
+  eatingNormally: boolean;
+  onEatingNormallyChange: (eatingNormally: boolean) => void;
 }
 
 const MEDICATION_REASONS = [
@@ -47,6 +49,8 @@ export default function MedicationSection({
   onReasonChange,
   medications,
   reasonNotTaking,
+  eatingNormally,
+  onEatingNormallyChange,
 }: MedicationSectionProps) {
   const [medicationSuggestions, setMedicationSuggestions] = useState<Medicamentos[]>([]);
   const [filteredSuggestions, setFilteredSuggestions] = useState<Medicamentos[]>([]);
@@ -133,6 +137,7 @@ export default function MedicationSection({
             Você tomou seus medicamentos conforme orientação?
           </Label>
           <RadioGroup
+            key={`medication-${takingMedicationCorrectly}`}
             value={takingMedicationCorrectly ? 'yes' : 'no'}
             onValueChange={(value) => {
               onMedicationChange(value === 'yes');
@@ -358,20 +363,21 @@ export default function MedicationSection({
             Alimentando normalmente?
           </Label>
           <RadioGroup
-            value={takingMedicationCorrectly ? 'yes' : 'no'}
+            key={`eating-${eatingNormally}`}
+            value={eatingNormally ? 'yes' : 'no'}
             onValueChange={(value) => {
-              // This will be handled by parent component
+              onEatingNormallyChange(value === 'yes');
             }}
             className="flex gap-4"
           >
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="yes" id="eating-yes" className="w-6 h-6" disabled />
+              <RadioGroupItem value="yes" id="eating-yes" className="w-6 h-6" />
               <Label htmlFor="eating-yes" className="font-paragraph text-lg cursor-pointer">
                 Sim
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="no" id="eating-no" className="w-6 h-6" disabled />
+              <RadioGroupItem value="no" id="eating-no" className="w-6 h-6" />
               <Label htmlFor="eating-no" className="font-paragraph text-lg cursor-pointer">
                 Não
               </Label>

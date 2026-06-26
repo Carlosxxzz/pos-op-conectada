@@ -457,6 +457,8 @@ export default function PatientChecklistPage() {
             onReasonChange={(reason) => setFormData({ ...formData, reasonNotTakingMedication: reason })}
             medications={medications}
             reasonNotTaking={formData.reasonNotTakingMedication}
+            eatingNormally={formData.eatingNormally}
+            onEatingNormallyChange={(value) => setFormData({ ...formData, eatingNormally: value })}
           />
 
           {/* Submit Button */}
