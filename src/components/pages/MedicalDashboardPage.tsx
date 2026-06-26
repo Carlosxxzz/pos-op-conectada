@@ -34,22 +34,32 @@ export default function MedicalDashboardPage() {
       const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
       setProfessional(professionalData);
 
-      const { items: evaluations } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
       const { items: patients } = await BaseCrudService.getAll<Pacientes>('pacientes');
+      const { items: evaluations } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
 
-      const referred = evaluations
-        .filter(e => e.referredToDoctor)
-        .map(evaluation => {
-          const patient = patients.find(p => p._id === evaluation.patientId);
-          return { evaluation, patient: patient || null };
+      // Filter patients: only those with pending_medical status AND matching hospital
+      const referred = patients
+        .filter(patient => {
+          // Only show patients from the same hospital with pending_medical status
+          return patient.hospital === professionalData?.hospital && 
+                 patient.followUpStatus === 'pending_medical';
         })
-        // Filter by hospital: only show patients from the same hospital
-        .filter(item => item.patient?.hospital === professionalData?.hospital)
-        .sort((a, b) => 
-          new Date(b.evaluation.checklistDate || 0).getTime() - new Date(a.evaluation.checklistDate || 0).getTime()
-        );
+        .map(patient => {
+          // For each patient, find their latest nursing evaluation
+          const patientEvaluations = evaluations.filter(e => e.patientId === patient._id);
+          const latestEvaluation = patientEvaluations.sort((a, b) => 
+            new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
+          )[0];
+          return { evaluation: latestEvaluation || null, patient };
+        })
+        .filter(item => item.evaluation !== null)
+        .sort((a, b) => {
+          const dateA = new Date(a.evaluation?.checklistDate || 0).getTime();
+          const dateB = new Date(b.evaluation?.checklistDate || 0).getTime();
+          return dateB - dateA;
+        });
 
-      setReferredCases(referred);
+      setReferredCases(referred as any);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {

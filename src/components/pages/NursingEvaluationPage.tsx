@@ -73,17 +73,35 @@ export default function NursingEvaluationPage() {
     setIsSaving(true);
 
     try {
+      if (!id || !patient) {
+        alert('Erro: Paciente não identificado');
+        return;
+      }
+
+      const evaluationId = crypto.randomUUID();
       const evaluation: AvaliaesdeEnfermagem = {
-        _id: crypto.randomUUID(),
+        _id: evaluationId,
         checklistDate: new Date().toISOString(),
         patientId: id,
         ...formData,
       };
 
+      // Create the nursing evaluation
       await BaseCrudService.create('avaliacoesenfermagem', evaluation);
+
+      // If referring to doctor, update patient status to pending_medical
+      if (formData.referredToDoctor) {
+        await BaseCrudService.update('pacientes', {
+          _id: id,
+          followUpStatus: 'pending_medical',
+          nursingEvaluationId: evaluationId,
+        });
+      }
+
       alert('Avaliação enviada com sucesso!');
       navigate('/nursing-dashboard');
     } catch (error) {
+      console.error('Error submitting evaluation:', error);
       alert('Erro ao enviar avaliação');
     } finally {
       setIsSaving(false);

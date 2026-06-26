@@ -79,17 +79,33 @@ export default function MedicalEvaluationPage() {
     setIsSaving(true);
 
     try {
+      if (!id || !patient) {
+        alert('Erro: Paciente não identificado');
+        return;
+      }
+
+      const medicalEvaluationId = crypto.randomUUID();
       const evaluation: AvaliaesMdicas = {
-        _id: crypto.randomUUID(),
+        _id: medicalEvaluationId,
         patientId: id,
         nursingEvaluationId: nursingEvaluation?._id || '',
         ...formData,
       };
 
+      // Create the medical evaluation
       await BaseCrudService.create('avaliacoesmedicas', evaluation);
+
+      // Update patient status to completed
+      await BaseCrudService.update('pacientes', {
+        _id: id,
+        followUpStatus: 'completed',
+        medicalEvaluationId: medicalEvaluationId,
+      });
+
       alert('Avaliação médica enviada com sucesso!');
       navigate('/medical-dashboard');
     } catch (error) {
+      console.error('Error submitting evaluation:', error);
       alert('Erro ao enviar avaliação');
     } finally {
       setIsSaving(false);
