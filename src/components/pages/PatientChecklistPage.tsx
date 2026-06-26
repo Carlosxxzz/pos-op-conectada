@@ -211,7 +211,7 @@ export default function PatientChecklistPage() {
 
                 {/* Description */}
                 <p className="font-paragraph text-lg text-foreground/70 leading-relaxed">
-                  Agora envie uma foto da cicatriz para completar o acompanhamento.
+                  Agora envie uma foto da cicatriz para completar o acompanhamento. A foto é obrigatória.
                 </p>
 
                 {/* Button */}
@@ -263,7 +263,7 @@ export default function PatientChecklistPage() {
             Checklist Diário
           </h2>
           <p className="font-paragraph text-lg text-foreground/70">
-            Responda as perguntas sobre sua recuperação
+            Responda ao questionário enviado pela equipe de saúde
           </p>
         </div>
 

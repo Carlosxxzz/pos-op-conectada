@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, LogOut, Calendar, Camera, History, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Activity, LogOut, Calendar, History, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios } from '@/entities';
@@ -159,7 +159,7 @@ export default function PatientDashboardPage() {
                   Checklist Diário
                 </h3>
                 <p className="font-paragraph text-base text-white/80">
-                  Responda seu questionário
+                  Responda ao questionário enviado pela equipe de saúde
                 </p>
               </div>
             </div>
@@ -178,26 +178,7 @@ export default function PatientDashboardPage() {
                   Histórico
                 </h3>
                 <p className="font-paragraph text-base text-foreground/70">
-                  Veja sua evolução
-                </p>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            to="/patient-photos"
-            className="block bg-white rounded-3xl p-6 border-2 border-secondary/30 hover:bg-background transition-colors"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center flex-shrink-0">
-                <Camera className="w-8 h-8 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-heading text-2xl font-bold text-foreground mb-1">
-                  Fotos
-                </h3>
-                <p className="font-paragraph text-base text-foreground/70">
-                  Envie fotos da cicatriz
+                  Visualize seu histórico de acompanhamentos
                 </p>
               </div>
             </div>
@@ -286,18 +267,6 @@ export default function PatientDashboardPage() {
                 </p>
                 <p className="font-paragraph text-base text-foreground/70">
                   Preencha todos os dias
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 p-4 bg-secondary/30 rounded-2xl border-2 border-secondary/40">
-              <Camera className="w-8 h-8 text-primary flex-shrink-0 mt-1" />
-              <div>
-                <p className="font-paragraph text-lg font-bold text-foreground mb-1">
-                  Fotos da Cicatriz
-                </p>
-                <p className="font-paragraph text-base text-foreground/70">
-                  Envie regularmente
                 </p>
               </div>
             </div>
