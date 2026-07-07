@@ -26,8 +26,8 @@ export default function NursingEvaluationPage() {
   const [doctors, setDoctors] = useState<Profissionais[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Profissionais | null>(null);
   const [referralReason, setReferralReason] = useState('');
-  const [evaluationTimestamp, setEvaluationTimestamp] = useState<string>('');
-  const [evaluationId, setEvaluationId] = useState<string>('');
+  const [evaluationTimestamp, setEvaluationTimestamp] = useState<string>('')
+  const [evaluationId, setEvaluationId] = useState<string>('')
     
   const [formData, setFormData] = useState({
     clinicalObservations: '',
@@ -136,6 +136,13 @@ export default function NursingEvaluationPage() {
       setEvaluationTimestamp(now);
       setEvaluationId(crypto.randomUUID());
       setShowReferralFlow(true);
+      // Scroll to referral form smoothly
+      setTimeout(() => {
+        const referralElement = document.getElementById('referral-form');
+        if (referralElement) {
+          referralElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
     } else {
       // Reset referral flow when going back
       setShowReferralFlow(false);
@@ -420,7 +427,7 @@ export default function NursingEvaluationPage() {
               </div>
             </div>
 
-            {/* Selected Checklist */}
+            {/* Selected Checklist or Referral Form */}
             <AnimatePresence mode="wait">
               {!showReferralFlow ? (
                 <motion.div
@@ -578,13 +585,14 @@ export default function NursingEvaluationPage() {
               ) : (
                 <motion.div
                   key="referral"
+                  id="referral-form"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
                   className="bg-white rounded-2xl p-8 border border-secondary/20"
                 >
-                  <div className="mb-6">
+                  <div className="mb-8">
                     <h2 className="font-heading text-2xl font-bold text-foreground mb-2">
                       Encaminhamento Médico
                     </h2>
@@ -692,180 +700,195 @@ export default function NursingEvaluationPage() {
             )}
           </div>
 
-          {/* Evaluation Form */}
-          <div className="lg:col-span-1">
-            <form onSubmit={handleSubmitEvaluation} className="bg-white rounded-2xl p-8 border border-secondary/20 sticky top-8">
-              <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
-                Avaliação de Enfermagem
-              </h2>
+          {/* Evaluation Form - Only show when NOT in referral flow */}
+          {!showReferralFlow && (
+            <div className="lg:col-span-1">
+              <form onSubmit={handleSubmitEvaluation} className="bg-white rounded-2xl p-8 border border-secondary/20 sticky top-8">
+                <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
+                  Avaliação de Enfermagem
+                </h2>
 
-              <div className="space-y-6">
-                {/* Professional Info - Read Only */}
-                <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="w-4 h-4 text-primary" />
-                    <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Profissional</p>
-                  </div>
-                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.fullName || professional?.email}</p>
-                </div>
-
-                <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-2">ID do Profissional</p>
-                  <p className="font-paragraph text-sm font-mono text-foreground">{professional?._id?.substring(0, 12)}...</p>
-                </div>
-
-                <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Building2 className="w-4 h-4 text-primary" />
-                    <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Hospital</p>
-                  </div>
-                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.hospital}</p>
-                </div>
-
-                <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-2">Cargo</p>
-                  <p className="font-paragraph text-base font-semibold text-foreground">Enfermeiro(a)</p>
-                </div>
-
-                <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="w-4 h-4 text-primary" />
-                    <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Data/Hora</p>
-                  </div>
-                  <p className="font-paragraph text-sm text-foreground">
-                    {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-
-                <div className="border-t border-secondary/30 pt-6">
-                  {/* Evaluation Fields - Only show if not in referral flow */}
-                  {!showReferralFlow && (
-                    <>
-                      <div className="mb-6">
-                        <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
-                          Observações Clínicas *
-                        </Label>
-                        <Textarea
-                          value={formData.clinicalObservations}
-                          onChange={(e) => setFormData({ ...formData, clinicalObservations: e.target.value })}
-                          className="font-paragraph min-h-[100px]"
-                          placeholder="Descreva suas observações sobre o estado do paciente..."
-                          required
-                        />
-                      </div>
-
-                      <div className="mb-6">
-                        <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
-                          Orientações ao Paciente *
-                        </Label>
-                        <Textarea
-                          value={formData.patientGuidelines}
-                          onChange={(e) => setFormData({ ...formData, patientGuidelines: e.target.value })}
-                          className="font-paragraph min-h-[100px]"
-                          placeholder="Orientações e recomendações..."
-                          required
-                        />
-                      </div>
-
-                      <div className="mb-6">
-                        <Label className="font-paragraph text-sm font-semibold text-foreground mb-3 block">
-                          Status do Paciente *
-                        </Label>
-                        <RadioGroup
-                          value={formData.patientStatus}
-                          onValueChange={(value) => setFormData({ ...formData, patientStatus: value })}
-                        >
-                          <div className="flex items-center space-x-2 mb-2">
-                            <RadioGroupItem value="stable" id="status-stable" />
-                            <Label htmlFor="status-stable" className="font-paragraph cursor-pointer">Estável</Label>
-                          </div>
-                          <div className="flex items-center space-x-2 mb-2">
-                            <RadioGroupItem value="observation" id="status-observation" />
-                            <Label htmlFor="status-observation" className="font-paragraph cursor-pointer">Em Observação</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="critical" id="status-critical" />
-                            <Label htmlFor="status-critical" className="font-paragraph cursor-pointer">Crítico</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-
-                      <div className="pt-4 border-t border-secondary/30">
-                        <div className="flex items-start gap-3 p-4 bg-attention/10 rounded-xl mb-4">
-                          <AlertTriangle className="w-5 h-5 text-attention-foreground flex-shrink-0 mt-0.5" />
-                          <div>
-                            <p className="font-paragraph text-sm font-semibold text-foreground mb-1">
-                              Encaminhar para Médico?
-                            </p>
-                            <p className="font-paragraph text-xs text-foreground/70">
-                              Marque se o caso necessita avaliação médica
-                            </p>
-                          </div>
-                        </div>
-                        <RadioGroup
-                          value={formData.referredToDoctor ? 'yes' : 'no'}
-                          onValueChange={handleReferralToggle}
-                        >
-                          <div className="flex items-center space-x-2 mb-2">
-                            <RadioGroupItem value="yes" id="refer-yes" />
-                            <Label htmlFor="refer-yes" className="font-paragraph cursor-pointer">Sim, encaminhar</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="no" id="refer-no" />
-                            <Label htmlFor="refer-no" className="font-paragraph cursor-pointer">Não</Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-
-                      <Button
-                        type="submit"
-                        disabled={isSaving || !formData.clinicalObservations || !formData.patientGuidelines}
-                        className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 rounded-lg mt-6"
-                      >
-                        {isSaving ? (
-                          'Finalizando...'
-                        ) : (
-                          <>
-                            <Send className="w-5 h-5 mr-2" />
-                            Finalizar Avaliação
-                          </>
-                        )}
-                      </Button>
-                    </>
-                  )}
-
-                  {/* Referral Flow Buttons */}
-                  {showReferralFlow && (
-                    <div className="space-y-3">
-                      <Button
-                        type="submit"
-                        disabled={isSaving || !referralReason || !selectedDoctor || !formData.clinicalObservations || !formData.patientGuidelines}
-                        className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 rounded-lg"
-                      >
-                        {isSaving ? (
-                          'Encaminhando...'
-                        ) : (
-                          <>
-                            <ArrowRight className="w-5 h-5 mr-2" />
-                            Encaminhar para o Médico
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleReferralToggle('no')}
-                        className="w-full font-paragraph font-semibold py-6 rounded-lg"
-                      >
-                        <ArrowLeft className="w-5 h-5 mr-2" />
-                        Voltar para Avaliação
-                      </Button>
+                <div className="space-y-6">
+                  {/* Professional Info - Read Only */}
+                  <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="w-4 h-4 text-primary" />
+                      <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Profissional</p>
                     </div>
-                  )}
+                    <p className="font-paragraph text-base font-semibold text-foreground">{professional?.fullName || professional?.email}</p>
+                  </div>
+
+                  <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                    <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-2">ID do Profissional</p>
+                    <p className="font-paragraph text-sm font-mono text-foreground">{professional?._id?.substring(0, 12)}...</p>
+                  </div>
+
+                  <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Building2 className="w-4 h-4 text-primary" />
+                      <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Hospital</p>
+                    </div>
+                    <p className="font-paragraph text-base font-semibold text-foreground">{professional?.hospital}</p>
+                  </div>
+
+                  <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                    <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-2">Cargo</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">Enfermeiro(a)</p>
+                  </div>
+
+                  <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="w-4 h-4 text-primary" />
+                      <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Data/Hora</p>
+                    </div>
+                    <p className="font-paragraph text-sm text-foreground">
+                      {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+
+                  <div className="border-t border-secondary/30 pt-6">
+                    <div className="mb-6">
+                      <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
+                        Observações Clínicas *
+                      </Label>
+                      <Textarea
+                        value={formData.clinicalObservations}
+                        onChange={(e) => setFormData({ ...formData, clinicalObservations: e.target.value })}
+                        className="font-paragraph min-h-[100px]"
+                        placeholder="Descreva suas observações sobre o estado do paciente..."
+                        required
+                      />
+                    </div>
+
+                    <div className="mb-6">
+                      <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
+                        Orientações ao Paciente *
+                      </Label>
+                      <Textarea
+                        value={formData.patientGuidelines}
+                        onChange={(e) => setFormData({ ...formData, patientGuidelines: e.target.value })}
+                        className="font-paragraph min-h-[100px]"
+                        placeholder="Orientações e recomendações..."
+                        required
+                      />
+                    </div>
+
+                    <div className="mb-6">
+                      <Label className="font-paragraph text-sm font-semibold text-foreground mb-3 block">
+                        Status do Paciente *
+                      </Label>
+                      <RadioGroup
+                        value={formData.patientStatus}
+                        onValueChange={(value) => setFormData({ ...formData, patientStatus: value })}
+                      >
+                        <div className="flex items-center space-x-2 mb-2">
+                          <RadioGroupItem value="stable" id="status-stable" />
+                          <Label htmlFor="status-stable" className="font-paragraph cursor-pointer">Estável</Label>
+                        </div>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <RadioGroupItem value="observation" id="status-observation" />
+                          <Label htmlFor="status-observation" className="font-paragraph cursor-pointer">Em Observação</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="critical" id="status-critical" />
+                          <Label htmlFor="status-critical" className="font-paragraph cursor-pointer">Crítico</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+
+                    <div className="pt-4 border-t border-secondary/30">
+                      <div className="flex items-start gap-3 p-4 bg-attention/10 rounded-xl mb-4">
+                        <AlertTriangle className="w-5 h-5 text-attention-foreground flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-paragraph text-sm font-semibold text-foreground mb-1">
+                            Encaminhar para Médico?
+                          </p>
+                          <p className="font-paragraph text-xs text-foreground/70">
+                            Marque se o caso necessita avaliação médica
+                          </p>
+                        </div>
+                      </div>
+                      <RadioGroup
+                        value={formData.referredToDoctor ? 'yes' : 'no'}
+                        onValueChange={handleReferralToggle}
+                      >
+                        <div className="flex items-center space-x-2 mb-2">
+                          <RadioGroupItem value="yes" id="refer-yes" />
+                          <Label htmlFor="refer-yes" className="font-paragraph cursor-pointer">Sim, encaminhar</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="no" id="refer-no" />
+                          <Label htmlFor="refer-no" className="font-paragraph cursor-pointer">Não</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={isSaving || !formData.clinicalObservations || !formData.patientGuidelines}
+                      className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 rounded-lg mt-6"
+                    >
+                      {isSaving ? (
+                        'Finalizando...'
+                      ) : (
+                        <>
+                          <Send className="w-5 h-5 mr-2" />
+                          Finalizar Avaliação
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Referral Form Sidebar - Show when in referral flow */}
+          {showReferralFlow && (
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl p-8 border border-secondary/20 sticky top-8">
+                <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
+                  Ações
+                </h2>
+
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleSubmitEvaluation}
+                    disabled={isSaving || !referralReason || !selectedDoctor}
+                    className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 rounded-lg"
+                  >
+                    {isSaving ? (
+                      'Encaminhando...'
+                    ) : (
+                      <>
+                        <ArrowRight className="w-5 h-5 mr-2" />
+                        Encaminhar para o Médico
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleReferralToggle('no')}
+                    className="w-full font-paragraph font-semibold py-6 rounded-lg"
+                  >
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Voltar para Avaliação
+                  </Button>
+                  <Link to="/nursing-dashboard">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full font-paragraph font-semibold py-6 rounded-lg"
+                    >
+                      <ArrowLeft className="w-5 h-5 mr-2" />
+                      Voltar
+                    </Button>
+                  </Link>
                 </div>
               </div>
-            </form>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
