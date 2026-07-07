@@ -82,16 +82,29 @@ export default function MedicalEvaluationPage() {
         setReferralChecklist(patientChecklists[0]);
       }
 
+      // Load referral data to get the nursing message (referral reason)
+      const { items: referrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
+      const referral = referrals.find(r => r.checklistId === patientChecklists[0]?._id && r.patientId === id);
+
+      // Get nursing evaluation - but ONLY if it exists (it shouldn't for referrals)
       const { items: evaluations } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
-      // Filter evaluations by patient ID and get the one related to the referral checklist
-      const patientEvaluations = evaluations.filter(e => e.patientId === id);
+      const patientEvaluations = evaluations.filter(e => e.patientId === id && e.checklistId === patientChecklists[0]?._id);
       
-      if (patientChecklists.length > 0 && patientEvaluations.length > 0) {
-        // Find the nursing evaluation for the referral checklist
-        const relatedEvaluation = patientEvaluations.find(e => e.checklistId === patientChecklists[0]._id);
-        setNursingEvaluation(relatedEvaluation || patientEvaluations[0]);
-      } else if (patientEvaluations.length > 0) {
+      if (patientEvaluations.length > 0) {
         setNursingEvaluation(patientEvaluations[0]);
+      } else if (referral) {
+        // Create a synthetic nursing evaluation object from the referral data
+        const syntheticEvaluation: AvaliaesdeEnfermagem = {
+          _id: 'synthetic-' + referral._id,
+          checklistId: referral.checklistId,
+          patientId: referral.patientId,
+          nurseName: referral.nurseName,
+          clinicalObservations: referral.nurseMessage, // Use the referral reason as clinical observations
+          patientGuidelines: '',
+          patientStatus: 'stable',
+          referredToDoctor: true,
+        };
+        setNursingEvaluation(syntheticEvaluation);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -272,7 +285,7 @@ export default function MedicalEvaluationPage() {
                 <div className="flex items-center gap-3 mb-6">
                   <FileText className="w-6 h-6 text-primary" />
                   <h2 className="font-heading text-2xl font-bold text-foreground">
-                    Avaliação da Enfermagem
+                    Motivo do Encaminhamento
                   </h2>
                 </div>
                 <div className="space-y-4">
@@ -283,34 +296,10 @@ export default function MedicalEvaluationPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Status do Paciente</p>
-                    <span className={`inline-block font-paragraph text-sm font-semibold px-3 py-1 rounded-full ${
-                      nursingEvaluation.patientStatus === 'critical'
-                        ? 'bg-critical/10 text-critical'
-                        : nursingEvaluation.patientStatus === 'observation'
-                        ? 'bg-attention/10 text-attention-foreground'
-                        : 'bg-stable/10 text-stable'
-                    }`}>
-                      {nursingEvaluation.patientStatus === 'critical'
-                        ? 'Crítico'
-                        : nursingEvaluation.patientStatus === 'observation'
-                        ? 'Em Observação'
-                        : 'Estável'}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-2">Observações Clínicas</p>
-                    <div className="bg-background rounded-xl p-4">
+                    <p className="font-paragraph text-sm text-foreground/60 mb-2">Motivo do Encaminhamento</p>
+                    <div className="bg-background rounded-xl p-4 border-l-4 border-primary">
                       <p className="font-paragraph text-sm text-foreground">
                         {nursingEvaluation.clinicalObservations}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-2">Orientações ao Paciente</p>
-                    <div className="bg-background rounded-xl p-4">
-                      <p className="font-paragraph text-sm text-foreground">
-                        {nursingEvaluation.patientGuidelines}
                       </p>
                     </div>
                   </div>

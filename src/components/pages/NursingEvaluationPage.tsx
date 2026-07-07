@@ -161,72 +161,73 @@ export default function NursingEvaluationPage() {
         return;
       }
 
+      // Validate non-referral requirements
+      if (!formData.referredToDoctor && (!formData.clinicalObservations.trim() || !formData.patientGuidelines.trim())) {
+        alert('Por favor, preencha as observações clínicas e orientações ao paciente.');
+        setIsSaving(false);
+        return;
+      }
+
       // Double-check that the checklist hasn't been evaluated already
       const checklistCheck = await BaseCrudService.getById<ChecklistsDirios>('checklistsdiarios', selectedChecklist._id);
-      if (checklistCheck?.avaliadoEnfermagem || checklistCheck?.statusEnfermagem === 'Concluído') {
+      if (checklistCheck?.avaliadoEnfermagem || checklistCheck?.statusEnfermagem === 'Concluído' || checklistCheck?.statusEnfermagem === 'Encaminhado') {
         alert('Este checklist já foi avaliado. Por favor, retorne ao dashboard.');
         navigate('/nursing-dashboard');
         return;
       }
 
       const now = new Date().toISOString();
-      const evalId = crypto.randomUUID();
-      
-      const evaluation: AvaliaesdeEnfermagem = {
-        _id: evalId,
-        checklistDate: now,
-        patientId: id,
-        checklistId: selectedChecklist._id,
-        nurseName: professional.fullName || professional.email || '',
-        clinicalObservations: formData.clinicalObservations,
-        patientGuidelines: formData.patientGuidelines,
-        patientStatus: formData.patientStatus,
-        referredToDoctor: formData.referredToDoctor,
-      };
 
-      // Create the nursing evaluation
-      await BaseCrudService.create('avaliacoesenfermagem', evaluation);
+      // CASE 1: Finalizar Avaliação (NOT referring to doctor)
+      if (!formData.referredToDoctor) {
+        const evalId = crypto.randomUUID();
+        
+        const evaluation: AvaliaesdeEnfermagem = {
+          _id: evalId,
+          checklistDate: now,
+          patientId: id,
+          checklistId: selectedChecklist._id,
+          nurseName: professional.fullName || professional.email || '',
+          clinicalObservations: formData.clinicalObservations,
+          patientGuidelines: formData.patientGuidelines,
+          patientStatus: formData.patientStatus,
+          referredToDoctor: false,
+        };
 
-      console.log('[NURSING] Avaliação criada', {
-        evaluationId: evalId.substring(0, 8),
-        checklistId: selectedChecklist._id.substring(0, 8),
-        patientId: id.substring(0, 8),
-        referredToDoctor: formData.referredToDoctor,
-      });
+        // Create the nursing evaluation
+        await BaseCrudService.create('avaliacoesenfermagem', evaluation);
 
-      // Update the checklist status to mark it as evaluated
-      const updateData: any = {
-        _id: selectedChecklist._id,
-        statusEnfermagem: formData.referredToDoctor ? 'Encaminhado' : 'Concluído',
-        avaliadoEnfermagem: true,
-        dataAvaliacaoEnfermagem: now,
-        enfermeiroResponsavel: professional.fullName || professional.email || '',
-      };
+        console.log('[NURSING] Avaliação criada (Finalizada)', {
+          evaluationId: evalId.substring(0, 8),
+          checklistId: selectedChecklist._id.substring(0, 8),
+          patientId: id.substring(0, 8),
+        });
 
-      // If referring to doctor, also set the doctor referral fields
-      if (formData.referredToDoctor) {
-        updateData.status = 'Aguardando Avaliação Médica';
-        updateData.encaminhadoMedico = true;
-        updateData.dataEncaminhamento = now;
-        updateData.medicoResponsavel = selectedDoctor?.fullName || '';
-        updateData.hospital = professional.hospital;
-        updateData.followUpStatus = 'Continuidade';
-      } else {
-        updateData.followUpStatus = 'Pendente';
+        // Update the checklist status to mark it as evaluated
+        await BaseCrudService.update('checklistsdiarios', {
+          _id: selectedChecklist._id,
+          statusEnfermagem: 'Concluído',
+          avaliadoEnfermagem: true,
+          dataAvaliacaoEnfermagem: now,
+          enfermeiroResponsavel: professional.fullName || professional.email || '',
+          status: 'Concluído',
+          followUpStatus: 'Pendente',
+        });
+
+        console.log('[NURSING] Checklist atualizado (Concluído)', {
+          checklistId: selectedChecklist._id.substring(0, 8),
+        });
+
+        alert('Avaliação finalizada com sucesso! O paciente receberá sua avaliação.');
+        navigate('/nursing-dashboard');
+        return;
       }
 
-      await BaseCrudService.update('checklistsdiarios', updateData);
-
-      console.log('[NURSING] Checklist atualizado', {
-        checklistId: selectedChecklist._id.substring(0, 8),
-        statusEnfermagem: updateData.statusEnfermagem,
-        avaliadoEnfermagem: true,
-        referredToDoctor: formData.referredToDoctor,
-      });
-
-      // If referring to doctor, create referral record
+      // CASE 2: Encaminhar para Médico (DO NOT save nursing evaluation)
       if (formData.referredToDoctor && selectedDoctor) {
         const referralId = crypto.randomUUID();
+        
+        // Create ONLY the referral record - NO nursing evaluation saved
         const referralData = {
           _id: referralId,
           patientId: id,
@@ -246,10 +247,29 @@ export default function NursingEvaluationPage() {
 
         await BaseCrudService.create('encaminhamentosmedicos', referralData);
 
-        console.log('[NURSING] Encaminhamento criado', {
+        console.log('[NURSING] Encaminhamento criado (SEM avaliação de enfermagem)', {
           referralId: referralId.substring(0, 8),
           patientId: id.substring(0, 8),
           doctorId: selectedDoctor._id.substring(0, 8),
+        });
+
+        // Update the checklist status to mark it as referred (NOT evaluated)
+        await BaseCrudService.update('checklistsdiarios', {
+          _id: selectedChecklist._id,
+          statusEnfermagem: 'Encaminhado',
+          avaliadoEnfermagem: false, // IMPORTANT: NOT marked as evaluated
+          dataEncaminhamento: now,
+          enfermeiroResponsavel: professional.fullName || professional.email || '',
+          status: 'Aguardando Avaliação Médica',
+          encaminhadoMedico: true,
+          medicoResponsavel: selectedDoctor?.fullName || '',
+          hospital: professional.hospital,
+          followUpStatus: 'Continuidade',
+        });
+
+        console.log('[NURSING] Checklist atualizado (Encaminhado)', {
+          checklistId: selectedChecklist._id.substring(0, 8),
+          status: 'Aguardando Avaliação Médica',
         });
 
         // Create notification for patient
@@ -257,7 +277,7 @@ export default function NursingEvaluationPage() {
         const patientNotification = {
           _id: notificationId,
           recipientType: 'Paciente',
-          message: 'Seu acompanhamento foi encaminhado para avaliação médica. Nossa equipe está analisando seu caso. Aguarde a resposta do médico.',
+          message: 'Sua avaliação está sendo analisada pela equipe médica. Aguarde a resposta do médico.',
           notificationType: 'Encaminhamento',
           isRead: false,
           timestamp: now,
@@ -268,10 +288,10 @@ export default function NursingEvaluationPage() {
         console.log('[NURSING] Notificação do paciente criada', {
           notificationId: notificationId.substring(0, 8),
         });
-      }
 
-      alert('Paciente encaminhado com sucesso para avaliação médica!');
-      navigate('/nursing-dashboard');
+        alert('Paciente encaminhado com sucesso para avaliação médica!');
+        navigate('/nursing-dashboard');
+      }
     } catch (error) {
       console.error('[NURSING] Erro ao enviar avaliação:', error);
       alert('Erro ao enviar avaliação. Por favor, tente novamente.');

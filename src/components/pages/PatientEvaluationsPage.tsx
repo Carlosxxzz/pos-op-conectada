@@ -39,14 +39,25 @@ export default function PatientEvaluationsPage() {
       // Load medical evaluations
       const { items: medicalEvals } = await BaseCrudService.getAll<AvaliaesMdicas>('avaliacoesmedicas');
 
+      // Load checklists to check referral status
+      const { items: checklists } = await BaseCrudService.getAll<any>('checklistsdiarios');
+
       // Combine evaluations with their medical counterparts
-      const combined: EvaluationWithMedical[] = patientNursingEvals.map(nursing => {
-        const medical = medicalEvals.find(m => m.nursingEvaluationId === nursing._id);
-        return {
-          ...nursing,
-          medicalEvaluation: medical
-        };
-      });
+      // IMPORTANT: Only show nursing evaluations that are NOT awaiting medical evaluation
+      const combined: EvaluationWithMedical[] = patientNursingEvals
+        .filter(nursing => {
+          // Find the checklist for this nursing evaluation
+          const checklist = checklists.find(c => c._id === nursing.checklistId);
+          // Only include if NOT awaiting medical evaluation
+          return checklist?.status !== 'Aguardando Avaliação Médica';
+        })
+        .map(nursing => {
+          const medical = medicalEvals.find(m => m.nursingEvaluationId === nursing._id);
+          return {
+            ...nursing,
+            medicalEvaluation: medical
+          };
+        });
 
       // Sort by date (newest first)
       combined.sort((a, b) => 

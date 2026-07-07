@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, LogOut, Calendar, History, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Activity, LogOut, Calendar, History, AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios } from '@/entities';
@@ -14,6 +14,7 @@ export default function PatientDashboardPage() {
   const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [awaitingMedicalEvaluation, setAwaitingMedicalEvaluation] = useState(false);
   
   // Maintain session persistence
   useSessionPersistence();
@@ -47,6 +48,10 @@ export default function PatientDashboardPage() {
       const { items } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
       setChecklists(items);
       logger.info('PatientDashboard', 'loadData', 'Checklists loaded', { count: items.length });
+
+      // Check if patient has any checklists awaiting medical evaluation
+      const hasAwaitingMedical = items.some(c => c.patientId === patientId && c.status === 'Aguardando Avaliação Médica');
+      setAwaitingMedicalEvaluation(hasAwaitingMedical);
     } catch (error) {
       logger.error('PatientDashboard', 'loadData', 'Error loading data', error);
       setError('Erro ao carregar dados. Por favor, tente novamente.');
@@ -203,6 +208,23 @@ export default function PatientDashboardPage() {
             </div>
           </Link>
         </div>
+
+        {/* Awaiting Medical Evaluation Alert */}
+        {awaitingMedicalEvaluation && (
+          <div className="bg-white rounded-3xl p-6 border-2 border-primary/30 mb-6">
+            <div className="flex items-start gap-4">
+              <Loader className="w-8 h-8 text-primary flex-shrink-0 mt-1 animate-spin" />
+              <div>
+                <p className="font-heading text-xl font-bold text-foreground mb-2">
+                  Avaliação em Andamento
+                </p>
+                <p className="font-paragraph text-base text-foreground/70">
+                  Sua avaliação está sendo analisada pela equipe médica. Aguarde a resposta do médico.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Latest Checklist Status */}
         <div className="bg-white rounded-3xl p-6 border-2 border-secondary/30 mb-6">
