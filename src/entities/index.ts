@@ -238,6 +238,8 @@ export interface Notifications {
   _createdDate?: Date;
   _updatedDate?: Date;
   /** @wixFieldType text */
+  recipientId?: string;
+  /** @wixFieldType text */
   recipientType?: string;
   /** @wixFieldType text */
   message?: string;
@@ -260,6 +262,10 @@ export interface Pacientes {
   _updatedDate?: Date;
   /** @wixFieldType text */
   fullName?: string;
+  /** @wixFieldType array_string */
+  pushTokens?: any;
+  /** @wixFieldType text */
+  authEmail?: string;
   /** @wixFieldType text */
   lastMedicalEvaluationId?: string;
   /** @wixFieldType text */
