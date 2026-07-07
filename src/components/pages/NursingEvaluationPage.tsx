@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, Send, AlertTriangle, Image as ImageIcon, Pill, AlertCircle, ChevronRight, Clock, User, Building2, ArrowRight } from 'lucide-react';
+import { Activity, ArrowLeft, Send, AlertTriangle, Image as ImageIcon, Pill, AlertCircle, ChevronRight, Clock, User, Building2, ArrowRight, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -224,7 +224,53 @@ export default function NursingEvaluationPage() {
         referredToDoctor: formData.referredToDoctor,
       });
 
-      alert('Avaliação enviada com sucesso!');
+      // If referring to doctor, create referral record
+      if (formData.referredToDoctor && selectedDoctor) {
+        const referralId = crypto.randomUUID();
+        const referralData = {
+          _id: referralId,
+          patientId: id,
+          checklistId: selectedChecklist._id,
+          hospitalId: professional.hospital || '',
+          nurseId: professional._id,
+          nurseName: professional.fullName || professional.email || '',
+          doctorId: selectedDoctor._id,
+          doctorName: selectedDoctor.fullName || selectedDoctor.email || '',
+          nurseMessage: referralReason,
+          referralDate: now,
+          status: 'Encaminhado ao Médico',
+          viewed: false,
+          doctorResponse: '',
+          responseDate: '',
+        };
+
+        await BaseCrudService.create('encaminhamentosmedicos', referralData);
+
+        console.log('[NURSING] Encaminhamento criado', {
+          referralId: referralId.substring(0, 8),
+          patientId: id.substring(0, 8),
+          doctorId: selectedDoctor._id.substring(0, 8),
+        });
+
+        // Create notification for patient
+        const notificationId = crypto.randomUUID();
+        const patientNotification = {
+          _id: notificationId,
+          recipientType: 'Paciente',
+          message: 'Seu acompanhamento foi encaminhado para avaliação médica. Nossa equipe está analisando seu caso. Aguarde a resposta do médico.',
+          notificationType: 'Encaminhamento',
+          isRead: false,
+          timestamp: now,
+        };
+
+        await BaseCrudService.create('notificacoes', patientNotification);
+
+        console.log('[NURSING] Notificação do paciente criada', {
+          notificationId: notificationId.substring(0, 8),
+        });
+      }
+
+      alert('Paciente encaminhado com sucesso para avaliação médica!');
       navigate('/nursing-dashboard');
     } catch (error) {
       console.error('[NURSING] Erro ao enviar avaliação:', error);

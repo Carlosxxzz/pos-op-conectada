@@ -135,7 +135,6 @@ export default function MedicalEvaluationPage() {
         hospitalReturnRecommended: false,
         inPersonEvaluationRecommended: false,
         medicationGuidanceAdjustment: formData.medicalPrescription,
-        followUpStatus: formData.needsFollowUp ? 'Continuidade' : 'Alta',
       };
 
       // Create the medical evaluation
@@ -158,6 +157,33 @@ export default function MedicalEvaluationPage() {
         followUpStatus: formData.needsFollowUp ? 'Ativo' : 'Alta',
         lastMedicalEvaluationId: medicalEvaluationId,
       });
+
+      // Update the referral record to mark as viewed and add doctor response
+      const { items: referrals } = await BaseCrudService.getAll('encaminhamentosmedicos');
+      const referral = referrals.find((r: any) => r.checklistId === referralChecklist._id && r.patientId === id);
+      
+      if (referral) {
+        await BaseCrudService.update('encaminhamentosmedicos', {
+          _id: referral._id,
+          viewed: true,
+          doctorResponse: formData.medicalConduct,
+          responseDate: now,
+          status: formData.needsFollowUp ? 'Continuidade' : 'Alta',
+        });
+      }
+
+      // Create notification for patient about medical evaluation
+      const notificationId = crypto.randomUUID();
+      const patientNotification = {
+        _id: notificationId,
+        recipientType: 'Paciente',
+        message: `Sua avaliação médica foi concluída. ${formData.needsFollowUp ? 'Você necessita de novo acompanhamento.' : 'Você recebeu alta médica.'}`,
+        notificationType: 'Avaliação Médica',
+        isRead: false,
+        timestamp: now,
+      };
+
+      await BaseCrudService.create('notificacoes', patientNotification);
 
       alert('Avaliação médica finalizada com sucesso!');
       navigate('/medical-dashboard');

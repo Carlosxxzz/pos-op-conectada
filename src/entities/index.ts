@@ -149,6 +149,43 @@ export interface ChecklistsDirios {
 
 
 /**
+ * Collection ID: encaminhamentosmedicos
+ * Interface for EncaminhamentosMdicos
+ */
+export interface EncaminhamentosMdicos {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  patientId?: string;
+  /** @wixFieldType text */
+  checklistId?: string;
+  /** @wixFieldType text */
+  hospitalId?: string;
+  /** @wixFieldType text */
+  nurseId?: string;
+  /** @wixFieldType text */
+  nurseName?: string;
+  /** @wixFieldType text */
+  doctorId?: string;
+  /** @wixFieldType text */
+  doctorName?: string;
+  /** @wixFieldType text */
+  nurseMessage?: string;
+  /** @wixFieldType datetime */
+  referralDate?: Date | string;
+  /** @wixFieldType text */
+  status?: string;
+  /** @wixFieldType boolean */
+  viewed?: boolean;
+  /** @wixFieldType text */
+  doctorResponse?: string;
+  /** @wixFieldType datetime */
+  responseDate?: Date | string;
+}
+
+
+/**
  * Collection ID: medicacoeschecklist
  * Interface for MedicaesdoChecklist
  */

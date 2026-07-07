@@ -39,42 +39,44 @@ export default function MedicalDashboardPage() {
         hospital: professionalData?.hospital,
       });
 
-      // Get all checklists
+      // Get all checklists and referrals
       const { items: allChecklists } = await BaseCrudService.getAll<any>('checklistsdiarios');
       const { items: allPatients } = await BaseCrudService.getAll<Pacientes>('pacientes');
+      const { items: allReferrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
 
       console.log('[MEDICAL] Total de checklists no banco:', allChecklists.length);
+      console.log('[MEDICAL] Total de encaminhamentos no banco:', allReferrals.length);
 
-      // Filter checklists: only those referred to doctor AND matching hospital AND with correct status
-      const referred = allChecklists
-        .filter(checklist => {
-          const isReferred = checklist.encaminhadoMedico === true;
-          const isCorrectStatus = checklist.status === 'Aguardando Avaliação Médica';
-          const isCorrectHospital = checklist.hospital === professionalData?.hospital;
-          
-          if (!isReferred || !isCorrectStatus || !isCorrectHospital) {
-            return false;
-          }
-          return true;
-        })
-        .map(checklist => {
-          // Find patient for this checklist
-          const patient = allPatients.find(p => p._id === checklist.patientId) || null;
-          return { checklist, patient };
-        })
+      // Filter referrals: only those for this doctor AND from same hospital AND not yet evaluated
+      const referralsForThisDoctor = allReferrals.filter((referral: any) => {
+        const isForThisDoctor = referral.doctorId === professionalId;
+        const isCorrectHospital = referral.hospitalId === professionalData?.hospital;
+        const isNotEvaluated = referral.status === 'Encaminhado ao Médico';
+        
+        return isForThisDoctor && isCorrectHospital && isNotEvaluated;
+      });
+
+      console.log('[MEDICAL] Encaminhamentos para este médico:', {
+        total: referralsForThisDoctor.length,
+        doctorId: professionalId.substring(0, 8),
+        hospital: professionalData?.hospital,
+      });
+
+      // Map referrals to cases with checklists and patients
+      const referred = referralsForThisDoctor.map((referral: any) => {
+        const checklist = allChecklists.find(c => c._id === referral.checklistId);
+        const patient = allPatients.find(p => p._id === referral.patientId) || null;
+        return { checklist, patient, referral };
+      }).filter(item => item.checklist) // Only include if checklist exists
         .sort((a, b) => {
-          const dateA = new Date(a.checklist.dataEncaminhamento || 0).getTime();
-          const dateB = new Date(b.checklist.dataEncaminhamento || 0).getTime();
+          const dateA = new Date(a.referral.referralDate || 0).getTime();
+          const dateB = new Date(b.referral.referralDate || 0).getTime();
           return dateB - dateA;
         });
 
-      console.log('[MEDICAL] Checklists encontrados para avaliação:', {
+      console.log('[MEDICAL] Casos filtrados para avaliação:', {
         total: referred.length,
         hospital: professionalData?.hospital,
-        filtros: {
-          encaminhadoMedico: true,
-          status: 'Aguardando Avaliação Médica',
-        },
       });
 
       setReferredCases(referred as any);

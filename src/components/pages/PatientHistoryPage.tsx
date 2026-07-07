@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, TrendingUp, Calendar, Image as ImageIcon, Pill } from 'lucide-react';
+import { Activity, ArrowLeft, TrendingUp, Calendar, Image as ImageIcon, Pill, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
 import type { ChecklistsDirios, MedicacoesChecklist } from '@/entities';
@@ -13,6 +13,7 @@ export default function PatientHistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
   const [medicationsByChecklist, setMedicationsByChecklist] = useState<{ [key: string]: MedicacoesChecklist[] }>({});
+  const [referralStatus, setReferralStatus] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     loadData();
@@ -45,6 +46,19 @@ export default function PatientHistoryPage() {
       });
       
       setMedicationsByChecklist(medsByChecklist);
+
+      // Load referral status for each checklist
+      const { items: allReferrals } = await BaseCrudService.getAll('encaminhamentosmedicos');
+      const statusMap: { [key: string]: string } = {};
+      
+      patientChecklists.forEach(checklist => {
+        const referral = allReferrals.find((r: any) => r.checklistId === checklist._id && r.patientId === patientId);
+        if (referral) {
+          statusMap[checklist._id] = referral.status;
+        }
+      });
+      
+      setReferralStatus(statusMap);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -224,19 +238,42 @@ export default function PatientHistoryPage() {
                             </p>
                           </div>
                         </div>
-                        <span className={`font-paragraph text-sm font-semibold px-3 py-1 rounded-full ${
-                          checklist.riskLevel === 'critical' 
-                            ? 'bg-critical/10 text-critical'
-                            : checklist.riskLevel === 'attention'
-                            ? 'bg-attention/10 text-attention-foreground'
-                            : 'bg-stable/10 text-stable'
-                        }`}>
-                          {checklist.riskLevel === 'critical' 
-                            ? 'Crítico'
-                            : checklist.riskLevel === 'attention'
-                            ? 'Atenção'
-                            : 'Estável'}
-                        </span>
+                        <div className="flex flex-col gap-2 items-end">
+                          <span className={`font-paragraph text-sm font-semibold px-3 py-1 rounded-full ${
+                            checklist.riskLevel === 'critical' 
+                              ? 'bg-critical/10 text-critical'
+                              : checklist.riskLevel === 'attention'
+                              ? 'bg-attention/10 text-attention-foreground'
+                              : 'bg-stable/10 text-stable'
+                          }`}>
+                            {checklist.riskLevel === 'critical' 
+                              ? 'Crítico'
+                              : checklist.riskLevel === 'attention'
+                              ? 'Atenção'
+                              : 'Estável'}
+                          </span>
+                          {referralStatus[checklist._id] && (
+                            <span className={`font-paragraph text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 ${
+                              referralStatus[checklist._id] === 'Encaminhado ao Médico'
+                                ? 'bg-attention/10 text-attention-foreground'
+                                : referralStatus[checklist._id] === 'Continuidade'
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-stable/10 text-stable'
+                            }`}>
+                              {referralStatus[checklist._id] === 'Encaminhado ao Médico' && (
+                                <AlertCircle className="w-3 h-3" />
+                              )}
+                              {referralStatus[checklist._id] === 'Continuidade' && (
+                                <CheckCircle className="w-3 h-3" />
+                              )}
+                              {referralStatus[checklist._id] === 'Encaminhado ao Médico'
+                                ? 'Aguardando Avaliação Médica'
+                                : referralStatus[checklist._id] === 'Continuidade'
+                                ? 'Continuidade'
+                                : referralStatus[checklist._id]}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
