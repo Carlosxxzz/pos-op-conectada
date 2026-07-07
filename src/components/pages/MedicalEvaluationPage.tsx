@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, Send, FileText } from 'lucide-react';
+import { Activity, ArrowLeft, Send, FileText, AlertCircle, Clock, User, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -18,12 +18,15 @@ export default function MedicalEvaluationPage() {
   const [patient, setPatient] = useState<Pacientes | null>(null);
   const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
   const [nursingEvaluation, setNursingEvaluation] = useState<AvaliaesdeEnfermagem | null>(null);
+  const [referralChecklist, setReferralChecklist] = useState<ChecklistsDirios | null>(null);
   
   const [formData, setFormData] = useState({
-    clinicalRecommendations: '',
-    hospitalReturnRecommended: false,
-    inPersonEvaluationRecommended: false,
-    medicationGuidanceAdjustment: '',
+    clinicalCondition: 'stable',
+    medicalConduct: '',
+    medicalPrescription: '',
+    patientRecommendations: '',
+    needsFollowUp: true,
+    medicalObservations: '',
   });
 
   const [professional, setProfessional] = useState<Profissionais | null>(null);
@@ -65,19 +68,31 @@ export default function MedicalEvaluationPage() {
       setPatient(patientData);
 
       const { items: checklistItems } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
-      // Filter checklists by patient ID only
-      const patientChecklists = checklistItems.filter(c => c.patientId === id);
+      // Filter checklists by patient ID and get those awaiting medical evaluation
+      const patientChecklists = checklistItems.filter(c => 
+        c.patientId === id && c.status === 'Aguardando Avaliação Médica'
+      );
+      
       setChecklists(patientChecklists.sort((a, b) => 
         new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
       ));
 
+      // Get the referral checklist (the one awaiting evaluation)
+      if (patientChecklists.length > 0) {
+        setReferralChecklist(patientChecklists[0]);
+      }
+
       const { items: evaluations } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
-      // Filter evaluations by patient ID
+      // Filter evaluations by patient ID and get the one related to the referral checklist
       const patientEvaluations = evaluations.filter(e => e.patientId === id);
-      const latestEvaluation = patientEvaluations.sort((a, b) => 
-        new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
-      )[0];
-      setNursingEvaluation(latestEvaluation || null);
+      
+      if (patientChecklists.length > 0 && patientEvaluations.length > 0) {
+        // Find the nursing evaluation for the referral checklist
+        const relatedEvaluation = patientEvaluations.find(e => e.checklistId === patientChecklists[0]._id);
+        setNursingEvaluation(relatedEvaluation || patientEvaluations[0]);
+      } else if (patientEvaluations.length > 0) {
+        setNursingEvaluation(patientEvaluations[0]);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -90,7 +105,7 @@ export default function MedicalEvaluationPage() {
     setIsSaving(true);
 
     try {
-      if (!id || !patient || !professional) {
+      if (!id || !patient || !professional || !referralChecklist) {
         alert('Erro: Dados não identificados');
         return;
       }
@@ -102,25 +117,49 @@ export default function MedicalEvaluationPage() {
         _id: medicalEvaluationId,
         patientId: id,
         nursingEvaluationId: nursingEvaluation?._id || '',
+        checklistId: referralChecklist._id,
         doctorName: professional.fullName || professional.email || '',
-        clinicalRecommendations: formData.clinicalRecommendations,
-        hospitalReturnRecommended: formData.hospitalReturnRecommended,
-        inPersonEvaluationRecommended: formData.inPersonEvaluationRecommended,
-        medicationGuidanceAdjustment: formData.medicationGuidanceAdjustment,
-        followUpStatus: 'completed',
+        enfermeiroResponsavel: nursingEvaluation?.nurseName || '',
+        hospitalName: professional.hospital || '',
+        evaluationDate: now,
+        clinicalCondition: formData.clinicalCondition,
+        medicalConduct: formData.medicalConduct,
+        medicalPrescription: formData.medicalPrescription,
+        patientRecommendations: formData.patientRecommendations,
+        needsFollowUp: formData.needsFollowUp,
+        medicalObservations: formData.medicalObservations,
+        referralReason: nursingEvaluation?.clinicalObservations || '',
+        status: formData.needsFollowUp ? 'Continuidade' : 'Alta',
+        followUpStatus: formData.needsFollowUp ? 'Continuidade' : 'Alta',
+        clinicalRecommendations: formData.medicalConduct,
+        hospitalReturnRecommended: false,
+        inPersonEvaluationRecommended: false,
+        medicationGuidanceAdjustment: formData.medicalPrescription,
+        followUpStatus: formData.needsFollowUp ? 'Continuidade' : 'Alta',
       };
 
       // Create the medical evaluation
       await BaseCrudService.create('avaliacoesmedicas', evaluation);
 
-      // Update patient status to completed
+      // Update the checklist to mark medical evaluation as complete
+      const updateChecklistData: any = {
+        _id: referralChecklist._id,
+        statusMedico: formData.needsFollowUp ? 'Continuidade' : 'Alta',
+        medicalEvaluationId: medicalEvaluationId,
+        status: formData.needsFollowUp ? 'Continuidade' : 'Alta',
+        followUpStatus: formData.needsFollowUp ? 'Continuidade' : 'Alta',
+      };
+
+      await BaseCrudService.update('checklistsdiarios', updateChecklistData);
+
+      // Update patient follow-up status
       await BaseCrudService.update('pacientes', {
         _id: id,
-        followUpStatus: 'completed',
-        medicalEvaluationId: medicalEvaluationId,
+        followUpStatus: formData.needsFollowUp ? 'Ativo' : 'Alta',
+        lastMedicalEvaluationId: medicalEvaluationId,
       });
 
-      alert('Avaliação médica enviada com sucesso!');
+      alert('Avaliação médica finalizada com sucesso!');
       navigate('/medical-dashboard');
     } catch (error) {
       console.error('Error submitting evaluation:', error);
@@ -201,7 +240,7 @@ export default function MedicalEvaluationPage() {
               </div>
             </div>
 
-            {/* Nursing Evaluation */}
+            {/* Nursing Evaluation with Referral Reason */}
             {nursingEvaluation && (
               <div className="bg-white rounded-2xl p-8 border border-secondary/20">
                 <div className="flex items-center gap-3 mb-6">
@@ -363,101 +402,138 @@ export default function MedicalEvaluationPage() {
                 </div>
 
                 <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                  <p className="font-paragraph text-sm text-foreground/60 mb-1">ID do Profissional</p>
-                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?._id}</p>
-                </div>
-
-                <div className="bg-background rounded-lg p-4 border border-secondary/20">
                   <p className="font-paragraph text-sm text-foreground/60 mb-1">Hospital</p>
                   <p className="font-paragraph text-base font-semibold text-foreground">{professional?.hospital}</p>
                 </div>
 
                 <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Cargo</p>
-                  <p className="font-paragraph text-base font-semibold text-foreground">Médico(a)</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Data/Hora</p>
+                  </div>
+                  <p className="font-paragraph text-sm text-foreground">
+                    {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
 
-                <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                  <p className="font-paragraph text-sm text-foreground/60 mb-1">E-mail Institucional</p>
-                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.email}</p>
-                </div>
-
-                <div>
-                  <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
-                    Recomendações Clínicas
-                  </Label>
-                  <Textarea
-                    value={formData.clinicalRecommendations}
-                    onChange={(e) => setFormData({ ...formData, clinicalRecommendations: e.target.value })}
-                    className="font-paragraph min-h-[120px]"
-                    placeholder="Descreva suas recomendações clínicas..."
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
-                    Ajuste de Medicação/Orientações
-                  </Label>
-                  <Textarea
-                    value={formData.medicationGuidanceAdjustment}
-                    onChange={(e) => setFormData({ ...formData, medicationGuidanceAdjustment: e.target.value })}
-                    className="font-paragraph min-h-[100px]"
-                    placeholder="Ajustes necessários..."
-                  />
-                </div>
-
-                <div className="pt-4 border-t border-secondary/30 space-y-4">
+                <div className="border-t border-secondary/30 pt-6 space-y-6">
+                  {/* Clinical Condition */}
                   <div>
                     <Label className="font-paragraph text-sm font-semibold text-foreground mb-3 block">
-                      Retorno Hospitalar Recomendado?
+                      Condição Clínica *
                     </Label>
                     <RadioGroup
-                      value={formData.hospitalReturnRecommended ? 'yes' : 'no'}
-                      onValueChange={(value) => setFormData({ ...formData, hospitalReturnRecommended: value === 'yes' })}
+                      value={formData.clinicalCondition}
+                      onValueChange={(value) => setFormData({ ...formData, clinicalCondition: value })}
                     >
                       <div className="flex items-center space-x-2 mb-2">
-                        <RadioGroupItem value="yes" id="hospital-yes" />
-                        <Label htmlFor="hospital-yes" className="font-paragraph cursor-pointer">Sim</Label>
+                        <RadioGroupItem value="stable" id="cond-stable" />
+                        <Label htmlFor="cond-stable" className="font-paragraph cursor-pointer">Estável</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <RadioGroupItem value="improving" id="cond-improving" />
+                        <Label htmlFor="cond-improving" className="font-paragraph cursor-pointer">Melhorando</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <RadioGroupItem value="observation" id="cond-observation" />
+                        <Label htmlFor="cond-observation" className="font-paragraph cursor-pointer">Em Observação</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <RadioGroupItem value="attention" id="cond-attention" />
+                        <Label htmlFor="cond-attention" className="font-paragraph cursor-pointer">Atenção</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="hospital-no" />
-                        <Label htmlFor="hospital-no" className="font-paragraph cursor-pointer">Não</Label>
+                        <RadioGroupItem value="critical" id="cond-critical" />
+                        <Label htmlFor="cond-critical" className="font-paragraph cursor-pointer">Crítico</Label>
                       </div>
                     </RadioGroup>
                   </div>
 
+                  {/* Medical Conduct */}
+                  <div>
+                    <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
+                      Conduta Médica *
+                    </Label>
+                    <Textarea
+                      value={formData.medicalConduct}
+                      onChange={(e) => setFormData({ ...formData, medicalConduct: e.target.value })}
+                      className="font-paragraph min-h-[100px]"
+                      placeholder="Ex: Manter tratamento atual, Ajustar medicação, Prescrever novo medicamento, Solicitar retorno ao hospital, Solicitar exames, Encaminhar para especialista, Internação necessária, Alta médica..."
+                      required
+                    />
+                  </div>
+
+                  {/* Medical Prescription */}
+                  <div>
+                    <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
+                      Prescrição Médica
+                    </Label>
+                    <Textarea
+                      value={formData.medicalPrescription}
+                      onChange={(e) => setFormData({ ...formData, medicalPrescription: e.target.value })}
+                      className="font-paragraph min-h-[100px]"
+                      placeholder="Medicamentos, doses, horários e orientações..."
+                    />
+                  </div>
+
+                  {/* Patient Recommendations */}
+                  <div>
+                    <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
+                      Recomendações ao Paciente
+                    </Label>
+                    <Textarea
+                      value={formData.patientRecommendations}
+                      onChange={(e) => setFormData({ ...formData, patientRecommendations: e.target.value })}
+                      className="font-paragraph min-h-[100px]"
+                      placeholder="Repouso, hidratação, retorno em X dias, evitar esforço, observar sinais de alerta..."
+                    />
+                  </div>
+
+                  {/* Follow-up Decision */}
                   <div>
                     <Label className="font-paragraph text-sm font-semibold text-foreground mb-3 block">
-                      Avaliação Presencial Recomendada?
+                      Necessita novo acompanhamento? *
                     </Label>
                     <RadioGroup
-                      value={formData.inPersonEvaluationRecommended ? 'yes' : 'no'}
-                      onValueChange={(value) => setFormData({ ...formData, inPersonEvaluationRecommended: value === 'yes' })}
+                      value={formData.needsFollowUp ? 'yes' : 'no'}
+                      onValueChange={(value) => setFormData({ ...formData, needsFollowUp: value === 'yes' })}
                     >
                       <div className="flex items-center space-x-2 mb-2">
-                        <RadioGroupItem value="yes" id="person-yes" />
-                        <Label htmlFor="person-yes" className="font-paragraph cursor-pointer">Sim</Label>
+                        <RadioGroupItem value="yes" id="followup-yes" />
+                        <Label htmlFor="followup-yes" className="font-paragraph cursor-pointer">Sim</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="person-no" />
-                        <Label htmlFor="person-no" className="font-paragraph cursor-pointer">Não</Label>
+                        <RadioGroupItem value="no" id="followup-no" />
+                        <Label htmlFor="followup-no" className="font-paragraph cursor-pointer">Não (Alta)</Label>
                       </div>
                     </RadioGroup>
+                  </div>
+
+                  {/* Medical Observations */}
+                  <div>
+                    <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
+                      Observações Médicas
+                    </Label>
+                    <Textarea
+                      value={formData.medicalObservations}
+                      onChange={(e) => setFormData({ ...formData, medicalObservations: e.target.value })}
+                      className="font-paragraph min-h-[80px]"
+                      placeholder="Informações adicionais (visível apenas aos profissionais)..."
+                    />
                   </div>
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={isSaving}
+                  disabled={isSaving || !formData.medicalConduct}
                   className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 rounded-lg"
                 >
                   {isSaving ? (
-                    'Enviando...'
+                    'Finalizando...'
                   ) : (
                     <>
                       <Send className="w-5 h-5 mr-2" />
-                      Enviar Avaliação Médica
+                      Finalizar Avaliação Médica
                     </>
                   )}
                 </Button>

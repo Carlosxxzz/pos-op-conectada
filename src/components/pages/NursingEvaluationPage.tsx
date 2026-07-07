@@ -21,7 +21,7 @@ export default function NursingEvaluationPage() {
   const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
   const [professional, setProfessional] = useState<Profissionais | null>(null);
   const [medicationsByChecklist, setMedicationsByChecklist] = useState<{ [key: string]: MedicacoesChecklist[] }>({});
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>('')
   const [showReferralFlow, setShowReferralFlow] = useState(false);
   const [doctors, setDoctors] = useState<Profissionais[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Profissionais | null>(null);
@@ -154,6 +154,13 @@ export default function NursingEvaluationPage() {
         return;
       }
 
+      // Validate referral requirements
+      if (formData.referredToDoctor && (!selectedDoctor || !referralReason.trim())) {
+        alert('Por favor, selecione um médico e descreva o motivo do encaminhamento.');
+        setIsSaving(false);
+        return;
+      }
+
       // Double-check that the checklist hasn't been evaluated already
       const checklistCheck = await BaseCrudService.getById<ChecklistsDirios>('checklistsdiarios', selectedChecklist._id);
       if (checklistCheck?.avaliadoEnfermagem || checklistCheck?.statusEnfermagem === 'Concluído') {
@@ -203,6 +210,9 @@ export default function NursingEvaluationPage() {
         updateData.dataEncaminhamento = now;
         updateData.medicoResponsavel = selectedDoctor?.fullName || '';
         updateData.hospital = professional.hospital;
+        updateData.followUpStatus = 'Continuidade';
+      } else {
+        updateData.followUpStatus = 'Pendente';
       }
 
       await BaseCrudService.update('checklistsdiarios', updateData);

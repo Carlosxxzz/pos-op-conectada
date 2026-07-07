@@ -39,6 +39,30 @@ export interface AvaliaesMdicas {
   _createdDate?: Date;
   _updatedDate?: Date;
   /** @wixFieldType text */
+  referralReason?: string;
+  /** @wixFieldType text */
+  status?: string;
+  /** @wixFieldType datetime */
+  evaluationDate?: Date | string;
+  /** @wixFieldType text */
+  hospitalName?: string;
+  /** @wixFieldType text */
+  enfermeiroResponsavel?: string;
+  /** @wixFieldType text */
+  checklistId?: string;
+  /** @wixFieldType text */
+  medicalObservations?: string;
+  /** @wixFieldType boolean */
+  needsFollowUp?: boolean;
+  /** @wixFieldType text */
+  patientRecommendations?: string;
+  /** @wixFieldType text */
+  medicalPrescription?: string;
+  /** @wixFieldType text */
+  medicalConduct?: string;
+  /** @wixFieldType text */
+  clinicalCondition?: string;
+  /** @wixFieldType text */
   nursingEvaluationId?: string;
   /** @wixFieldType text */
   followUpStatus?: string;
@@ -67,6 +91,10 @@ export interface ChecklistsDirios {
   _updatedDate?: Date;
   /** @wixFieldType datetime */
   checklistDate?: Date | string;
+  /** @wixFieldType text */
+  medicalEvaluationId?: string;
+  /** @wixFieldType text */
+  followUpStatus?: string;
   /** @wixFieldType datetime */
   dataAvaliacaoEnfermagem?: Date | string;
   /** @wixFieldType boolean */
@@ -195,6 +223,10 @@ export interface Pacientes {
   _updatedDate?: Date;
   /** @wixFieldType text */
   fullName?: string;
+  /** @wixFieldType text */
+  lastMedicalEvaluationId?: string;
+  /** @wixFieldType text */
+  followUpStatus?: string;
   /** @wixFieldType text */
   hospital?: string;
   /** @wixFieldType text */
