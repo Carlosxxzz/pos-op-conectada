@@ -50,7 +50,7 @@ export default function PatientDashboardPage() {
       logger.info('PatientDashboard', 'loadData', 'Checklists loaded', { count: items.length });
 
       // Check if patient has any checklists awaiting medical evaluation
-      const hasAwaitingMedical = items.some(c => c.patientId === patientId && c.status === 'Aguardando Avaliação Médica');
+      const hasAwaitingMedical = items.some(c => c.patientId === patientId && (c.status === 'Aguardando Avaliação Médica' || c.encaminhadoMedico === true));
       setAwaitingMedicalEvaluation(hasAwaitingMedical);
     } catch (error) {
       logger.error('PatientDashboard', 'loadData', 'Error loading data', error);

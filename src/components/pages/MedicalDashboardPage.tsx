@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 interface ReferredCase {
   checklist: ChecklistsDirios;
   patient: Pacientes | null;
+  referral: any;
 }
 
 export default function MedicalDashboardPage() {
@@ -47,19 +48,18 @@ export default function MedicalDashboardPage() {
       console.log('[MEDICAL] Total de checklists no banco:', allChecklists.length);
       console.log('[MEDICAL] Total de encaminhamentos no banco:', allReferrals.length);
 
-      // Filter referrals: only those for this doctor AND from same hospital AND not yet evaluated
+      // Filter referrals: only those for this doctor AND not yet evaluated (status not 'Alta' or 'Continuidade')
       const referralsForThisDoctor = allReferrals.filter((referral: any) => {
         const isForThisDoctor = referral.doctorId === professionalId;
-        const isCorrectHospital = referral.hospitalId === professionalData?.hospital;
-        const isNotEvaluated = referral.status === 'Encaminhado ao Médico';
+        const isNotEvaluated = referral.status !== 'Alta' && referral.status !== 'Continuidade' && referral.status !== 'Avaliado';
         
-        return isForThisDoctor && isCorrectHospital && isNotEvaluated;
+        return isForThisDoctor && isNotEvaluated;
       });
 
       console.log('[MEDICAL] Encaminhamentos para este médico:', {
         total: referralsForThisDoctor.length,
         doctorId: professionalId.substring(0, 8),
-        hospital: professionalData?.hospital,
+        details: referralsForThisDoctor.map((r: any) => ({ checklistId: r.checklistId, status: r.status })),
       });
 
       // Map referrals to cases with checklists and patients
@@ -67,7 +67,7 @@ export default function MedicalDashboardPage() {
         const checklist = allChecklists.find(c => c._id === referral.checklistId);
         const patient = allPatients.find(p => p._id === referral.patientId) || null;
         return { checklist, patient, referral };
-      }).filter(item => item.checklist) // Only include if checklist exists
+      }).filter(item => item.checklist && item.patient) // Only include if both checklist and patient exist
         .sort((a, b) => {
           const dateA = new Date(a.referral.referralDate || 0).getTime();
           const dateB = new Date(b.referral.referralDate || 0).getTime();
@@ -76,7 +76,11 @@ export default function MedicalDashboardPage() {
 
       console.log('[MEDICAL] Casos filtrados para avaliação:', {
         total: referred.length,
-        hospital: professionalData?.hospital,
+        cases: referred.map((c: any) => ({ 
+          patientName: c.patient?.fullName, 
+          checklistId: c.checklist?._id,
+          riskLevel: c.checklist?.riskLevel 
+        })),
       });
 
       setReferredCases(referred as any);

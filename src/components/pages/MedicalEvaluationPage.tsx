@@ -19,6 +19,7 @@ export default function MedicalEvaluationPage() {
   const [checklists, setChecklists] = useState<ChecklistsDirios[]>([]);
   const [nursingEvaluation, setNursingEvaluation] = useState<AvaliaesdeEnfermagem | null>(null);
   const [referralChecklist, setReferralChecklist] = useState<ChecklistsDirios | null>(null);
+  const [referralData, setReferralData] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     clinicalCondition: 'stable',
@@ -39,7 +40,7 @@ export default function MedicalEvaluationPage() {
     if (!id) return;
 
     try {
-      // Get professional info to verify hospital access
+      // Get professional info to verify access
       const professionalId = localStorage.getItem('professionalId');
       const professionalProfile = localStorage.getItem('professionalProfile');
       
@@ -58,37 +59,33 @@ export default function MedicalEvaluationPage() {
       setProfessional(professionalData);
       
       const patientData = await BaseCrudService.getById<Pacientes>('pacientes', id);
+      setPatient(patientData);
+
+      // Load referral data to find the checklist
+      const { items: referrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
+      const referral = referrals.find(r => r.patientId === id && r.doctorId === professionalId);
       
-      // Verify patient belongs to same hospital
-      if (patientData?.hospital !== professionalData?.hospital) {
-        navigate('/medical-dashboard');
+      if (!referral) {
+        console.error('No referral found for this patient and doctor');
+        setIsLoading(false);
         return;
       }
 
-      setPatient(patientData);
+      setReferralData(referral);
 
+      // Get the specific checklist from the referral
       const { items: checklistItems } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
-      // Filter checklists by patient ID and get those awaiting medical evaluation
-      const patientChecklists = checklistItems.filter(c => 
-        c.patientId === id && c.status === 'Aguardando Avaliação Médica'
-      );
+      const referralChecklistId = referral.checklistId;
+      const referralChecklistData = checklistItems.find(c => c._id === referralChecklistId);
       
-      setChecklists(patientChecklists.sort((a, b) => 
-        new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
-      ));
-
-      // Get the referral checklist (the one awaiting evaluation)
-      if (patientChecklists.length > 0) {
-        setReferralChecklist(patientChecklists[0]);
+      if (referralChecklistData) {
+        setReferralChecklist(referralChecklistData);
+        setChecklists([referralChecklistData]);
       }
 
-      // Load referral data to get the nursing message (referral reason)
-      const { items: referrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
-      const referral = referrals.find(r => r.checklistId === patientChecklists[0]?._id && r.patientId === id);
-
-      // Get nursing evaluation - but ONLY if it exists (it shouldn't for referrals)
+      // Get nursing evaluation if it exists
       const { items: evaluations } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
-      const patientEvaluations = evaluations.filter(e => e.patientId === id && e.checklistId === patientChecklists[0]?._id);
+      const patientEvaluations = evaluations.filter(e => e.patientId === id && e.checklistId === referralChecklistId);
       
       if (patientEvaluations.length > 0) {
         setNursingEvaluation(patientEvaluations[0]);
@@ -118,7 +115,7 @@ export default function MedicalEvaluationPage() {
     setIsSaving(true);
 
     try {
-      if (!id || !patient || !professional || !referralChecklist) {
+      if (!id || !patient || !professional || !referralChecklist || !referralData) {
         alert('Erro: Dados não identificados');
         return;
       }
@@ -172,18 +169,13 @@ export default function MedicalEvaluationPage() {
       });
 
       // Update the referral record to mark as viewed and add doctor response
-      const { items: referrals } = await BaseCrudService.getAll('encaminhamentosmedicos');
-      const referral = referrals.find((r: any) => r.checklistId === referralChecklist._id && r.patientId === id);
-      
-      if (referral) {
-        await BaseCrudService.update('encaminhamentosmedicos', {
-          _id: referral._id,
-          viewed: true,
-          doctorResponse: formData.medicalConduct,
-          responseDate: now,
-          status: formData.needsFollowUp ? 'Continuidade' : 'Alta',
-        });
-      }
+      await BaseCrudService.update('encaminhamentosmedicos', {
+        _id: referralData._id,
+        viewed: true,
+        doctorResponse: formData.medicalConduct,
+        responseDate: now,
+        status: formData.needsFollowUp ? 'Continuidade' : 'Alta',
+      });
 
       // Create notification for patient about medical evaluation
       const notificationId = crypto.randomUUID();
@@ -218,8 +210,25 @@ export default function MedicalEvaluationPage() {
     );
   }
 
-  if (!patient) {
-    return null;
+  if (!patient || !referralChecklist) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+          <h2 className="font-heading text-2xl font-bold text-foreground mb-2">
+            Paciente não encontrado
+          </h2>
+          <p className="font-paragraph text-lg text-foreground/70 mb-6">
+            Não foi possível carregar os dados do paciente.
+          </p>
+          <Link to="/medical-dashboard">
+            <Button className="bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-bold">
+              Voltar ao Dashboard
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
