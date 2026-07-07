@@ -23,7 +23,6 @@ export default function NursingEvaluationPage() {
   const [error, setError] = useState<string>('');
    
   const [formData, setFormData] = useState({
-    nurseName: '',
     clinicalObservations: '',
     patientGuidelines: '',
     patientStatus: 'stable',
@@ -40,12 +39,27 @@ export default function NursingEvaluationPage() {
     try {
       // Get professional info
       const professionalId = localStorage.getItem('professionalId');
-      if (!professionalId) {
+      const professionalProfile = localStorage.getItem('professionalProfile');
+      
+      if (!professionalId || !professionalProfile) {
         navigate('/professional-login');
         return;
       }
 
+      // Verify professional has Enfermeiro profile
+      if (professionalProfile !== 'Enfermeiro') {
+        setError('Acesso negado. Apenas enfermeiros podem acessar esta tela. Por favor, faça login com uma conta de enfermeiro válida.');
+        return;
+      }
+
       const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
+      
+      if (!professionalData) {
+        setError('Dados do profissional não encontrados. Por favor, faça login novamente.');
+        navigate('/professional-login');
+        return;
+      }
+
       setProfessional(professionalData);
 
       const patientData = await BaseCrudService.getById<Pacientes>('pacientes', id);
@@ -124,7 +138,7 @@ export default function NursingEvaluationPage() {
         checklistDate: now,
         patientId: id,
         checklistId: selectedChecklist._id,
-        nurseName: formData.nurseName,
+        nurseName: professional.fullName || professional.email || '',
         clinicalObservations: formData.clinicalObservations,
         patientGuidelines: formData.patientGuidelines,
         patientStatus: formData.patientStatus,
@@ -477,18 +491,29 @@ export default function NursingEvaluationPage() {
               </h2>
 
               <div className="space-y-6">
-                <div>
-                  <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
-                    Nome do Enfermeiro(a)
-                  </Label>
-                  <input
-                    type="text"
-                    value={formData.nurseName}
-                    onChange={(e) => setFormData({ ...formData, nurseName: e.target.value })}
-                    className="w-full px-4 py-3 border border-secondary rounded-lg font-paragraph focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Seu nome"
-                    required
-                  />
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Nome do Enfermeiro(a)</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.fullName || professional?.email}</p>
+                </div>
+
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">ID do Profissional</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?._id}</p>
+                </div>
+
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Hospital</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.hospital}</p>
+                </div>
+
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Cargo</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">Enfermeiro(a)</p>
+                </div>
+
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">E-mail Institucional</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.email}</p>
                 </div>
 
                 <div>

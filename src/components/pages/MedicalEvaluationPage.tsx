@@ -20,12 +20,13 @@ export default function MedicalEvaluationPage() {
   const [nursingEvaluation, setNursingEvaluation] = useState<AvaliaesdeEnfermagem | null>(null);
   
   const [formData, setFormData] = useState({
-    doctorName: '',
     clinicalRecommendations: '',
     hospitalReturnRecommended: false,
     inPersonEvaluationRecommended: false,
     medicationGuidanceAdjustment: '',
   });
+
+  const [professional, setProfessional] = useState<Profissionais | null>(null);
 
   useEffect(() => {
     loadData();
@@ -37,12 +38,22 @@ export default function MedicalEvaluationPage() {
     try {
       // Get professional info to verify hospital access
       const professionalId = localStorage.getItem('professionalId');
-      if (!professionalId) {
+      const professionalProfile = localStorage.getItem('professionalProfile');
+      
+      if (!professionalId || !professionalProfile) {
         navigate('/professional-login');
         return;
       }
 
+      // Verify professional has Médico profile
+      if (professionalProfile !== 'Médico') {
+        setIsLoading(false);
+        return;
+      }
+
       const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
+      setProfessional(professionalData);
+      
       const patientData = await BaseCrudService.getById<Pacientes>('pacientes', id);
       
       // Verify patient belongs to same hospital
@@ -79,17 +90,24 @@ export default function MedicalEvaluationPage() {
     setIsSaving(true);
 
     try {
-      if (!id || !patient) {
-        alert('Erro: Paciente não identificado');
+      if (!id || !patient || !professional) {
+        alert('Erro: Dados não identificados');
         return;
       }
 
       const medicalEvaluationId = crypto.randomUUID();
+      const now = new Date().toISOString();
+      
       const evaluation: AvaliaesMdicas = {
         _id: medicalEvaluationId,
         patientId: id,
         nursingEvaluationId: nursingEvaluation?._id || '',
-        ...formData,
+        doctorName: professional.fullName || professional.email || '',
+        clinicalRecommendations: formData.clinicalRecommendations,
+        hospitalReturnRecommended: formData.hospitalReturnRecommended,
+        inPersonEvaluationRecommended: formData.inPersonEvaluationRecommended,
+        medicationGuidanceAdjustment: formData.medicationGuidanceAdjustment,
+        followUpStatus: 'completed',
       };
 
       // Create the medical evaluation
@@ -339,18 +357,29 @@ export default function MedicalEvaluationPage() {
               </h2>
 
               <div className="space-y-6">
-                <div>
-                  <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
-                    Nome do Médico(a)
-                  </Label>
-                  <input
-                    type="text"
-                    value={formData.doctorName}
-                    onChange={(e) => setFormData({ ...formData, doctorName: e.target.value })}
-                    className="w-full px-4 py-3 border border-secondary rounded-lg font-paragraph focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Dr(a). Seu nome"
-                    required
-                  />
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Nome do Médico(a)</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.fullName || professional?.email}</p>
+                </div>
+
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">ID do Profissional</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?._id}</p>
+                </div>
+
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Hospital</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.hospital}</p>
+                </div>
+
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Cargo</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">Médico(a)</p>
+                </div>
+
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">E-mail Institucional</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.email}</p>
                 </div>
 
                 <div>
