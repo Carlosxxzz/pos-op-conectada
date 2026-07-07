@@ -427,252 +427,161 @@ export default function NursingEvaluationPage() {
               </div>
             </div>
 
-            {/* Selected Checklist or Referral Form */}
-            <AnimatePresence mode="wait">
-              {!showReferralFlow ? (
-                <motion.div
-                  key="checklist"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white rounded-2xl p-8 border border-secondary/20"
-                >
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="font-heading text-2xl font-bold text-foreground">
-                        Checklist para Avaliação
-                      </h2>
-                      <p className="font-paragraph text-sm text-foreground/60 mt-1">
-                        {new Date(selectedChecklist.checklistDate || '').toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    </div>
-                    <span className={`font-paragraph text-sm font-semibold px-4 py-2 rounded-full ${
-                      selectedChecklist.riskLevel === 'critical' 
-                        ? 'bg-critical/10 text-critical'
-                        : selectedChecklist.riskLevel === 'attention'
-                        ? 'bg-attention/10 text-attention-foreground'
-                        : 'bg-stable/10 text-stable'
-                    }`}>
-                      {selectedChecklist.riskLevel === 'critical' 
-                        ? 'CRÍTICO'
-                        : selectedChecklist.riskLevel === 'attention'
-                        ? 'ATENÇÃO'
-                        : 'ESTÁVEL'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/60 mb-1">Nível de Dor</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">
-                        {selectedChecklist.painLevel}/10
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/60 mb-1">Temperatura</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">
-                        {selectedChecklist.bodyTemperature}°C
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/60 mb-1">Febre</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">
-                        {selectedChecklist.hasFever ? 'Sim' : 'Não'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/60 mb-1">Vermelhidão</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">
-                        {selectedChecklist.scarRedness ? 'Sim' : 'Não'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/60 mb-1">Secreção</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">
-                        {selectedChecklist.hasSecretion ? 'Sim' : 'Não'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/60 mb-1">Mau Cheiro</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">
-                        {selectedChecklist.hasBadOdor ? 'Sim' : 'Não'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/60 mb-1">Falta de Ar</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">
-                        {selectedChecklist.shortnessOfBreath ? 'Sim' : 'Não'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/60 mb-1">Tontura</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">
-                        {selectedChecklist.dizziness ? 'Sim' : 'Não'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/60 mb-1">Medicação</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">
-                        {selectedChecklist.takingMedicationCorrectly ? 'Sim' : 'Não'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Medications Section */}
-                  {selectedChecklist.takingMedicationCorrectly && medicationsByChecklist[selectedChecklist._id]?.length > 0 && (
-                    <div className="mt-8 pt-8 border-t border-secondary/20">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Pill className="w-5 h-5 text-primary" />
-                        <h3 className="font-heading text-lg font-bold text-foreground">Medicamentos Tomados</h3>
-                      </div>
-                      <div className="space-y-3">
-                        {medicationsByChecklist[selectedChecklist._id].map((med) => (
-                          <div key={med._id} className="bg-background rounded-lg p-4 border border-secondary/10">
-                            <div className="grid grid-cols-3 gap-4">
-                              <div>
-                                <p className="font-paragraph text-xs text-foreground/60 mb-1">Medicamento</p>
-                                <p className="font-paragraph text-sm font-semibold text-foreground">{med.medicationName}</p>
-                              </div>
-                              <div>
-                                <p className="font-paragraph text-xs text-foreground/60 mb-1">Horário</p>
-                                <p className="font-paragraph text-sm font-semibold text-foreground">{med.timeTaken}</p>
-                              </div>
-                              <div>
-                                <p className="font-paragraph text-xs text-foreground/60 mb-1">Dose</p>
-                                <p className="font-paragraph text-sm font-semibold text-foreground">{med.doseQuantity}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Medication Not Taken Reason */}
-                  {!selectedChecklist.takingMedicationCorrectly && selectedChecklist.reasonNotTakingMedication && (
-                    <div className="mt-8 pt-8 border-t border-secondary/20">
-                      <div className="flex items-center gap-2 mb-4">
-                        <AlertTriangle className="w-5 h-5 text-attention" />
-                        <h3 className="font-heading text-lg font-bold text-foreground">Motivo - Não Tomou Medicação</h3>
-                      </div>
-                      <div className="bg-attention/10 rounded-lg p-4 border border-attention/20">
-                        <p className="font-paragraph text-sm text-foreground">{selectedChecklist.reasonNotTakingMedication}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedChecklist.scarPhoto && (
-                    <div className="mt-6">
-                      <div className="flex items-center gap-2 mb-3">
-                        <ImageIcon className="w-5 h-5 text-primary" />
-                        <p className="font-paragraph text-sm font-semibold text-foreground">Foto da Cicatriz</p>
-                      </div>
-                      <Image
-                        src={selectedChecklist.scarPhoto}
-                        alt="Foto da cicatriz"
-                        width={400}
-                        className="rounded-xl border border-secondary/20 max-w-md"
-                      />
-                    </div>
-                  )}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="referral"
-                  id="referral-form"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white rounded-2xl p-8 border border-secondary/20"
-                >
-                  <div className="mb-8">
-                    <h2 className="font-heading text-2xl font-bold text-foreground mb-2">
-                      Encaminhamento Médico
+            {/* Selected Checklist */}
+            {!showReferralFlow && (
+              <motion.div
+                key="checklist"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-2xl p-8 border border-secondary/20"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="font-heading text-2xl font-bold text-foreground">
+                      Checklist para Avaliação
                     </h2>
-                    <p className="font-paragraph text-sm text-foreground/60">
-                      Preencha os dados para encaminhar o paciente para avaliação médica
+                    <p className="font-paragraph text-sm text-foreground/60 mt-1">
+                      {new Date(selectedChecklist.checklistDate || '').toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </p>
                   </div>
+                  <span className={`font-paragraph text-sm font-semibold px-4 py-2 rounded-full ${
+                    selectedChecklist.riskLevel === 'critical' 
+                      ? 'bg-critical/10 text-critical'
+                      : selectedChecklist.riskLevel === 'attention'
+                      ? 'bg-attention/10 text-attention-foreground'
+                      : 'bg-stable/10 text-stable'
+                  }`}>
+                    {selectedChecklist.riskLevel === 'critical' 
+                      ? 'CRÍTICO'
+                      : selectedChecklist.riskLevel === 'attention'
+                      ? 'ATENÇÃO'
+                      : 'ESTÁVEL'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Nível de Dor</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">
+                      {selectedChecklist.painLevel}/10
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Temperatura</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">
+                      {selectedChecklist.bodyTemperature}°C
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Febre</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">
+                      {selectedChecklist.hasFever ? 'Sim' : 'Não'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Vermelhidão</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">
+                      {selectedChecklist.scarRedness ? 'Sim' : 'Não'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Secreção</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">
+                      {selectedChecklist.hasSecretion ? 'Sim' : 'Não'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Mau Cheiro</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">
+                      {selectedChecklist.hasBadOdor ? 'Sim' : 'Não'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Falta de Ar</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">
+                      {selectedChecklist.shortnessOfBreath ? 'Sim' : 'Não'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Tontura</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">
+                      {selectedChecklist.dizziness ? 'Sim' : 'Não'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Medicação</p>
+                    <p className="font-paragraph text-base font-semibold text-foreground">
+                      {selectedChecklist.takingMedicationCorrectly ? 'Sim' : 'Não'}
+                    </p>
+                  </div>
+                </div>
 
-                  <div className="space-y-6">
-                    {/* Referral Reason */}
-                    <div>
-                      <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
-                        Motivo do Encaminhamento *
-                      </Label>
-                      <Textarea
-                        value={referralReason}
-                        onChange={(e) => setReferralReason(e.target.value)}
-                        className="font-paragraph min-h-[120px]"
-                        placeholder="Descreva o motivo do encaminhamento. Ex: Paciente apresentou febre persistente e secreção na incisão cirúrgica..."
-                        required
-                      />
-                      <p className="font-paragraph text-xs text-foreground/60 mt-2">
-                        Este texto será visualizado pelo médico
-                      </p>
+                {/* Medications Section */}
+                {selectedChecklist.takingMedicationCorrectly && medicationsByChecklist[selectedChecklist._id]?.length > 0 && (
+                  <div className="mt-8 pt-8 border-t border-secondary/20">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Pill className="w-5 h-5 text-primary" />
+                      <h3 className="font-heading text-lg font-bold text-foreground">Medicamentos Tomados</h3>
                     </div>
-
-                    {/* Doctor Selection */}
-                    <div>
-                      <Label className="font-paragraph text-sm font-semibold text-foreground mb-3 block">
-                        Selecionar Médico *
-                      </Label>
-                      {doctors.length === 0 ? (
-                        <div className="bg-attention/10 rounded-lg p-4 border border-attention/20">
-                          <p className="font-paragraph text-sm text-foreground">
-                            Nenhum médico disponível no seu hospital no momento.
-                          </p>
+                    <div className="space-y-3">
+                      {medicationsByChecklist[selectedChecklist._id].map((med) => (
+                        <div key={med._id} className="bg-background rounded-lg p-4 border border-secondary/10">
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <p className="font-paragraph text-xs text-foreground/60 mb-1">Medicamento</p>
+                              <p className="font-paragraph text-sm font-semibold text-foreground">{med.medicationName}</p>
+                            </div>
+                            <div>
+                              <p className="font-paragraph text-xs text-foreground/60 mb-1">Horário</p>
+                              <p className="font-paragraph text-sm font-semibold text-foreground">{med.timeTaken}</p>
+                            </div>
+                            <div>
+                              <p className="font-paragraph text-xs text-foreground/60 mb-1">Dose</p>
+                              <p className="font-paragraph text-sm font-semibold text-foreground">{med.doseQuantity}</p>
+                            </div>
+                          </div>
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {doctors.map((doctor) => (
-                            <motion.div
-                              key={doctor._id}
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => setSelectedDoctor(doctor)}
-                              className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                selectedDoctor?._id === doctor._id
-                                  ? 'border-primary bg-primary/5'
-                                  : 'border-secondary/20 bg-background hover:border-primary/50'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <p className="font-paragraph font-semibold text-foreground">{doctor.fullName}</p>
-                                  <div className="flex items-center gap-4 mt-2">
-                                    <div className="flex items-center gap-1">
-                                      <User className="w-4 h-4 text-foreground/60" />
-                                      <p className="font-paragraph text-xs text-foreground/60">{doctor.specialty}</p>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <Building2 className="w-4 h-4 text-foreground/60" />
-                                      <p className="font-paragraph text-xs text-foreground/60">{doctor.hospital}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                                {selectedDoctor?._id === doctor._id && (
-                                  <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                                    <div className="w-2 h-2 bg-primary-foreground rounded-full" />
-                                  </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      )}
+                      ))}
                     </div>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                )}
+
+                {/* Medication Not Taken Reason */}
+                {!selectedChecklist.takingMedicationCorrectly && selectedChecklist.reasonNotTakingMedication && (
+                  <div className="mt-8 pt-8 border-t border-secondary/20">
+                    <div className="flex items-center gap-2 mb-4">
+                      <AlertTriangle className="w-5 h-5 text-attention" />
+                      <h3 className="font-heading text-lg font-bold text-foreground">Motivo - Não Tomou Medicação</h3>
+                    </div>
+                    <div className="bg-attention/10 rounded-lg p-4 border border-attention/20">
+                      <p className="font-paragraph text-sm text-foreground">{selectedChecklist.reasonNotTakingMedication}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedChecklist.scarPhoto && (
+                  <div className="mt-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <ImageIcon className="w-5 h-5 text-primary" />
+                      <p className="font-paragraph text-sm font-semibold text-foreground">Foto da Cicatriz</p>
+                    </div>
+                    <Image
+                      src={selectedChecklist.scarPhoto}
+                      alt="Foto da cicatriz"
+                      width={400}
+                      className="rounded-xl border border-secondary/20 max-w-md"
+                    />
+                  </div>
+                )}
+              </motion.div>
+            )}
 
             {/* Other Pending Checklists */}
             {checklists.length > 1 && (
@@ -700,62 +609,60 @@ export default function NursingEvaluationPage() {
             )}
           </div>
 
-          {/* Right Sidebar - Evaluation Form or Referral Form */}
+          {/* Right Sidebar - Evaluation Form with Referral Section */}
           <div className="lg:col-span-1">
-            <AnimatePresence mode="wait">
-              {!showReferralFlow ? (
-                <motion.form
-                  key="evaluation-form"
-                  onSubmit={handleSubmitEvaluation}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white rounded-2xl p-8 border border-secondary/20 sticky top-8"
-                >
-                  <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
-                    Avaliação de Enfermagem
-                  </h2>
+            <motion.form
+              onSubmit={handleSubmitEvaluation}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white rounded-2xl p-8 border border-secondary/20 sticky top-8"
+            >
+              <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
+                Avaliação de Enfermagem
+              </h2>
 
-                  <div className="space-y-6">
-                    {/* Professional Info - Read Only */}
-                    <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                      <div className="flex items-center gap-2 mb-2">
-                        <User className="w-4 h-4 text-primary" />
-                        <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Profissional</p>
-                      </div>
-                      <p className="font-paragraph text-base font-semibold text-foreground">{professional?.fullName || professional?.email}</p>
-                    </div>
+              <div className="space-y-6">
+                {/* Professional Info - Read Only */}
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-4 h-4 text-primary" />
+                    <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Profissional</p>
+                  </div>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.fullName || professional?.email}</p>
+                </div>
 
-                    <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                      <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-2">ID do Profissional</p>
-                      <p className="font-paragraph text-sm font-mono text-foreground">{professional?._id?.substring(0, 12)}...</p>
-                    </div>
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-2">ID do Profissional</p>
+                  <p className="font-paragraph text-sm font-mono text-foreground">{professional?._id?.substring(0, 12)}...</p>
+                </div>
 
-                    <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Building2 className="w-4 h-4 text-primary" />
-                        <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Hospital</p>
-                      </div>
-                      <p className="font-paragraph text-base font-semibold text-foreground">{professional?.hospital}</p>
-                    </div>
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Hospital</p>
+                  </div>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{professional?.hospital}</p>
+                </div>
 
-                    <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                      <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-2">Cargo</p>
-                      <p className="font-paragraph text-base font-semibold text-foreground">Enfermeiro(a)</p>
-                    </div>
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-2">Cargo</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">Enfermeiro(a)</p>
+                </div>
 
-                    <div className="bg-background rounded-lg p-4 border border-secondary/20">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="w-4 h-4 text-primary" />
-                        <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Data/Hora</p>
-                      </div>
-                      <p className="font-paragraph text-sm text-foreground">
-                        {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
+                <div className="bg-background rounded-lg p-4 border border-secondary/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide">Data/Hora</p>
+                  </div>
+                  <p className="font-paragraph text-sm text-foreground">
+                    {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
 
-                    <div className="border-t border-secondary/30 pt-6">
+                <div className="border-t border-secondary/30 pt-6">
+                  {!formData.referredToDoctor ? (
+                    <>
                       <div className="mb-6">
                         <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
                           Observações Clínicas *
@@ -846,122 +753,108 @@ export default function NursingEvaluationPage() {
                           </>
                         )}
                       </Button>
-                    </div>
-                  </div>
-                </motion.form>
-              ) : (
-                <motion.div
-                  key="referral-form"
-                  id="referral-form"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white rounded-2xl p-8 border border-secondary/20 sticky top-8"
-                >
-                  <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
-                    Encaminhamento Médico
-                  </h2>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="font-heading text-lg font-bold text-foreground mb-6">
+                        Encaminhamento Médico
+                      </h3>
 
-                  <div className="space-y-6">
-                    {/* Referral Reason */}
-                    <div>
-                      <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
-                        Motivo do Encaminhamento *
-                      </Label>
-                      <Textarea
-                        value={referralReason}
-                        onChange={(e) => setReferralReason(e.target.value)}
-                        className="font-paragraph min-h-[120px]"
-                        placeholder="Descreva o motivo do encaminhamento. Ex: Paciente apresentou febre persistente e secreção na incisão cirúrgica..."
-                        required
-                      />
-                      <p className="font-paragraph text-xs text-foreground/60 mt-2">
-                        Este texto será visualizado pelo médico
-                      </p>
-                    </div>
+                      {/* Referral Reason */}
+                      <div className="mb-6">
+                        <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
+                          Motivo do Encaminhamento *
+                        </Label>
+                        <Textarea
+                          value={referralReason}
+                          onChange={(e) => setReferralReason(e.target.value)}
+                          className="font-paragraph min-h-[100px]"
+                          placeholder="Descreva o motivo do encaminhamento..."
+                          required
+                        />
+                        <p className="font-paragraph text-xs text-foreground/60 mt-2">
+                          Este texto será visualizado pelo médico
+                        </p>
+                      </div>
 
-                    {/* Doctor Selection */}
-                    <div>
-                      <Label className="font-paragraph text-sm font-semibold text-foreground mb-3 block">
-                        Selecionar Médico *
-                      </Label>
-                      {doctors.length === 0 ? (
-                        <div className="bg-attention/10 rounded-lg p-4 border border-attention/20">
-                          <p className="font-paragraph text-sm text-foreground">
-                            Nenhum médico disponível no seu hospital no momento.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {doctors.map((doctor) => (
-                            <motion.div
-                              key={doctor._id}
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              onClick={() => setSelectedDoctor(doctor)}
-                              className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                selectedDoctor?._id === doctor._id
-                                  ? 'border-primary bg-primary/5'
-                                  : 'border-secondary/20 bg-background hover:border-primary/50'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <p className="font-paragraph font-semibold text-foreground">{doctor.fullName}</p>
-                                  <div className="flex items-center gap-4 mt-2">
-                                    <div className="flex items-center gap-1">
-                                      <User className="w-4 h-4 text-foreground/60" />
-                                      <p className="font-paragraph text-xs text-foreground/60">{doctor.specialty}</p>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                      <Building2 className="w-4 h-4 text-foreground/60" />
-                                      <p className="font-paragraph text-xs text-foreground/60">{doctor.hospital}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                                {selectedDoctor?._id === doctor._id && (
-                                  <div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                                    <div className="w-2 h-2 bg-primary-foreground rounded-full" />
-                                  </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="pt-6 border-t border-secondary/30 space-y-3">
-                      <Button
-                        onClick={handleSubmitEvaluation}
-                        disabled={isSaving || !referralReason || !selectedDoctor}
-                        className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 rounded-lg"
-                      >
-                        {isSaving ? (
-                          'Encaminhando...'
+                      {/* Doctor Selection */}
+                      <div className="mb-6">
+                        <Label className="font-paragraph text-sm font-semibold text-foreground mb-3 block">
+                          Selecionar Médico *
+                        </Label>
+                        {doctors.length === 0 ? (
+                          <div className="bg-attention/10 rounded-lg p-4 border border-attention/20">
+                            <p className="font-paragraph text-sm text-foreground">
+                              Nenhum médico disponível no seu hospital no momento.
+                            </p>
+                          </div>
                         ) : (
-                          <>
-                            <ArrowRight className="w-5 h-5 mr-2" />
-                            Encaminhar para o Médico
-                          </>
+                          <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                            {doctors.map((doctor) => (
+                              <motion.div
+                                key={doctor._id}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => setSelectedDoctor(doctor)}
+                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                  selectedDoctor?._id === doctor._id
+                                    ? 'border-primary bg-primary/5'
+                                    : 'border-secondary/20 bg-background hover:border-primary/50'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <p className="font-paragraph font-semibold text-sm text-foreground">{doctor.fullName}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <div className="flex items-center gap-1">
+                                        <User className="w-3 h-3 text-foreground/60" />
+                                        <p className="font-paragraph text-xs text-foreground/60">{doctor.specialty}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {selectedDoctor?._id === doctor._id && (
+                                    <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <div className="w-1.5 h-1.5 bg-primary-foreground rounded-full" />
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
                         )}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleReferralToggle('no')}
-                        className="w-full font-paragraph font-semibold py-6 rounded-lg"
-                      >
-                        <ArrowLeft className="w-5 h-5 mr-2" />
-                        Voltar para Avaliação
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="pt-4 border-t border-secondary/30 space-y-3">
+                        <Button
+                          onClick={handleSubmitEvaluation}
+                          disabled={isSaving || !referralReason || !selectedDoctor}
+                          className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 rounded-lg"
+                        >
+                          {isSaving ? (
+                            'Encaminhando...'
+                          ) : (
+                            <>
+                              <ArrowRight className="w-5 h-5 mr-2" />
+                              Encaminhar
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleReferralToggle('no')}
+                          className="w-full font-paragraph font-semibold py-6 rounded-lg"
+                        >
+                          <ArrowLeft className="w-5 h-5 mr-2" />
+                          Voltar
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </motion.form>
           </div>
         </div>
       </div>
