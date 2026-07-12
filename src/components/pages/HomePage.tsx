@@ -137,35 +137,35 @@ function HeroSection() {
   const yText = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
 
   return (
-    <section ref={sectionRef} className="relative w-full min-h-[90vh] pt-24 flex items-center overflow-hidden bg-background hairline-grid">
+    <section ref={sectionRef} className="relative w-full min-h-screen pt-24 pb-12 md:pb-20 flex items-center bg-background hairline-grid">
       <div className="absolute inset-0 z-0 opacity-40">
         <div className="absolute top-0 left-1/4 w-1/2 h-full bg-gradient-to-r from-transparent via-secondary/20 to-transparent transform -skew-x-12" />
       </div>
 
-      <div className="w-full max-w-[120rem] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
+      <div className="w-full max-w-[120rem] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start lg:items-center relative z-10">
         
         <motion.div 
           style={{ opacity: opacityText, y: yText }}
-          className="lg:col-span-6 flex flex-col justify-center pt-12 lg:pt-0"
+          className="lg:col-span-6 flex flex-col justify-center pt-8 md:pt-12 lg:pt-0"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 w-fit mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 w-fit mb-6 md:mb-8">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span className="text-xs font-bold text-primary tracking-wider uppercase">Monitoramento Contínuo</span>
           </div>
           
-          <h1 className="font-heading text-5xl md:text-7xl font-bold text-foreground leading-[1.1] mb-6 tracking-tight">
+          <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] mb-4 md:mb-6 tracking-tight">
             Precisão no <br/>
             <span className="text-gradient">Pós-Operatório.</span>
           </h1>
           
-          <p className="text-lg md:text-xl text-foreground/70 mb-10 max-w-2xl leading-relaxed">
+          <p className="text-base md:text-lg lg:text-xl text-foreground/70 mb-8 md:mb-10 max-w-2xl leading-relaxed">
             Plataforma digital para hospitais públicos. Reduzimos complicações após a alta hospitalar através de monitoramento remoto, triagem inteligente e conexão direta entre pacientes e equipes médicas.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 pb-4">
             <Link
               to="/patient-login"
-              className="group relative inline-flex items-center justify-center px-8 py-4 bg-primary text-primary-foreground font-bold rounded-xl overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              className="group relative inline-flex items-center justify-center px-6 md:px-8 py-3 md:py-4 bg-primary text-primary-foreground font-bold rounded-xl overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98]"
             >
               <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
               <span className="relative flex items-center gap-2">
@@ -175,14 +175,14 @@ function HeroSection() {
             </Link>
             <Link
               to="/professional-login"
-              className="inline-flex items-center justify-center px-8 py-4 bg-transparent text-foreground border-2 border-secondary/50 font-bold rounded-xl hover:bg-secondary/10 hover:border-primary/50 transition-all"
+              className="inline-flex items-center justify-center px-6 md:px-8 py-3 md:py-4 bg-transparent text-foreground border-2 border-secondary/50 font-bold rounded-xl hover:bg-secondary/10 hover:border-primary/50 transition-all"
             >
               Acesso Profissional
             </Link>
           </div>
         </motion.div>
 
-        <div className="lg:col-span-6 relative h-[60vh] lg:h-[80vh] w-full rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 border border-white/20">
+        <div className="lg:col-span-6 relative h-[50vh] md:h-[60vh] lg:h-[80vh] w-full rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 border border-white/20">
           <motion.div style={{ y: yImage }} className="absolute inset-[-10%] w-[120%] h-[120%]">
             <Image 
               src={PLACEHOLDER_IMG} 
@@ -197,10 +197,10 @@ function HeroSection() {
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="absolute bottom-8 left-8 right-8 glass-panel rounded-2xl p-6 flex items-center justify-between"
+            className="absolute bottom-4 md:bottom-8 left-4 md:left-8 right-4 md:right-8 glass-panel rounded-2xl p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-stable/20 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-stable/20 flex items-center justify-center flex-shrink-0">
                 <CheckCircle2 className="w-6 h-6 text-stable" />
               </div>
               <div>
