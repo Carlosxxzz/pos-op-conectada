@@ -37,8 +37,9 @@ const MEDICATION_REASONS = [
 const TIME_OPTIONS = (() => {
   const times: string[] = [];
   for (let hour = 0; hour < 24; hour++) {
-    times.push(`${String(hour).padStart(2, '0')}:00`);
-    times.push(`${String(hour).padStart(2, '0')}:30`);
+    for (let minute = 0; minute < 60; minute += 10) {
+      times.push(`${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
+    }
   }
   return times;
 })();
