@@ -49,14 +49,7 @@ export default function PatientChecklistPage() {
     reasonNotTakingMedication: '',
   });
 
-  const [medications, setMedications] = useState<MedicationEntry[]>([
-    {
-      id: crypto.randomUUID(),
-      medicationName: '',
-      timeTaken: '',
-      doseQuantity: '',
-    },
-  ]);
+  const [medications, setMedications] = useState<MedicationEntry[]>([]);
 
   useEffect(() => {
     loadPatient();
@@ -173,7 +166,8 @@ export default function PatientChecklistPage() {
         increasingPain: formData.increasingPain,
         takingMedicationCorrectly: formData.takingMedicationCorrectly,
         eatingNormally: formData.eatingNormally,
-        reasonNotTakingMedication: formData.reasonNotTakingMedication,
+        // Only save reason if not taking medication correctly
+        reasonNotTakingMedication: formData.takingMedicationCorrectly ? '' : formData.reasonNotTakingMedication,
         riskLevel,
         scarPhoto: '',
         status: 'Aguardando Avaliação de Enfermagem',

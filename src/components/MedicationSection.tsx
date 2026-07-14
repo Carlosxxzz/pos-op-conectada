@@ -70,6 +70,32 @@ export default function MedicationSection({
     }
   };
 
+  // Handle switching between Yes and No
+  const handleMedicationToggle = (value: string) => {
+    const isYes = value === 'yes';
+    
+    if (isYes) {
+      // Switching to YES: clear reason and reset medications to single empty entry
+      onReasonChange('');
+      setOtherReason('');
+      onMedicationsChange([
+        {
+          id: crypto.randomUUID(),
+          medicationName: '',
+          timeTaken: '',
+          doseQuantity: '',
+        },
+      ]);
+    } else {
+      // Switching to NO: clear all medications
+      onMedicationsChange([]);
+      onReasonChange('');
+      setOtherReason('');
+    }
+    
+    onMedicationChange(isYes);
+  };
+
   const handleMedicationNameChange = (id: string, value: string) => {
     const updated = medications.map(m => 
       m.id === id ? { ...m, medicationName: value } : m
@@ -121,7 +147,20 @@ export default function MedicationSection({
   };
 
   const removeMedication = (id: string) => {
-    onMedicationsChange(medications.filter(m => m.id !== id));
+    const filtered = medications.filter(m => m.id !== id);
+    // Ensure at least one empty medication entry remains
+    if (filtered.length === 0) {
+      onMedicationsChange([
+        {
+          id: crypto.randomUUID(),
+          medicationName: '',
+          timeTaken: '',
+          doseQuantity: '',
+        },
+      ]);
+    } else {
+      onMedicationsChange(filtered);
+    }
   };
 
   return (
@@ -138,14 +177,7 @@ export default function MedicationSection({
           </Label>
           <RadioGroup
             value={takingMedicationCorrectly ? 'yes' : 'no'}
-            onValueChange={(value) => {
-              const isYes = value === 'yes';
-              onMedicationChange(isYes);
-              if (isYes) {
-                onReasonChange('');
-                setOtherReason('');
-              }
-            }}
+            onValueChange={handleMedicationToggle}
             className="flex gap-4"
           >
             <div className="flex items-center space-x-2">
