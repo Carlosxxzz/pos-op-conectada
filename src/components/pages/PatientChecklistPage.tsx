@@ -337,7 +337,6 @@ export default function PatientChecklistPage() {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mb-8">
@@ -410,9 +409,7 @@ export default function PatientChecklistPage() {
                 </RadioGroup>
               </div>
               <div>
-                <Label htmlFor="temperature" className="font-paragraph text-2xl font-bold text-foreground mb-4 block">
-                  Temperatura (°C)
-                </Label>
+
                 <TemperatureInput
                   value={formData.bodyTemperature}
                   onChange={(temp) => setFormData({ ...formData, bodyTemperature: temp })}
