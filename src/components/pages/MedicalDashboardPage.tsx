@@ -48,12 +48,13 @@ export default function MedicalDashboardPage() {
       console.log('[MEDICAL] Total de checklists no banco:', allChecklists.length);
       console.log('[MEDICAL] Total de encaminhamentos no banco:', allReferrals.length);
 
-      // Filter referrals: only those for this doctor AND not yet evaluated (status not 'Alta' or 'Continuidade')
+      // Filter referrals: only those for this doctor AND awaiting medical evaluation
       const referralsForThisDoctor = allReferrals.filter((referral: any) => {
         const isForThisDoctor = referral.doctorId === professionalId;
-        const isNotEvaluated = referral.status !== 'Alta' && referral.status !== 'Continuidade' && referral.status !== 'Avaliado';
+        // Only show referrals with status 'Encaminhado ao Médico' (awaiting medical evaluation)
+        const isAwaitingEvaluation = referral.status === 'Encaminhado ao Médico';
         
-        return isForThisDoctor && isNotEvaluated;
+        return isForThisDoctor && isAwaitingEvaluation;
       });
 
       console.log('[MEDICAL] Encaminhamentos para este médico:', {

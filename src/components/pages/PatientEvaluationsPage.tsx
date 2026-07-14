@@ -43,16 +43,16 @@ export default function PatientEvaluationsPage() {
       const { items: checklists } = await BaseCrudService.getAll<any>('checklistsdiarios');
 
       // Combine evaluations with their medical counterparts
-      // IMPORTANT: Only show nursing evaluations that are NOT awaiting medical evaluation
+      // IMPORTANT: Only show evaluations that have completed medical evaluation
       const combined: EvaluationWithMedical[] = patientNursingEvals
         .filter(nursing => {
-          // Find the checklist for this nursing evaluation
-          const checklist = checklists.find(c => c._id === nursing.checklistId);
-          // Only include if NOT awaiting medical evaluation
-          return checklist?.status !== 'Aguardando Avaliação Médica';
+          // Find if there's a medical evaluation for this checklist
+          const medical = medicalEvals.find(m => m.checklistId === nursing.checklistId);
+          // Only include if there's a completed medical evaluation
+          return medical !== undefined;
         })
         .map(nursing => {
-          const medical = medicalEvals.find(m => m.nursingEvaluationId === nursing._id);
+          const medical = medicalEvals.find(m => m.checklistId === nursing.checklistId);
           return {
             ...nursing,
             medicalEvaluation: medical

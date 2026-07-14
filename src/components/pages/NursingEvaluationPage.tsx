@@ -283,8 +283,9 @@ export default function NursingEvaluationPage() {
         const notificationId = crypto.randomUUID();
         const patientNotification = {
           _id: notificationId,
+          recipientId: id,
           recipientType: 'Paciente',
-          message: 'Sua avaliação está sendo analisada pela equipe médica. Aguarde a resposta do médico.',
+          message: 'Sua avaliação foi encaminhada para um médico da equipe. Aguarde a análise do profissional. Você será notificado assim que a avaliação médica for concluída.',
           notificationType: 'Encaminhamento',
           isRead: false,
           timestamp: now,

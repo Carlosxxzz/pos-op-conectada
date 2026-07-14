@@ -181,6 +181,7 @@ export default function MedicalEvaluationPage() {
       const notificationId = crypto.randomUUID();
       const patientNotification = {
         _id: notificationId,
+        recipientId: id,
         recipientType: 'Paciente',
         message: `Sua avaliação médica foi concluída. ${formData.needsFollowUp ? 'Você necessita de novo acompanhamento.' : 'Você recebeu alta médica.'}`,
         notificationType: 'Avaliação Médica',
