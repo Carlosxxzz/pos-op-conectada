@@ -49,17 +49,26 @@ export default function PatientHistoryPage() {
 
       // Load referral status for each checklist
       const { items: allReferrals } = await BaseCrudService.getAll('encaminhamentosmedicos');
+      const { items: nursingEvals } = await BaseCrudService.getAll('avaliacoesenfermagem');
+      const { items: medicalEvals } = await BaseCrudService.getAll('avaliacoesmedicas');
       const statusMap: { [key: string]: string } = {};
       
       patientChecklists.forEach(checklist => {
         const referral = allReferrals.find((r: any) => r.checklistId === checklist._id && r.patientId === patientId);
-        if (referral) {
-          // Map referral status to display status
-          if (referral.status === 'CONCLUIDO') {
-            statusMap[checklist._id] = 'Avaliação Concluída';
-          } else {
-            statusMap[checklist._id] = referral.status;
-          }
+        const nursing = nursingEvals.find((n: any) => n.checklistId === checklist._id);
+        const medical = medicalEvals.find((m: any) => m.checklistId === checklist._id);
+        
+        // CASE 1: Nursing evaluation finalized (no referral)
+        if (nursing && !referral && !medical) {
+          statusMap[checklist._id] = 'Avaliação Finalizada';
+        }
+        // CASE 2: Medical evaluation completed
+        else if (medical) {
+          statusMap[checklist._id] = 'Avaliação Concluída';
+        }
+        // CASE 3: Referral pending
+        else if (referral && referral.status !== 'CONCLUIDO') {
+          statusMap[checklist._id] = 'Aguardando Avaliação Médica';
         }
       });
       

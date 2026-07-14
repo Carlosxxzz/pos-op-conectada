@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, CheckCircle, AlertTriangle, ShieldAlert, Award, Pill, ArrowRight } from 'lucide-react';
+import { Activity, ArrowLeft, CheckCircle, AlertTriangle, ShieldAlert, Award, Pill, ArrowRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
-import type { AvaliaesdeEnfermagem, AvaliaesMdicas, Pacientes } from '@/entities';
+import type { AvaliaesdeEnfermagem, AvaliaesMdicas, Pacientes, ChecklistsDirios } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-interface EvaluationWithMedical extends AvaliaesdeEnfermagem {
-  medicalEvaluation?: AvaliaesMdicas;
+interface EvaluationRecord {
+  type: 'nursing' | 'medical' | 'pending';
+  checklistId: string;
+  checklistDate: Date | string;
+  nursing?: AvaliaesdeEnfermagem;
+  medical?: AvaliaesMdicas;
+  checklist?: ChecklistsDirios;
 }
 
 export default function PatientEvaluationsPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
-  const [evaluations, setEvaluations] = useState<EvaluationWithMedical[]>([]);
+  const [evaluations, setEvaluations] = useState<EvaluationRecord[]>([]);
   const [patient, setPatient] = useState<Pacientes | null>(null);
 
   useEffect(() => {
@@ -32,39 +37,60 @@ export default function PatientEvaluationsPage() {
       const patientData = await BaseCrudService.getById<Pacientes>('pacientes', patientId);
       setPatient(patientData);
 
-      // Load nursing evaluations for this patient
+      // Load all necessary data
       const { items: nursingEvals } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
-      const patientNursingEvals = nursingEvals.filter(e => e.patientId === patientId);
-
-      // Load medical evaluations
       const { items: medicalEvals } = await BaseCrudService.getAll<AvaliaesMdicas>('avaliacoesmedicas');
+      const { items: checklists } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
+      const { items: referrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
 
-      // Load checklists to check referral status
-      const { items: checklists } = await BaseCrudService.getAll<any>('checklistsdiarios');
+      const patientChecklists = checklists.filter(c => c.patientId === patientId);
+      const evaluationRecords: EvaluationRecord[] = [];
 
-      // Combine evaluations with their medical counterparts
-      // IMPORTANT: Only show evaluations that have completed medical evaluation
-      const combined: EvaluationWithMedical[] = patientNursingEvals
-        .filter(nursing => {
-          // Find if there's a medical evaluation for this checklist
-          const medical = medicalEvals.find(m => m.checklistId === nursing.checklistId);
-          // Only include if there's a completed medical evaluation
-          return medical !== undefined;
-        })
-        .map(nursing => {
-          const medical = medicalEvals.find(m => m.checklistId === nursing.checklistId);
-          return {
-            ...nursing,
-            medicalEvaluation: medical
-          };
-        });
+      // Process each checklist
+      patientChecklists.forEach(checklist => {
+        const nursing = nursingEvals.find(e => e.checklistId === checklist._id);
+        const medical = medicalEvals.find(m => m.checklistId === checklist._id);
+        const referral = referrals.find(r => r.checklistId === checklist._id && r.patientId === patientId);
+
+        // CASE 1: Nursing evaluation finalized (no referral)
+        if (nursing && !referral && !medical) {
+          evaluationRecords.push({
+            type: 'nursing',
+            checklistId: checklist._id,
+            checklistDate: nursing.checklistDate || checklist.checklistDate,
+            nursing,
+            checklist
+          });
+        }
+        // CASE 2: Medical evaluation completed (after referral)
+        else if (medical) {
+          evaluationRecords.push({
+            type: 'medical',
+            checklistId: checklist._id,
+            checklistDate: medical.evaluationDate || checklist.checklistDate,
+            nursing,
+            medical,
+            checklist
+          });
+        }
+        // CASE 3: Referral pending (awaiting medical evaluation)
+        else if (referral && referral.status !== 'CONCLUIDO') {
+          evaluationRecords.push({
+            type: 'pending',
+            checklistId: checklist._id,
+            checklistDate: referral.referralDate || checklist.checklistDate,
+            nursing,
+            checklist
+          });
+        }
+      });
 
       // Sort by date (newest first)
-      combined.sort((a, b) => 
+      evaluationRecords.sort((a, b) => 
         new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()
       );
 
-      setEvaluations(combined);
+      setEvaluations(evaluationRecords);
     } catch (error) {
       console.error('Error loading evaluations:', error);
     } finally {
@@ -96,10 +122,6 @@ export default function PatientEvaluationsPage() {
       default:
         return 'Desconhecido';
     }
-  };
-
-  const isDischargedFromFollowUp = (medical?: AvaliaesMdicas) => {
-    return medical?.followUpStatus === 'Alta' || medical?.followUpStatus === 'Alta concedida';
   };
 
   if (isLoading) {
@@ -150,7 +172,7 @@ export default function PatientEvaluationsPage() {
           <div className="space-y-6">
             {evaluations.map((evaluation) => (
               <EvaluationCard 
-                key={evaluation._id} 
+                key={evaluation.checklistId} 
                 evaluation={evaluation}
                 getStatusIcon={getStatusIcon}
                 getStatusLabel={getStatusLabel}
@@ -179,36 +201,47 @@ export default function PatientEvaluationsPage() {
 }
 
 interface EvaluationCardProps {
-  evaluation: EvaluationWithMedical;
+  evaluation: EvaluationRecord;
   getStatusIcon: (status?: string) => React.ReactNode;
   getStatusLabel: (status?: string) => string;
 }
 
 function EvaluationCard({ evaluation, getStatusIcon, getStatusLabel }: EvaluationCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const medical = evaluation.medicalEvaluation;
-  const isDischargedFromFollowUp = medical?.followUpStatus === 'Alta' || medical?.followUpStatus === 'Alta concedida';
+  const nursing = evaluation.nursing;
+  const medical = evaluation.medical;
+  const isPending = evaluation.type === 'pending';
 
   return (
     <div className="bg-white rounded-2xl border border-secondary/20 overflow-hidden hover:shadow-lg transition-shadow">
       {/* Header */}
-      <div className="p-6 bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-secondary/20">
+      <div className={`p-6 border-b border-secondary/20 ${
+        isPending ? 'bg-attention/5' : 'bg-gradient-to-r from-primary/5 to-secondary/5'
+      }`}>
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
-              {getStatusIcon(evaluation.patientStatus)}
+              {!isPending && getStatusIcon(nursing?.patientStatus || medical?.clinicalCondition)}
+              {isPending && <Clock className="w-6 h-6 text-attention" />}
               <div>
                 <p className="font-heading text-xl font-bold text-foreground">
-                  Avaliação de {new Date(evaluation.checklistDate || '').toLocaleDateString('pt-BR')}
+                  {isPending ? 'Aguardando Avaliação Médica' : `Avaliação de ${new Date(evaluation.checklistDate || '').toLocaleDateString('pt-BR')}`}
                 </p>
                 <p className="font-paragraph text-sm text-foreground/60">
-                  {evaluation.hospital}
+                  {evaluation.checklist?.hospital || 'Hospital'}
                 </p>
               </div>
             </div>
-            <p className="font-paragraph text-base font-semibold text-foreground mb-2">
-              Status: {getStatusLabel(evaluation.patientStatus)}
-            </p>
+            {!isPending && (
+              <p className="font-paragraph text-base font-semibold text-foreground mb-2">
+                Status: {getStatusLabel(nursing?.patientStatus || medical?.clinicalCondition)}
+              </p>
+            )}
+            {isPending && (
+              <p className="font-paragraph text-base font-semibold text-attention mb-2">
+                Sua avaliação foi encaminhada para um médico. Aguarde a análise da equipe médica.
+              </p>
+            )}
           </div>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
@@ -226,7 +259,7 @@ function EvaluationCard({ evaluation, getStatusIcon, getStatusLabel }: Evaluatio
             <div>
               <p className="font-paragraph text-xs text-foreground/60 mb-1">Enfermeiro</p>
               <p className="font-paragraph text-base font-semibold text-foreground">
-                {evaluation.nurseName || 'Não informado'}
+                {nursing?.nurseName || 'Não informado'}
               </p>
             </div>
             {medical && (
@@ -238,11 +271,11 @@ function EvaluationCard({ evaluation, getStatusIcon, getStatusLabel }: Evaluatio
               </div>
             )}
             <div>
-              <p className="font-paragraph text-xs text-foreground/60 mb-1">Status do Acompanhamento</p>
+              <p className="font-paragraph text-xs text-foreground/60 mb-1">Tipo de Avaliação</p>
               <p className={`font-paragraph text-base font-semibold ${
-                isDischargedFromFollowUp ? 'text-stable' : 'text-primary'
+                isPending ? 'text-attention' : medical ? 'text-primary' : 'text-stable'
               }`}>
-                {isDischargedFromFollowUp ? '🟢 Alta concedida' : 'Em acompanhamento'}
+                {isPending ? '⏳ Pendente' : medical ? '✓ Médica' : '✓ Enfermagem'}
               </p>
             </div>
           </div>
@@ -253,45 +286,52 @@ function EvaluationCard({ evaluation, getStatusIcon, getStatusLabel }: Evaluatio
       {isExpanded && (
         <div className="p-6 space-y-6">
           {/* Nursing Evaluation */}
-          <div>
-            <h3 className="font-heading text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
-              Avaliação de Enfermagem
-            </h3>
-            <div className="space-y-4 ml-7">
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Enfermeiro</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {evaluation.nurseName || 'Não informado'}
-                </p>
-              </div>
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Parecer da Enfermagem</p>
-                <p className="font-paragraph text-base text-foreground bg-background rounded-lg p-3">
-                  {evaluation.clinicalObservations || 'Sem observações'}
-                </p>
-              </div>
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Orientações ao Paciente</p>
-                <p className="font-paragraph text-base text-foreground bg-background rounded-lg p-3">
-                  {evaluation.patientGuidelines || 'Sem orientações específicas'}
-                </p>
-              </div>
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Status do Paciente</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {getStatusLabel(evaluation.patientStatus)}
-                </p>
-              </div>
-              {evaluation.referredToDoctor && (
-                <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                  <p className="font-paragraph text-sm font-semibold text-primary">
-                    ✓ Encaminhado para avaliação médica
+          {nursing && (
+            <div>
+              <h3 className="font-heading text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-primary" />
+                Avaliação de Enfermagem
+              </h3>
+              <div className="space-y-4 ml-7">
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Enfermeiro(a)</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">
+                    {nursing.nurseName || 'Não informado'}
                   </p>
                 </div>
-              )}
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Data e Hora</p>
+                  <p className="font-paragraph text-base text-foreground">
+                    {new Date(nursing.checklistDate || '').toLocaleDateString('pt-BR')} às {new Date(nursing.checklistDate || '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Estado do Paciente</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">
+                    {getStatusLabel(nursing.patientStatus)}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Observações</p>
+                  <p className="font-paragraph text-base text-foreground bg-background rounded-lg p-3">
+                    {nursing.clinicalObservations || 'Sem observações'}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Orientações ao Paciente</p>
+                  <p className="font-paragraph text-base text-foreground bg-background rounded-lg p-3">
+                    {nursing.patientGuidelines || 'Sem orientações específicas'}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Status do Acompanhamento</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">
+                    {nursing.referredToDoctor ? 'Encaminhado para Médico' : 'Finalizado'}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Medical Evaluation */}
           {medical && (
@@ -302,76 +342,75 @@ function EvaluationCard({ evaluation, getStatusIcon, getStatusLabel }: Evaluatio
               </h3>
               <div className="space-y-4 ml-7">
                 <div>
-                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Médico</p>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Médico(a)</p>
                   <p className="font-paragraph text-base font-semibold text-foreground">
                     {medical.doctorName || 'Não informado'}
                   </p>
                 </div>
                 <div>
-                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Diagnóstico/Avaliação</p>
-                  <p className="font-paragraph text-base text-foreground bg-background rounded-lg p-3">
-                    {medical.clinicalRecommendations || 'Sem recomendações'}
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Especialidade</p>
+                  <p className="font-paragraph text-base text-foreground">
+                    {medical.clinicalRecommendations ? 'Clínico Geral' : 'Não informado'}
                   </p>
                 </div>
-                {medical.medicationGuidanceAdjustment && (
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Data</p>
+                  <p className="font-paragraph text-base text-foreground">
+                    {new Date(medical.evaluationDate || '').toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Estado do Paciente</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">
+                    {getStatusLabel(medical.clinicalCondition)}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Conduta Médica</p>
+                  <p className="font-paragraph text-base text-foreground bg-background rounded-lg p-3">
+                    {medical.medicalConduct || 'Sem conduta informada'}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Orientações</p>
+                  <p className="font-paragraph text-base text-foreground bg-background rounded-lg p-3">
+                    {medical.patientRecommendations || 'Sem orientações específicas'}
+                  </p>
+                </div>
+                {medical.medicalPrescription && (
                   <div>
                     <p className="font-paragraph text-sm text-foreground/60 mb-2 flex items-center gap-2">
                       <Pill className="w-4 h-4" />
-                      Medicamentos Prescritos
+                      Prescrição Médica
                     </p>
                     <p className="font-paragraph text-base text-foreground bg-background rounded-lg p-3">
-                      {medical.medicationGuidanceAdjustment}
+                      {medical.medicalPrescription}
                     </p>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-secondary/20">
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Retorno Hospitalar</p>
-                    <p className="font-paragraph text-base font-semibold">
-                      {medical.hospitalReturnRecommended ? '✓ Recomendado' : '✗ Não recomendado'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Avaliação Presencial</p>
-                    <p className="font-paragraph text-base font-semibold">
-                      {medical.inPersonEvaluationRecommended ? '✓ Recomendada' : '✗ Não recomendada'}
-                    </p>
-                  </div>
-                </div>
               </div>
             </div>
           )}
 
-          {/* Follow-up Status */}
-          <div className="border-t border-secondary/20 pt-6">
-            <h3 className="font-heading text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-primary" />
-              Status do Acompanhamento
-            </h3>
-            {isDischargedFromFollowUp ? (
-              <div className="bg-stable/10 border-2 border-stable/30 rounded-lg p-4 ml-7">
-                <p className="font-paragraph text-lg font-bold text-stable mb-3">
-                  🟢 Alta Concedida
+          {/* Pending Status */}
+          {isPending && (
+            <div className="border-t border-secondary/20 pt-6">
+              <h3 className="font-heading text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-attention" />
+                Status da Avaliação
+              </h3>
+              <div className="bg-attention/10 border-2 border-attention/30 rounded-lg p-4 ml-7">
+                <p className="font-paragraph text-lg font-bold text-attention mb-3">
+                  ⏳ Aguardando Avaliação Médica
                 </p>
                 <p className="font-paragraph text-base text-foreground">
-                  Parabéns! Sua equipe de saúde concluiu que você não necessita mais enviar checklists diários. Caso volte a precisar de acompanhamento em uma nova consulta ou procedimento, o hospital poderá reativar seu acompanhamento.
+                  Sua avaliação foi encaminhada para um médico da equipe. Aguarde a análise do profissional. Você será notificado assim que a avaliação médica for concluída.
                 </p>
               </div>
-            ) : (
-              <div className="bg-primary/10 border-2 border-primary/30 rounded-lg p-4 ml-7">
-                <p className="font-paragraph text-lg font-bold text-primary mb-2">
-                  Em Acompanhamento
-                </p>
-                <p className="font-paragraph text-base text-foreground">
-                  Continue preenchendo seus checklists diários para que a equipe de saúde possa acompanhar sua recuperação.
-                </p>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
-
-
