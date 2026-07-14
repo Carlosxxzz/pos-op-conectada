@@ -168,13 +168,13 @@ export default function MedicalEvaluationPage() {
         lastMedicalEvaluationId: medicalEvaluationId,
       });
 
-      // Update the referral record to mark as viewed and add doctor response
+      // Update the referral record to mark as CONCLUIDO (completed)
       await BaseCrudService.update('encaminhamentosmedicos', {
         _id: referralData._id,
         viewed: true,
         doctorResponse: formData.medicalConduct,
         responseDate: now,
-        status: formData.needsFollowUp ? 'Continuidade' : 'Alta',
+        status: 'CONCLUIDO',
       });
 
       // Create notification for patient about medical evaluation

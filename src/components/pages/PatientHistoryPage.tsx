@@ -54,7 +54,12 @@ export default function PatientHistoryPage() {
       patientChecklists.forEach(checklist => {
         const referral = allReferrals.find((r: any) => r.checklistId === checklist._id && r.patientId === patientId);
         if (referral) {
-          statusMap[checklist._id] = referral.status;
+          // Map referral status to display status
+          if (referral.status === 'CONCLUIDO') {
+            statusMap[checklist._id] = 'Avaliação Concluída';
+          } else {
+            statusMap[checklist._id] = referral.status;
+          }
         }
       });
       

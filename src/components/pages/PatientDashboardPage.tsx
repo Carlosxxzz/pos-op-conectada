@@ -49,8 +49,12 @@ export default function PatientDashboardPage() {
       setChecklists(items);
       logger.info('PatientDashboard', 'loadData', 'Checklists loaded', { count: items.length });
 
-      // Check if patient has any checklists awaiting medical evaluation
-      const hasAwaitingMedical = items.some(c => c.patientId === patientId && (c.status === 'Aguardando Avaliação Médica' || c.encaminhadoMedico === true));
+      // Check referral status to determine if awaiting medical evaluation
+      const { items: referrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
+      const patientReferrals = referrals.filter((r: any) => r.patientId === patientId);
+      
+      // Only show awaiting if there's a referral with status NOT 'CONCLUIDO'
+      const hasAwaitingMedical = patientReferrals.some((r: any) => r.status !== 'CONCLUIDO');
       setAwaitingMedicalEvaluation(hasAwaitingMedical);
     } catch (error) {
       logger.error('PatientDashboard', 'loadData', 'Error loading data', error);
