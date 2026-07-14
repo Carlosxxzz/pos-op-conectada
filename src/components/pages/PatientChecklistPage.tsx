@@ -12,6 +12,7 @@ import { useChecklistFlow } from '@/hooks/useChecklistFlow';
 import { logger } from '@/lib/logger';
 import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 import MedicationSection from '@/components/MedicationSection';
+import TemperatureInput from '@/components/TemperatureInput';
 
 interface MedicationEntry {
   id: string;
@@ -28,6 +29,7 @@ export default function PatientChecklistPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [checklistId, setChecklistId] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
+  const [isTemperatureValid, setIsTemperatureValid] = useState(false);
   
   // Maintain session persistence
   useSessionPersistence();
@@ -111,6 +113,13 @@ export default function PatientChecklistPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate temperature before submitting
+    if (!isTemperatureValid) {
+      setError('Por favor, informe uma temperatura válida entre 30,0 °C e 45,0 °C.');
+      return;
+    }
+    
     setIsSaving(true);
     setError('');
 
@@ -404,14 +413,10 @@ export default function PatientChecklistPage() {
                 <Label htmlFor="temperature" className="font-paragraph text-2xl font-bold text-foreground mb-4 block">
                   Temperatura (°C)
                 </Label>
-                <Input
-                  id="temperature"
-                  type="number"
-                  step="0.1"
+                <TemperatureInput
                   value={formData.bodyTemperature}
-                  onChange={(e) => setFormData({ ...formData, bodyTemperature: Number(e.target.value) })}
-                  className="font-paragraph text-2xl h-16 rounded-2xl border-2"
-                  required
+                  onChange={(temp) => setFormData({ ...formData, bodyTemperature: temp })}
+                  onValidationChange={setIsTemperatureValid}
                 />
               </div>
             </div>
