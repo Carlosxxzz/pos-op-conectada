@@ -80,9 +80,9 @@ export default function NursingEvaluationPage() {
       setPatient(patientData);
 
       const { items } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
-      // Filter checklists by patient ID and get only PENDING ones
+      // Filter checklists by patient ID and get only PENDING ones (AGUARDANDO_ENFERMAGEM status)
       const patientChecklists = items.filter(c => 
-        c.patientId === id && (c.statusEnfermagem === 'Pendente' || !c.avaliadoEnfermagem)
+        c.patientId === id && (c.statusEnfermagem === 'AGUARDANDO_ENFERMAGEM' || !c.avaliadoEnfermagem)
       );
       
       const sortedChecklists = patientChecklists.sort((a, b) => 
@@ -177,7 +177,7 @@ export default function NursingEvaluationPage() {
 
       // Double-check that the checklist hasn't been evaluated already
       const checklistCheck = await BaseCrudService.getById<ChecklistsDirios>('checklistsdiarios', selectedChecklist._id);
-      if (checklistCheck?.avaliadoEnfermagem || checklistCheck?.statusEnfermagem === 'Concluído' || checklistCheck?.statusEnfermagem === 'Encaminhado') {
+      if (checklistCheck?.avaliadoEnfermagem || checklistCheck?.statusEnfermagem === 'AVALIADO_ENFERMAGEM' || checklistCheck?.statusEnfermagem === 'ENCAMINHADO_MEDICO') {
         alert('Este checklist já foi avaliado. Por favor, retorne ao dashboard.');
         navigate('/nursing-dashboard');
         return;
@@ -213,11 +213,11 @@ export default function NursingEvaluationPage() {
         // Update the checklist status to mark it as evaluated
         await BaseCrudService.update('checklistsdiarios', {
           _id: selectedChecklist._id,
-          statusEnfermagem: 'Concluído',
+          statusEnfermagem: 'AVALIADO_ENFERMAGEM',
           avaliadoEnfermagem: true,
           dataAvaliacaoEnfermagem: now,
           enfermeiroResponsavel: professional.fullName || professional.email || '',
-          status: 'Concluído',
+          status: 'AVALIADO_ENFERMAGEM',
           followUpStatus: 'Pendente',
         });
 
@@ -263,11 +263,11 @@ export default function NursingEvaluationPage() {
         // Update the checklist status to mark it as referred (NOT evaluated)
         await BaseCrudService.update('checklistsdiarios', {
           _id: selectedChecklist._id,
-          statusEnfermagem: 'Encaminhado',
+          statusEnfermagem: 'ENCAMINHADO_MEDICO',
           avaliadoEnfermagem: false, // IMPORTANT: NOT marked as evaluated
           dataEncaminhamento: now,
           enfermeiroResponsavel: professional.fullName || professional.email || '',
-          status: 'Aguardando Avaliação Médica',
+          status: 'ENCAMINHADO_MEDICO',
           encaminhadoMedico: true,
           medicoResponsavel: selectedDoctor?.fullName || '',
           hospital: professional.hospital,
@@ -276,7 +276,7 @@ export default function NursingEvaluationPage() {
 
         console.log('[NURSING] Checklist atualizado (Encaminhado)', {
           checklistId: selectedChecklist._id.substring(0, 8),
-          status: 'Aguardando Avaliação Médica',
+          status: 'ENCAMINHADO_MEDICO',
         });
 
         // Create notification for patient
