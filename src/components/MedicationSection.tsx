@@ -389,7 +389,7 @@ export default function MedicationSection({
 
               {/* If "Other" is selected - Show text field */}
               <AnimatePresence>
-                {reasonNotTaking === 'other' && (
+                {(reasonNotTaking === 'other' || reasonNotTaking.startsWith('other:')) && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
