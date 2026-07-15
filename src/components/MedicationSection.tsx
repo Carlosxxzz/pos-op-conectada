@@ -367,10 +367,12 @@ export default function MedicationSection({
                   Qual o motivo?
                 </Label>
                 <RadioGroup
-                  value={reasonNotTaking}
+                  value={reasonNotTaking.startsWith('other:') ? 'other' : reasonNotTaking}
                   onValueChange={(value) => {
-                    onReasonChange(value);
-                    if (value !== 'other') {
+                    if (value === 'other') {
+                      onReasonChange('other');
+                    } else {
+                      onReasonChange(value);
                       setOtherReason('');
                     }
                   }}
