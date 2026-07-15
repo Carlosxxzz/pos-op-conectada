@@ -74,6 +74,17 @@ export default function MedicationSection({
     }
   }, [reasonNotTaking]);
 
+  // Sync otherReason with reasonNotTaking when reason changes to 'other'
+  // This ensures the local state stays in sync with parent state
+  useEffect(() => {
+    if (reasonNotTaking.startsWith('other:')) {
+      const extractedText = reasonNotTaking.substring(6);
+      setOtherReason(extractedText);
+    } else if (reasonNotTaking !== 'other') {
+      setOtherReason('');
+    }
+  }, [reasonNotTaking]);
+
   const loadMedicationSuggestions = async () => {
     try {
       const result = await BaseCrudService.getAll<Medicamentos>('medicamentos', [], { limit: 100 });
@@ -397,7 +408,10 @@ export default function MedicationSection({
                         onChange={(e) => {
                           const value = e.target.value.substring(0, 300);
                           setOtherReason(value);
-                          onReasonChange(`other: ${value}`);
+                          onReasonChange(`other:${value}`);
+                        }}
+                        onBlur={() => {
+                          onReasonChange(`other:${otherReason}`);
                         }}
                         maxLength={300}
                         className="w-full font-paragraph text-base h-24 rounded-xl border-2 border-primary/50 px-4 py-3 bg-white text-foreground/80 placeholder-foreground/40 resize-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
