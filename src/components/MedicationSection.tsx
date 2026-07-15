@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Plus, X, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,10 +58,21 @@ export default function MedicationSection({
   const [filteredSuggestions, setFilteredSuggestions] = useState<Medicamentos[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<{ [key: string]: boolean }>({});
   const [otherReason, setOtherReason] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     loadMedicationSuggestions();
   }, []);
+
+  // Focus textarea when "other" reason is selected
+  useEffect(() => {
+    if (reasonNotTaking === 'other' && textareaRef.current) {
+      // Use setTimeout to ensure the DOM has updated
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
+    }
+  }, [reasonNotTaking]);
 
   const loadMedicationSuggestions = async () => {
     try {
@@ -380,6 +391,7 @@ export default function MedicationSection({
                         Descreva o motivo:
                       </Label>
                       <textarea
+                        ref={textareaRef}
                         placeholder="Descreva o motivo..."
                         value={otherReason}
                         onChange={(e) => {
