@@ -146,6 +146,15 @@ export default function PatientChecklistPage() {
           setIsSaving(false);
           return;
         }
+        // Validate that "other" reason has text
+        if (formData.reasonNotTakingMedication.startsWith('other:')) {
+          const otherText = formData.reasonNotTakingMedication.substring(6).trim();
+          if (!otherText) {
+            setError('Por favor, informe o motivo.');
+            setIsSaving(false);
+            return;
+          }
+        }
       }
 
       const riskLevel = calculateRiskLevel();

@@ -373,17 +373,29 @@ export default function MedicationSection({
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.2 }}
+                    className="space-y-3"
                   >
-                    <Input
-                      type="text"
-                      placeholder="Explique o motivo..."
-                      value={otherReason}
-                      onChange={(e) => {
-                        setOtherReason(e.target.value);
-                        onReasonChange(`other: ${e.target.value}`);
-                      }}
-                      className="font-paragraph text-base h-12 rounded-xl border-2"
-                    />
+                    <div className="bg-white rounded-2xl p-4 border-2 border-primary/50">
+                      <Label className="font-paragraph text-base font-semibold text-foreground mb-3 block">
+                        Descreva o motivo:
+                      </Label>
+                      <textarea
+                        placeholder="Descreva o motivo..."
+                        value={otherReason}
+                        onChange={(e) => {
+                          const value = e.target.value.substring(0, 300);
+                          setOtherReason(value);
+                          onReasonChange(`other: ${value}`);
+                        }}
+                        maxLength={300}
+                        className="w-full font-paragraph text-base h-24 rounded-xl border-2 border-primary/50 px-4 py-3 bg-white text-foreground/80 placeholder-foreground/40 resize-none focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+                      />
+                      <div className="flex justify-between items-center mt-2">
+                        <p className="font-paragraph text-xs text-foreground/50">
+                          {otherReason.length}/300 caracteres
+                        </p>
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
