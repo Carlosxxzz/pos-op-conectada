@@ -51,6 +51,19 @@ export default function PatientChecklistPage() {
 
   const [medications, setMedications] = useState<MedicationEntry[]>([]);
 
+  // Function to get color based on pain level
+  const getPainLevelColor = (level: number): { bg: string; text: string } => {
+    if (level <= 3) {
+      return { bg: '#32CD32', text: '#FFFFFF' }; // Green - Light pain
+    } else if (level <= 6) {
+      return { bg: '#FFD700', text: '#333333' }; // Yellow - Moderate pain
+    } else if (level <= 8) {
+      return { bg: '#FF8C00', text: '#FFFFFF' }; // Orange - Strong pain
+    } else {
+      return { bg: '#FF0000', text: '#FFFFFF' }; // Red - Very intense pain
+    }
+  };
+
   useEffect(() => {
     loadPatient();
   }, []);
@@ -375,8 +388,18 @@ export default function PatientChecklistPage() {
                   <span className="font-paragraph text-base text-foreground/70">Sem dor</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center">
-                    <span className="font-heading text-4xl font-bold text-white">
+                  <div 
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ease-out"
+                    style={{
+                      backgroundColor: getPainLevelColor(formData.painLevel).bg,
+                    }}
+                  >
+                    <span 
+                      className="font-heading text-4xl font-bold transition-colors duration-300 ease-out"
+                      style={{
+                        color: getPainLevelColor(formData.painLevel).text,
+                      }}
+                    >
                       {formData.painLevel}
                     </span>
                   </div>
