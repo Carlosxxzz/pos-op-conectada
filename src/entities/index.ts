@@ -4,6 +4,33 @@
  */
 
 /**
+ * Collection ID: alertasprioritarios
+ * Interface for PriorityAlerts
+ */
+export interface PriorityAlerts {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  patientId?: string;
+  /** @wixFieldType text */
+  patientName?: string;
+  /** @wixFieldType text */
+  alertType?: string;
+  /** @wixFieldType text */
+  severity?: string;
+  /** @wixFieldType text */
+  alertValue?: string;
+  /** @wixFieldType datetime */
+  alertTimestamp?: Date | string;
+  /** @wixFieldType boolean */
+  resolutionStatus?: boolean;
+  /** @wixFieldType datetime */
+  resolutionTimestamp?: Date | string;
+}
+
+
+/**
  * Collection ID: avaliacoesenfermagem
  * Interface for AvaliaesdeEnfermagem
  */
@@ -186,6 +213,33 @@ export interface EncaminhamentosMdicos {
 
 
 /**
+ * Collection ID: historicoatividades
+ * Interface for ActivityHistory
+ */
+export interface ActivityHistory {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  nurseId?: string;
+  /** @wixFieldType text */
+  nurseName?: string;
+  /** @wixFieldType text */
+  actionType?: string;
+  /** @wixFieldType text */
+  patientId?: string;
+  /** @wixFieldType text */
+  patientName?: string;
+  /** @wixFieldType datetime */
+  actionTimestamp?: Date | string;
+  /** @wixFieldType text */
+  actionDescription?: string;
+  /** @wixFieldType text */
+  actionDetails?: string;
+}
+
+
+/**
  * Collection ID: medicacoeschecklist
  * Interface for MedicaesdoChecklist
  */
@@ -321,4 +375,31 @@ export interface Profissionais {
   specialty?: string;
   /** @wixFieldType text */
   status?: string;
+}
+
+
+/**
+ * Collection ID: statusacompanhamentopaciente
+ * Interface for PatientFollowupStatus
+ */
+export interface PatientFollowupStatus {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  patientName?: string;
+  /** @wixFieldType text */
+  currentStatus?: string;
+  /** @wixFieldType text */
+  previousStatus?: string;
+  /** @wixFieldType datetime */
+  statusChangeDate?: Date | string;
+  /** @wixFieldType number */
+  daysInCurrentStatus?: number;
+  /** @wixFieldType date */
+  dischargeDate?: Date | string;
+  /** @wixFieldType text */
+  dischargeReason?: string;
+  /** @wixFieldType date */
+  followUpEndDate?: Date | string;
 }

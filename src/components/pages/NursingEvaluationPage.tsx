@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, Send, AlertTriangle, Image as ImageIcon, Pill, AlertCircle, ChevronRight, Clock, User, Building2, ArrowRight, CheckCircle } from 'lucide-react';
+import { Activity, ArrowLeft, Send, AlertTriangle, Image as ImageIcon, Pill, AlertCircle, ChevronRight, Clock, User, Building2, ArrowRight, CheckCircle, Calendar, FileText, Stethoscope, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -35,6 +35,7 @@ export default function NursingEvaluationPage() {
     patientStatus: 'stable',
     referredToDoctor: false,
   });
+  const [activeTab, setActiveTab] = useState<'avaliacao' | 'historico' | 'perfil'>('avaliacao');
 
   useEffect(() => {
     loadData();
