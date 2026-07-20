@@ -11,6 +11,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createReferralNotification } from '@/lib/notificationHelper';
+import { handleChecklistSubmitted, handleCriticalAlert } from '@/lib/notificationIntegration';
 
 export default function NursingEvaluationPage() {
   const { id } = useParams<{ id: string }>();

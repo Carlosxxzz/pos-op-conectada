@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, X, AlertCircle, CheckCircle, Clock, Trash2, Eye } from 'lucide-react';
+import { Bell, X, AlertCircle, CheckCircle, Clock, Trash2, Eye, AlertTriangle, Heart, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '@/hooks/useNotifications';
 import { format, isToday, isYesterday, isWithinInterval, subDays } from 'date-fns';
@@ -7,10 +7,11 @@ import { ptBR } from 'date-fns/locale';
 
 interface NotificationPanelProps {
   professionalId: string | null;
+  recipientType?: string;
   onNotificationClick?: (notificationId: string, checklistId?: string) => void;
 }
 
-export default function NotificationPanel({ professionalId, onNotificationClick }: NotificationPanelProps) {
+export default function NotificationPanel({ professionalId, recipientType = 'Enfermeiro', onNotificationClick }: NotificationPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -21,7 +22,7 @@ export default function NotificationPanel({ professionalId, onNotificationClick 
     markAsRead,
     markAllAsRead,
     clearReadNotifications,
-  } = useNotifications(professionalId);
+  } = useNotifications(professionalId, recipientType);
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -44,9 +45,13 @@ export default function NotificationPanel({ professionalId, onNotificationClick 
       case 'checklist':
         return <CheckCircle className="w-5 h-5 text-primary" />;
       case 'critical':
-        return <AlertCircle className="w-5 h-5 text-critical" />;
+        return <AlertTriangle className="w-5 h-5 text-critical" />;
       case 'urgent':
-        return <AlertCircle className="w-5 h-5 text-attention-foreground" />;
+        return <Zap className="w-5 h-5 text-attention-foreground" />;
+      case 'discharge':
+        return <Heart className="w-5 h-5 text-stable" />;
+      case 'medical_evaluation':
+        return <CheckCircle className="w-5 h-5 text-primary" />;
       default:
         return <Bell className="w-5 h-5 text-primary" />;
     }
@@ -62,6 +67,10 @@ export default function NotificationPanel({ professionalId, onNotificationClick 
         return 'border-l-4 border-l-critical';
       case 'urgent':
         return 'border-l-4 border-l-attention-foreground';
+      case 'discharge':
+        return 'border-l-4 border-l-stable';
+      case 'medical_evaluation':
+        return 'border-l-4 border-l-primary';
       default:
         return 'border-l-4 border-l-secondary';
     }

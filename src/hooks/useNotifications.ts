@@ -5,10 +5,10 @@ import type { Notifications } from '@/entities';
 export interface NotificationWithDetails extends Notifications {
   patientName?: string;
   hospital?: string;
-  checklistId?: string;
+  relatedChecklistId?: string;
 }
 
-export const useNotifications = (professionalId: string | null) => {
+export const useNotifications = (professionalId: string | null, recipientType: string = 'Enfermeiro') => {
   const [notifications, setNotifications] = useState<NotificationWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -22,7 +22,7 @@ export const useNotifications = (professionalId: string | null) => {
       
       // Filter notifications for this professional
       const filtered = items.filter(n => 
-        n.recipientId === professionalId && n.recipientType === 'Médico'
+        n.recipientId === professionalId && n.recipientType === recipientType
       ) as NotificationWithDetails[];
       
       // Sort by newest first
@@ -42,7 +42,7 @@ export const useNotifications = (professionalId: string | null) => {
     } finally {
       setIsLoading(false);
     }
-  }, [professionalId]);
+  }, [professionalId, recipientType]);
 
   const markAsRead = useCallback(async (notificationId: string) => {
     try {

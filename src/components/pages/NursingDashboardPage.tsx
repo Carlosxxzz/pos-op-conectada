@@ -17,6 +17,7 @@ import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 import NotificationPanel from '@/components/NotificationPanel';
 import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
 import { Image } from '@/components/ui/image';
+import { useNotifications } from '@/hooks/useNotifications';
 
 type EvaluationStatus = 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'CONCLUIDO';
 type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'URGENTE' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS';
@@ -50,12 +51,12 @@ export default function NursingDashboardPage() {
   const [allPatients, setAllPatients] = useState<PatientEvaluationData[]>([]);
   const [professional, setProfessional] = useState<Profissionais | null>(null);
   const [error, setError] = useState<string>('');
+  const { unreadCount } = useNotifications(professional?._id || null, 'Enfermeiro');
   const [referrals, setReferrals] = useState<EncaminhamentosMdicos[]>([]);
   const [filterType, setFilterType] = useState<FilterType>('TODOS');
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'agenda' | 'historico' | 'perfil'>('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     awaitingEvaluation: 0,
@@ -75,26 +76,6 @@ export default function NursingDashboardPage() {
     const interval = setInterval(loadData, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (professional) {
-      loadUnreadNotifications();
-      const interval = setInterval(loadUnreadNotifications, 10000);
-      return () => clearInterval(interval);
-    }
-  }, [professional]);
-
-  const loadUnreadNotifications = async () => {
-    try {
-      const result = await BaseCrudService.getAll<any>('notificacoes');
-      const unread = result.items.filter(
-        n => n.recipientId === professional?._id && !n.isRead
-      ).length;
-      setUnreadNotificationCount(unread);
-    } catch (error) {
-      logger.error('NursingDashboard', 'loadUnreadNotifications', 'Error loading unread count', error);
-    }
-  };
 
   const loadData = async () => {
     try {
@@ -246,6 +227,15 @@ export default function NursingDashboardPage() {
     setActiveTab('dashboard');
   };
 
+  const handleNotificationClick = (notificationId: string, checklistId?: string) => {
+    setShowNotifications(false);
+    
+    // Navigate based on checklist
+    if (checklistId) {
+      navigate(`/nursing-evaluation/${checklistId}`);
+    }
+  };
+
   // Filter and search logic
   const filteredPatients = useMemo(() => {
     let result = allPatients;
@@ -346,13 +336,6 @@ export default function NursingDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Notification Panel */}
-      <NotificationPanel
-        recipientId={professional?._id || ''}
-        isOpen={showNotifications}
-        onClose={() => setShowNotifications(false)}
-      />
-
       {/* Header */}
       <header className="bg-white border-b border-secondary/30 sticky top-0 z-40">
         <div className="max-w-[120rem] mx-auto px-8 py-6">
@@ -367,17 +350,11 @@ export default function NursingDashboardPage() {
               </div>
             </Link>
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 hover:bg-background rounded-lg transition-colors"
-              >
-                <Bell className="w-6 h-6 text-foreground" />
-                {unreadNotificationCount > 0 && (
-                  <span className="absolute top-1 right-1 w-5 h-5 bg-critical text-critical-foreground text-xs font-bold rounded-full flex items-center justify-center">
-                    {unreadNotificationCount}
-                  </span>
-                )}
-              </button>
+              <NotificationPanel
+                professionalId={professional?._id || null}
+                recipientType="Enfermeiro"
+                onNotificationClick={handleNotificationClick}
+              />
 
               {/* Profile Menu */}
               <div className="relative">
