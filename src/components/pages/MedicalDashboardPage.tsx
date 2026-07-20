@@ -158,6 +158,10 @@ export default function MedicalDashboardPage() {
       item.patient?.susNumber?.includes(searchTerm);
   });
 
+  const handleEvaluatedCaseClick = (patientId: string) => {
+    navigate(`/medical-evaluation-history/${patientId}`);
+  };
+
   const calculateTimeSinceReferral = (referralDate: string | Date) => {
     const now = new Date();
     const refDate = new Date(referralDate);
@@ -574,9 +578,9 @@ export default function MedicalDashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Link
-                    to={`/medical-evaluation/${item.patient?._id}`}
-                    className="block bg-white border border-secondary/20 rounded-2xl p-6 hover:bg-secondary/5 transition-colors"
+                  <button
+                    onClick={() => handleEvaluatedCaseClick(item.patient?._id || '')}
+                    className="w-full text-left block bg-white border border-secondary/20 rounded-2xl p-6 hover:bg-secondary/5 transition-colors"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div>
@@ -605,7 +609,7 @@ export default function MedicalDashboardPage() {
                         </span>
                       </div>
                     </div>
-                  </Link>
+                  </button>
                 </motion.div>
               ))}
             </div>

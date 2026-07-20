@@ -82,6 +82,18 @@ export default function MedicalEvaluationPage() {
       if (referralChecklistData) {
         setReferralChecklist(referralChecklistData);
         setChecklists([referralChecklistData]);
+
+        // Check if this checklist has already been evaluated by this doctor
+        const { items: medicalEvaluations } = await BaseCrudService.getAll<AvaliaesMdicas>('avaliacoesmedicas');
+        const existingEvaluation = medicalEvaluations.find(
+          e => e.checklistId === referralChecklistId && e.patientId === id
+        );
+
+        if (existingEvaluation) {
+          // Redirect to history page if evaluation already exists
+          navigate(`/medical-evaluation-history/${id}`);
+          return;
+        }
       }
 
       // Get nursing evaluation if it exists
