@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, Stethoscope, AlertCircle, ArrowRight, LogOut, Search, Filter, User, Clock, Users, CheckCircle, TrendingUp } from 'lucide-react';
+import { Activity, Stethoscope, AlertCircle, ArrowRight, LogOut, Search, Filter, User, Clock, Users, CheckCircle, TrendingUp, ClipboardCheck, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BaseCrudService } from '@/integrations';
@@ -274,7 +274,7 @@ export default function MedicalDashboardPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-critical/10 rounded-lg flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-critical" />
+                <Clock className="w-6 h-6 text-critical" />
               </div>
               <span className="font-heading text-3xl font-bold text-critical">{stats.pendingCount}</span>
             </div>
@@ -289,7 +289,7 @@ export default function MedicalDashboardPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-primary" />
+                <ClipboardCheck className="w-6 h-6 text-primary" />
               </div>
               <span className="font-heading text-3xl font-bold text-primary">{stats.evaluatedTodayCount}</span>
             </div>
@@ -304,7 +304,7 @@ export default function MedicalDashboardPage() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-stable/10 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-stable" />
+                <UserCheck className="w-6 h-6 text-stable" />
               </div>
               <span className="font-heading text-3xl font-bold text-stable">{stats.evaluatedWeekCount}</span>
             </div>
