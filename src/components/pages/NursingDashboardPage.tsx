@@ -291,6 +291,13 @@ export default function NursingDashboardPage() {
     });
   }, [allPatients]);
 
+  const colorMap = {
+    primary: { bg: 'bg-primary/10', text: 'text-primary', icon: 'text-primary', bgIcon: 'bg-primary' },
+    attention: { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-attention-foreground', bgIcon: 'bg-attention' },
+    'attention-foreground': { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-attention-foreground', bgIcon: 'bg-attention' },
+    stable: { bg: 'bg-stable/10', text: 'text-stable', icon: 'text-stable', bgIcon: 'bg-stable' },
+  };
+
   const getStatusBadge = (status: EvaluationStatus) => {
     switch (status) {
       case 'AVALIADO_ENFERMAGEM':
@@ -446,12 +453,13 @@ export default function NursingDashboardPage() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {[
-                { label: 'Aguardando Avaliação', value: stats.awaitingEvaluation, icon: Clock, color: 'primary', bg: 'bg-primary/10', filterId: 'AGUARDANDO_ENFERMAGEM' as FilterType },
-                { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, color: 'attention-foreground', bg: 'bg-attention/10', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
-                { label: 'Avaliados Enfermagem', value: stats.evaluatedByNurse, icon: CheckCircle, color: 'stable', bg: 'bg-stable/10', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
-                { label: 'Avaliados Médico', value: stats.evaluatedByDoctor, icon: Stethoscope, color: 'stable', bg: 'bg-stable/10', filterId: 'AVALIADO_MEDICO' as FilterType },
+                { label: 'Aguardando Avaliação', value: stats.awaitingEvaluation, icon: Clock, colorKey: 'primary', filterId: 'AGUARDANDO_ENFERMAGEM' as FilterType },
+                { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, colorKey: 'attention', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
+                { label: 'Avaliados Enfermagem', value: stats.evaluatedByNurse, icon: CheckCircle, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
+                { label: 'Avaliados Médico', value: stats.evaluatedByDoctor, icon: Stethoscope, colorKey: 'stable', filterId: 'AVALIADO_MEDICO' as FilterType },
               ].map((stat, index) => {
                 const Icon = stat.icon;
+                const colors = colorMap[stat.colorKey as keyof typeof colorMap];
                 return (
                   <motion.button
                     key={stat.label}
@@ -460,11 +468,11 @@ export default function NursingDashboardPage() {
                     transition={{ delay: index * 0.1 }}
                     onClick={() => handleCardClick(stat.filterId)}
                     whileHover={{ y: -4 }}
-                    className={`${stat.bg} rounded-2xl p-6 border border-secondary/20 hover:shadow-lg transition-all cursor-pointer text-left`}
+                    className={`${colors.bg} rounded-2xl p-6 border border-secondary/20 hover:shadow-lg transition-all cursor-pointer text-left`}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <div className={`w-12 h-12 bg-${stat.color} rounded-lg flex items-center justify-center`}>
-                        <Icon className={`w-6 h-6 text-${stat.color === 'attention-foreground' ? 'attention-foreground' : stat.color}`} />
+                      <div className={`w-12 h-12 ${colors.bgIcon} rounded-lg flex items-center justify-center`}>
+                        <Icon className={`w-6 h-6 ${colors.icon}`} />
                       </div>
                       <span className="font-heading text-3xl font-bold text-foreground">{stat.value}</span>
                     </div>
