@@ -7,6 +7,8 @@ import { BaseCrudService } from '@/integrations';
 import type { ChecklistsDirios, Pacientes, Profissionais, AvaliaesMdicas } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
+import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
+import { Image } from '@/components/ui/image';
 
 interface ReferredCase {
   checklist: ChecklistsDirios;
@@ -225,8 +227,12 @@ export default function MedicalDashboardPage() {
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="flex items-center gap-2 p-2 hover:bg-background rounded-lg transition-colors"
                 >
-                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary" />
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-primary/20 flex-shrink-0">
+                    {professional?.profilePhoto ? (
+                      <Image src={professional.profilePhoto} alt={professional.fullName} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-5 h-5 text-primary" />
+                    )}
                   </div>
                   <span className="font-paragraph text-sm font-semibold text-foreground hidden sm:inline">
                     {professional?.fullName?.split(' ')[0]}

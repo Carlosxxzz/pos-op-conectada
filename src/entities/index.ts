@@ -363,6 +363,8 @@ export interface Profissionais {
   _updatedDate?: Date;
   /** @wixFieldType text */
   fullName?: string;
+  /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
+  profilePhoto?: string;
   /** @wixFieldType text */
   email?: string;
   /** @wixFieldType text */

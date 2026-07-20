@@ -15,6 +15,8 @@ import { motion } from 'framer-motion';
 import { logger } from '@/lib/logger';
 import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 import NotificationPanel from '@/components/NotificationPanel';
+import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
+import { Image } from '@/components/ui/image';
 
 type EvaluationStatus = 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'CONCLUIDO';
 type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'URGENTE' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS';
@@ -383,8 +385,12 @@ export default function NursingDashboardPage() {
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="flex items-center gap-2 p-2 hover:bg-background rounded-lg transition-colors"
                 >
-                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary" />
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-primary/20 flex-shrink-0">
+                    {professional?.profilePhoto ? (
+                      <Image src={professional.profilePhoto} alt={professional.fullName} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="w-5 h-5 text-primary" />
+                    )}
                   </div>
                   <span className="font-paragraph text-sm font-semibold text-foreground hidden sm:inline">
                     {professional?.fullName?.split(' ')[0]}
@@ -393,16 +399,13 @@ export default function NursingDashboardPage() {
 
                 {showProfileMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg border border-secondary/20 shadow-lg z-50">
-                    <button
-                      onClick={() => {
-                        setActiveTab('perfil');
-                        setShowProfileMenu(false);
-                      }}
-                      className="w-full text-left px-4 py-3 font-paragraph text-sm text-foreground hover:bg-background rounded-t-lg transition-colors flex items-center gap-2"
+                    <Link
+                      to="/nursing-profile"
+                      className="block px-4 py-3 font-paragraph text-sm text-foreground hover:bg-background rounded-t-lg transition-colors flex items-center gap-2"
                     >
                       <User className="w-4 h-4" />
                       Meu Perfil
-                    </button>
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-3 font-paragraph text-sm text-destructive hover:bg-background rounded-b-lg transition-colors flex items-center gap-2"

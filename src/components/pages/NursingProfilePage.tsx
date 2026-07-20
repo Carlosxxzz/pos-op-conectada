@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, LogOut, User, Mail, Building2, Briefcase, Calendar, Users, CheckCircle, Award } from 'lucide-react';
+import { Activity, ArrowLeft, LogOut, User, Mail, Building2, Briefcase, Users, CheckCircle, Award, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
-import type { Profissionais, AvaliaesMdicas } from '@/entities';
+import type { Profissionais, AvaliaesdeEnfermagem } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
 
-export default function MedicalProfilePage() {
+export default function NursingProfilePage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [professional, setProfessional] = useState<Profissionais | null>(null);
   const [stats, setStats] = useState({
     totalEvaluations: 0,
-    totalDischarges: 0,
+    totalReferrals: 0,
     totalPatients: 0,
   });
 
@@ -34,19 +34,16 @@ export default function MedicalProfilePage() {
       setProfessional(professionalData);
 
       // Get statistics
-      const { items: allEvaluations } = await BaseCrudService.getAll<AvaliaesMdicas>('avaliacoesmedicas');
+      const { items: allEvaluations } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
       const { items: allReferrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
 
-      const evaluationsByThisDoctor = allEvaluations.filter(e => e.doctorName === professionalData?.fullName);
-      const discharges = evaluationsByThisDoctor.filter(e => e.status === 'Alta').length;
-      const uniquePatients = new Set(allReferrals
-        .filter((r: any) => r.doctorId === professionalId)
-        .map((r: any) => r.patientId)
-      ).size;
+      const evaluationsByThisNurse = allEvaluations.filter(e => e.nurseName === professionalData?.fullName);
+      const referralsByThisNurse = allReferrals.filter((r: any) => r.nurseId === professionalId);
+      const uniquePatients = new Set(evaluationsByThisNurse.map(e => e.patientId)).size;
 
       setStats({
-        totalEvaluations: evaluationsByThisDoctor.length,
-        totalDischarges: discharges,
+        totalEvaluations: evaluationsByThisNurse.length,
+        totalReferrals: referralsByThisNurse.length,
         totalPatients: uniquePatients,
       });
     } catch (error) {
@@ -114,17 +111,17 @@ export default function MedicalProfilePage() {
       <header className="bg-white border-b border-secondary/30 sticky top-0 z-50">
         <div className="max-w-[120rem] mx-auto px-8 py-6">
           <div className="flex items-center justify-between">
-            <Link to="/medical-dashboard" className="flex items-center gap-3">
+            <Link to="/nursing-dashboard" className="flex items-center gap-3">
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
                 <Activity className="w-7 h-7 text-primary-foreground" />
               </div>
               <div>
                 <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
-                <p className="font-paragraph text-sm text-foreground/60">Perfil do Médico</p>
+                <p className="font-paragraph text-sm text-foreground/60">Perfil do Enfermeiro</p>
               </div>
             </Link>
             <div className="flex items-center gap-4">
-              <Link to="/medical-dashboard">
+              <Link to="/nursing-dashboard">
                 <Button variant="outline" className="flex items-center gap-2 font-paragraph">
                   <ArrowLeft className="w-4 h-4" />
                   Voltar
@@ -247,7 +244,7 @@ export default function MedicalProfilePage() {
                   </div>
                   <span className="font-heading text-3xl font-bold text-foreground">{stats.totalPatients}</span>
                 </div>
-                <p className="font-paragraph text-sm text-foreground/70">Pacientes Acompanhados</p>
+                <p className="font-paragraph text-sm text-foreground/70">Pacientes Avaliados</p>
               </div>
 
               <div className="bg-white rounded-2xl p-6 border border-secondary/20">
@@ -262,12 +259,12 @@ export default function MedicalProfilePage() {
 
               <div className="bg-white rounded-2xl p-6 border border-secondary/20">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-stable/10 rounded-lg flex items-center justify-center">
-                    <Award className="w-6 h-6 text-stable" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <Heart className="w-6 h-6 text-primary" />
                   </div>
-                  <span className="font-heading text-3xl font-bold text-foreground">{stats.totalDischarges}</span>
+                  <span className="font-heading text-3xl font-bold text-foreground">{stats.totalReferrals}</span>
                 </div>
-                <p className="font-paragraph text-sm text-foreground/70">Altas Concedidas</p>
+                <p className="font-paragraph text-sm text-foreground/70">Encaminhamentos Realizados</p>
               </div>
             </motion.div>
           </div>
