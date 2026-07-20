@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Activity, Users, AlertCircle, CheckCircle, Clock, ArrowRight, LogOut, Filter, Eye,
-  Bell, Search, TrendingUp, Calendar, BarChart3, User, FileText, Zap, Clipboard, Heart, Stethoscope, TrendingDown
+  Bell, Search, TrendingUp, Calendar, BarChart3, User, FileText, Zap, Clipboard, Heart, Stethoscope, TrendingDown,
+  ClipboardCheck, UserCheck, AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
