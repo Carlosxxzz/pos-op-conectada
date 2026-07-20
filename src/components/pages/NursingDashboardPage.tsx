@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Activity, Users, AlertCircle, CheckCircle, Clock, ArrowRight, LogOut, Filter, Eye,
-  Bell, Search, TrendingUp, Calendar, BarChart3, User, FileText, Zap
+  Bell, Search, TrendingUp, Calendar, BarChart3, User, FileText, Zap, Clipboard, Heart, Stethoscope, TrendingDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
@@ -14,6 +14,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import { logger } from '@/lib/logger';
 import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import NotificationPanel from '@/components/NotificationPanel';
 
 type EvaluationStatus = 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'CONCLUIDO';
 type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'URGENTE' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS';
@@ -49,6 +50,9 @@ export default function NursingDashboardPage() {
   const [error, setError] = useState<string>('');
   const [filterType, setFilterType] = useState<FilterType>('TODOS');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'agenda' | 'historico' | 'perfil'>('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     awaitingEvaluation: 0,
@@ -68,6 +72,26 @@ export default function NursingDashboardPage() {
     const interval = setInterval(loadData, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (professional) {
+      loadUnreadNotifications();
+      const interval = setInterval(loadUnreadNotifications, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [professional]);
+
+  const loadUnreadNotifications = async () => {
+    try {
+      const result = await BaseCrudService.getAll<any>('notificacoes');
+      const unread = result.items.filter(
+        n => n.recipientId === professional?._id && !n.isRead
+      ).length;
+      setUnreadNotificationCount(unread);
+    } catch (error) {
+      logger.error('NursingDashboard', 'loadUnreadNotifications', 'Error loading unread count', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -214,6 +238,11 @@ export default function NursingDashboardPage() {
     navigate('/professional-login');
   };
 
+  const handleCardClick = (newFilterType: FilterType) => {
+    setFilterType(newFilterType);
+    setActiveTab('dashboard');
+  };
+
   // Filter and search logic
   const filteredPatients = useMemo(() => {
     let result = allPatients;
@@ -307,6 +336,13 @@ export default function NursingDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Notification Panel */}
+      <NotificationPanel
+        recipientId={professional?._id || ''}
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
+
       {/* Header */}
       <header className="bg-white border-b border-secondary/30 sticky top-0 z-40">
         <div className="max-w-[120rem] mx-auto px-8 py-6">
@@ -321,17 +357,54 @@ export default function NursingDashboardPage() {
               </div>
             </Link>
             <div className="flex items-center gap-4">
-              <button className="relative p-2 hover:bg-background rounded-lg transition-colors">
-                <Bell className="w-6 h-6 text-foreground" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-critical rounded-full"></span>
-              </button>
               <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 hover:bg-background rounded-lg transition-colors"
               >
-                <LogOut className="w-4 h-4" />
-                Sair
+                <Bell className="w-6 h-6 text-foreground" />
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute top-1 right-1 w-5 h-5 bg-critical text-critical-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                    {unreadNotificationCount}
+                  </span>
+                )}
               </button>
+
+              {/* Profile Menu */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="flex items-center gap-2 p-2 hover:bg-background rounded-lg transition-colors"
+                >
+                  <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="font-paragraph text-sm font-semibold text-foreground hidden sm:inline">
+                    {professional?.fullName?.split(' ')[0]}
+                  </span>
+                </button>
+
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg border border-secondary/20 shadow-lg z-50">
+                    <button
+                      onClick={() => {
+                        setActiveTab('perfil');
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-3 font-paragraph text-sm text-foreground hover:bg-background rounded-t-lg transition-colors flex items-center gap-2"
+                    >
+                      <User className="w-4 h-4" />
+                      Meu Perfil
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-3 font-paragraph text-sm text-destructive hover:bg-background rounded-b-lg transition-colors flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sair
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -372,19 +445,21 @@ export default function NursingDashboardPage() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {[
-                { label: 'Aguardando Avaliação', value: stats.awaitingEvaluation, icon: Clock, color: 'primary', bg: 'bg-primary/10' },
-                { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: ArrowRight, color: 'attention-foreground', bg: 'bg-attention/10' },
-                { label: 'Avaliados Enfermagem', value: stats.evaluatedByNurse, icon: CheckCircle, color: 'stable', bg: 'bg-stable/10' },
-                { label: 'Avaliados Médico', value: stats.evaluatedByDoctor, icon: CheckCircle, color: 'stable', bg: 'bg-stable/10' },
+                { label: 'Aguardando Avaliação', value: stats.awaitingEvaluation, icon: Clock, color: 'primary', bg: 'bg-primary/10', filterId: 'AGUARDANDO_ENFERMAGEM' as FilterType },
+                { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, color: 'attention-foreground', bg: 'bg-attention/10', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
+                { label: 'Avaliados Enfermagem', value: stats.evaluatedByNurse, icon: CheckCircle, color: 'stable', bg: 'bg-stable/10', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
+                { label: 'Avaliados Médico', value: stats.evaluatedByDoctor, icon: Stethoscope, color: 'stable', bg: 'bg-stable/10', filterId: 'AVALIADO_MEDICO' as FilterType },
               ].map((stat, index) => {
                 const Icon = stat.icon;
                 return (
-                  <motion.div
+                  <motion.button
                     key={stat.label}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className={`${stat.bg} rounded-2xl p-6 border border-secondary/20`}
+                    onClick={() => handleCardClick(stat.filterId)}
+                    whileHover={{ y: -4 }}
+                    className={`${stat.bg} rounded-2xl p-6 border border-secondary/20 hover:shadow-lg transition-all cursor-pointer text-left`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className={`w-12 h-12 bg-${stat.color} rounded-lg flex items-center justify-center`}>
@@ -393,18 +468,20 @@ export default function NursingDashboardPage() {
                       <span className="font-heading text-3xl font-bold text-foreground">{stat.value}</span>
                     </div>
                     <p className="font-paragraph text-sm text-foreground/70">{stat.label}</p>
-                  </motion.div>
+                  </motion.button>
                 );
               })}
             </div>
 
             {/* Critical Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <motion.div
+              <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-critical/10 rounded-2xl p-6 border border-critical/20"
+                onClick={() => handleCardClick('URGENTE')}
+                whileHover={{ y: -4 }}
+                className="bg-critical/10 rounded-2xl p-6 border border-critical/20 hover:shadow-lg transition-all cursor-pointer text-left"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-critical rounded-lg flex items-center justify-center">
@@ -413,28 +490,32 @@ export default function NursingDashboardPage() {
                   <span className="font-heading text-3xl font-bold text-critical">{stats.critical}</span>
                 </div>
                 <p className="font-paragraph text-sm text-foreground/70">Pacientes Críticos</p>
-              </motion.div>
+              </motion.button>
 
-              <motion.div
+              <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="bg-primary/10 rounded-2xl p-6 border border-primary/20"
+                onClick={() => handleCardClick('ULTIMOS_7_DIAS')}
+                whileHover={{ y: -4 }}
+                className="bg-primary/10 rounded-2xl p-6 border border-primary/20 hover:shadow-lg transition-all cursor-pointer text-left"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                    <Zap className="w-6 h-6 text-primary-foreground" />
+                    <Clipboard className="w-6 h-6 text-primary-foreground" />
                   </div>
                   <span className="font-heading text-3xl font-bold text-primary">{stats.totalChecklistsToday}</span>
                 </div>
                 <p className="font-paragraph text-sm text-foreground/70">Checklists Hoje</p>
-              </motion.div>
+              </motion.button>
 
-              <motion.div
+              <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="bg-stable/10 rounded-2xl p-6 border border-stable/20"
+                onClick={() => handleCardClick('TODOS')}
+                whileHover={{ y: -4 }}
+                className="bg-stable/10 rounded-2xl p-6 border border-stable/20 hover:shadow-lg transition-all cursor-pointer text-left"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-stable rounded-lg flex items-center justify-center">
@@ -443,7 +524,7 @@ export default function NursingDashboardPage() {
                   <span className="font-heading text-3xl font-bold text-stable">{stats.inFollowUp}</span>
                 </div>
                 <p className="font-paragraph text-sm text-foreground/70">Em Acompanhamento</p>
-              </motion.div>
+              </motion.button>
             </div>
 
             {/* Search and Filter */}
