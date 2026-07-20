@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, Send, FileText, AlertCircle, Clock, User, Building2 } from 'lucide-react';
+import { Activity, ArrowLeft, Send, FileText, AlertCircle, Clock, User, Building2, Calendar, Pill, Thermometer, Heart, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,7 @@ import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
+import { motion } from 'framer-motion';
 
 export default function MedicalEvaluationPage() {
   const { id } = useParams<{ id: string }>();
@@ -232,10 +233,18 @@ export default function MedicalEvaluationPage() {
     );
   }
 
+  const calculateDaysSinceSurgery = () => {
+    if (!patient?.surgeryDate) return 0;
+    const surgery = new Date(patient.surgeryDate);
+    const today = new Date();
+    const diffMs = today.getTime() - surgery.getTime();
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b border-secondary/30">
+      <header className="bg-white border-b border-secondary/30 sticky top-0 z-50">
         <div className="max-w-[120rem] mx-auto px-8 py-6">
           <div className="flex items-center justify-between">
             <Link to="/medical-dashboard" className="flex items-center gap-3">
@@ -263,10 +272,17 @@ export default function MedicalEvaluationPage() {
           {/* Patient History */}
           <div className="lg:col-span-2 space-y-8">
             {/* Patient Info */}
-            <div className="bg-white rounded-2xl p-8 border border-secondary/20">
-              <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
-                Informações do Paciente
-              </h2>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl p-8 border border-secondary/20"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <User className="w-6 h-6 text-primary" />
+                <h2 className="font-heading text-2xl font-bold text-foreground">
+                  Informações do Paciente
+                </h2>
+              </div>
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <p className="font-paragraph text-sm text-foreground/60 mb-1">Nome Completo</p>
@@ -277,6 +293,39 @@ export default function MedicalEvaluationPage() {
                   <p className="font-paragraph text-base font-semibold text-foreground">{patient.cpf}</p>
                 </div>
                 <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">SUS</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{patient.susNumber || '-'}</p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Telefone</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{patient.phoneNumber || '-'}</p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Hospital</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{patient.hospital}</p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Médico Responsável</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{patient.responsibleDoctorName || '-'}</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Surgery Information */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl p-8 border border-secondary/20"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <Calendar className="w-6 h-6 text-primary" />
+                <h2 className="font-heading text-2xl font-bold text-foreground">
+                  Informações da Cirurgia
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
                   <p className="font-paragraph text-sm text-foreground/60 mb-1">Tipo de Cirurgia</p>
                   <p className="font-paragraph text-base font-semibold text-foreground">{patient.surgeryType}</p>
                 </div>
@@ -286,12 +335,33 @@ export default function MedicalEvaluationPage() {
                     {patient.surgeryDate ? new Date(patient.surgeryDate).toLocaleDateString('pt-BR') : '-'}
                   </p>
                 </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Dias de Pós-Operatório</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">{calculateDaysSinceSurgery()} dias</p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-sm text-foreground/60 mb-1">Status de Acompanhamento</p>
+                  <p className="font-paragraph text-base font-semibold text-foreground">
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                      patient.followUpStatus === 'Ativo' 
+                        ? 'bg-primary/20 text-primary'
+                        : 'bg-stable/20 text-stable'
+                    }`}>
+                      {patient.followUpStatus || 'Ativo'}
+                    </span>
+                  </p>
+                </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Nursing Evaluation with Referral Reason */}
             {nursingEvaluation && (
-              <div className="bg-white rounded-2xl p-8 border border-secondary/20">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-2xl p-8 border border-secondary/20"
+              >
                 <div className="flex items-center gap-3 mb-6">
                   <FileText className="w-6 h-6 text-primary" />
                   <h2 className="font-heading text-2xl font-bold text-foreground">
@@ -314,14 +384,20 @@ export default function MedicalEvaluationPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {/* Checklists History */}
             {checklists.length > 0 ? (
               <div className="space-y-8">
                 {checklists.map((checklist, index) => (
-                  <div key={checklist._id} className="bg-white rounded-2xl p-8 border border-secondary/20">
+                  <motion.div
+                    key={checklist._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                    className="bg-white rounded-2xl p-8 border border-secondary/20"
+                  >
                     <div className="flex items-center justify-between mb-6">
                       <div>
                         <h2 className="font-heading text-2xl font-bold text-foreground">
@@ -351,47 +427,115 @@ export default function MedicalEvaluationPage() {
                           : 'ESTÁVEL'}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                      <div>
-                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Nível de Dor</p>
-                        <p className="font-paragraph text-base font-semibold text-foreground">
-                          {checklist.painLevel}/10
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Temperatura</p>
-                        <p className="font-paragraph text-base font-semibold text-foreground">
-                          {checklist.bodyTemperature}°C
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Febre</p>
-                        <p className="font-paragraph text-base font-semibold text-foreground">
-                          {checklist.hasFever ? 'Sim' : 'Não'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Vermelhidão</p>
-                        <p className="font-paragraph text-base font-semibold text-foreground">
-                          {checklist.scarRedness ? 'Sim' : 'Não'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Secreção</p>
-                        <p className="font-paragraph text-base font-semibold text-foreground">
-                          {checklist.hasSecretion ? 'Sim' : 'Não'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Falta de Ar</p>
-                        <p className="font-paragraph text-base font-semibold text-foreground">
-                          {checklist.shortnessOfBreath ? 'Sim' : 'Não'}
-                        </p>
+
+                    {/* Vital Signs */}
+                    <div className="mb-6 pb-6 border-b border-secondary/20">
+                      <h3 className="font-heading text-lg font-bold text-foreground mb-4">Sinais Vitais</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="flex items-start gap-3">
+                          <Heart className="w-5 h-5 text-critical mt-1 flex-shrink-0" />
+                          <div>
+                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Nível de Dor</p>
+                            <p className="font-paragraph text-base font-semibold text-foreground">
+                              {checklist.painLevel}/10
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <Thermometer className="w-5 h-5 text-attention-foreground mt-1 flex-shrink-0" />
+                          <div>
+                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Temperatura</p>
+                            <p className="font-paragraph text-base font-semibold text-foreground">
+                              {checklist.bodyTemperature}°C
+                            </p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1">Febre</p>
+                          <p className="font-paragraph text-base font-semibold text-foreground">
+                            {checklist.hasFever ? 'Sim' : 'Não'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1">Alimentação</p>
+                          <p className="font-paragraph text-base font-semibold text-foreground">
+                            {checklist.eatingNormally ? 'Normal' : 'Alterada'}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
+                    {/* Surgical Site */}
+                    <div className="mb-6 pb-6 border-b border-secondary/20">
+                      <h3 className="font-heading text-lg font-bold text-foreground mb-4">Sítio Cirúrgico</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1">Vermelhidão</p>
+                          <p className="font-paragraph text-base font-semibold text-foreground">
+                            {checklist.scarRedness ? 'Sim' : 'Não'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1">Secreção</p>
+                          <p className="font-paragraph text-base font-semibold text-foreground">
+                            {checklist.hasSecretion ? 'Sim' : 'Não'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1">Mau Cheiro</p>
+                          <p className="font-paragraph text-base font-semibold text-foreground">
+                            {checklist.hasBadOdor ? 'Sim' : 'Não'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Symptoms */}
+                    <div className="mb-6 pb-6 border-b border-secondary/20">
+                      <h3 className="font-heading text-lg font-bold text-foreground mb-4">Sintomas</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1">Falta de Ar</p>
+                          <p className="font-paragraph text-base font-semibold text-foreground">
+                            {checklist.shortnessOfBreath ? 'Sim' : 'Não'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1">Tontura</p>
+                          <p className="font-paragraph text-base font-semibold text-foreground">
+                            {checklist.dizziness ? 'Sim' : 'Não'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1">Dor Crescente</p>
+                          <p className="font-paragraph text-base font-semibold text-foreground">
+                            {checklist.increasingPain ? 'Sim' : 'Não'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Medications */}
+                    <div className="mb-6 pb-6 border-b border-secondary/20">
+                      <h3 className="font-heading text-lg font-bold text-foreground mb-4">Medicamentos</h3>
+                      <div className="flex items-start gap-3">
+                        <Pill className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                        <div>
+                          <p className="font-paragraph text-sm text-foreground">
+                            {checklist.takingMedicationCorrectly ? 'Tomando corretamente' : 'Não está tomando corretamente'}
+                          </p>
+                          {!checklist.takingMedicationCorrectly && checklist.reasonNotTakingMedication && (
+                            <p className="font-paragraph text-sm text-foreground/60 mt-2">
+                              Motivo: {checklist.reasonNotTakingMedication}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Scar Photo */}
                     {checklist.scarPhoto && (
-                      <div className="mt-6">
+                      <div>
                         <p className="font-paragraph text-sm font-semibold text-foreground mb-3">Foto da Cicatriz</p>
                         <Image
                           src={checklist.scarPhoto}
@@ -401,7 +545,7 @@ export default function MedicalEvaluationPage() {
                         />
                       </div>
                     )}
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             ) : (

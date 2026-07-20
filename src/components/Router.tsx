@@ -16,6 +16,7 @@ import NursingDashboardPage from '@/components/pages/NursingDashboardPage';
 import NursingEvaluationPage from '@/components/pages/NursingEvaluationPage';
 import MedicalDashboardPage from '@/components/pages/MedicalDashboardPage';
 import MedicalEvaluationPage from '@/components/pages/MedicalEvaluationPage';
+import MedicalProfilePage from '@/components/pages/MedicalProfilePage';
 import AdminDashboardPage from '@/components/pages/AdminDashboardPage';
 import { ProfessionalProtectedRoute } from '@/components/ProfessionalProtectedRoute';
 
@@ -107,6 +108,14 @@ const router = createBrowserRouter([
         element: (
           <ProfessionalProtectedRoute allowedProfiles={['Médico']}>
             <MedicalEvaluationPage />
+          </ProfessionalProtectedRoute>
+        ),
+      },
+      {
+        path: "medical-profile",
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Médico']}>
+            <MedicalProfilePage />
           </ProfessionalProtectedRoute>
         ),
       },
