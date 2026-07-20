@@ -294,6 +294,14 @@ export interface Notifications {
   /** @wixFieldType text */
   recipientId?: string;
   /** @wixFieldType text */
+  relatedChecklistId?: string;
+  /** @wixFieldType text */
+  hospital?: string;
+  /** @wixFieldType text */
+  patientName?: string;
+  /** @wixFieldType text */
+  patientId?: string;
+  /** @wixFieldType text */
   recipientType?: string;
   /** @wixFieldType text */
   message?: string;

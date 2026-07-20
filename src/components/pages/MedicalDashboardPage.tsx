@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, Stethoscope, AlertCircle, ArrowRight, LogOut, Search, Filter, Bell, User, Clock, Users, CheckCircle, TrendingUp } from 'lucide-react';
+import { Activity, Stethoscope, AlertCircle, ArrowRight, LogOut, Search, Filter, User, Clock, Users, CheckCircle, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BaseCrudService } from '@/integrations';
@@ -9,6 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
 import { Image } from '@/components/ui/image';
+import NotificationPanel from '@/components/NotificationPanel';
 
 interface ReferredCase {
   checklist: ChecklistsDirios;
@@ -211,15 +212,15 @@ export default function MedicalDashboardPage() {
             </Link>
             
             <div className="flex items-center gap-6">
-              {/* Notifications */}
-              <button className="relative p-2 hover:bg-background rounded-lg transition-colors">
-                <Bell className="w-6 h-6 text-foreground" />
-                {stats.pendingCount > 0 && (
-                  <span className="absolute top-0 right-0 w-5 h-5 bg-critical text-critical-foreground text-xs font-bold rounded-full flex items-center justify-center">
-                    {stats.pendingCount}
-                  </span>
-                )}
-              </button>
+              {/* Notifications Panel */}
+              <NotificationPanel 
+                professionalId={professional?._id || null}
+                onNotificationClick={(notificationId, checklistId) => {
+                  if (checklistId) {
+                    navigate(`/medical-evaluation/${checklistId}`);
+                  }
+                }}
+              />
 
               {/* Profile Menu */}
               <div className="relative">

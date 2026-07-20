@@ -10,6 +10,7 @@ import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, Profissionais, 
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createReferralNotification } from '@/lib/notificationHelper';
 
 export default function NursingEvaluationPage() {
   const { id } = useParams<{ id: string }>();
@@ -278,6 +279,21 @@ export default function NursingEvaluationPage() {
         console.log('[NURSING] Checklist atualizado (Encaminhado)', {
           checklistId: selectedChecklist._id.substring(0, 8),
           status: 'ENCAMINHADO_MEDICO',
+        });
+
+        // Create notification for doctor
+        await createReferralNotification(
+          selectedDoctor._id,
+          id,
+          patient.fullName || 'Paciente',
+          patient.hospital || 'Hospital não informado',
+          selectedChecklist._id,
+          professional.fullName || professional.email || 'Enfermeiro',
+          referralReason
+        );
+
+        console.log('[NURSING] Notificação do médico criada', {
+          doctorId: selectedDoctor._id.substring(0, 8),
         });
 
         // Create notification for patient

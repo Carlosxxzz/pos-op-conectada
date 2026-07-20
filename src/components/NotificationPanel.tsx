@@ -1,314 +1,295 @@
-import { useState, useEffect } from 'react';
-import { Bell, X, Check, Trash2, AlertCircle, CheckCircle, Clock, Zap, TrendingUp, Activity, FileText } from 'lucide-react';
-import { BaseCrudService } from '@/integrations';
-import type { Notifications } from '@/entities';
+import { useState, useRef, useEffect } from 'react';
+import { Bell, X, AlertCircle, CheckCircle, Clock, Trash2, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format } from 'date-fns';
+import { useNotifications } from '@/hooks/useNotifications';
+import { format, isToday, isYesterday, isWithinInterval, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface NotificationPanelProps {
-  recipientId: string;
-  isOpen: boolean;
-  onClose: () => void;
+  professionalId: string | null;
+  onNotificationClick?: (notificationId: string, checklistId?: string) => void;
 }
 
-const getNotificationIcon = (type: string) => {
-  switch (type) {
-    case 'NOVO_CHECKLIST':
-      return <FileText className="w-5 h-5" />;
-    case 'CHECKLIST_RESPONDIDO':
-      return <CheckCircle className="w-5 h-5" />;
-    case 'CHECKLIST_NAO_RESPONDIDO':
-      return <Clock className="w-5 h-5" />;
-    case 'DOR_INTENSA':
-      return <AlertCircle className="w-5 h-5" />;
-    case 'FEBRE':
-      return <Zap className="w-5 h-5" />;
-    case 'FOTO_ENVIADA':
-      return <Activity className="w-5 h-5" />;
-    case 'AVALIACAO_MEDICA':
-      return <CheckCircle className="w-5 h-5" />;
-    case 'ALTA_CONCEDIDA':
-      return <TrendingUp className="w-5 h-5" />;
-    default:
-      return <Bell className="w-5 h-5" />;
-  }
-};
+export default function NotificationPanel({ professionalId, onNotificationClick }: NotificationPanelProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearReadNotifications,
+  } = useNotifications(professionalId);
 
-const getNotificationColor = (type: string) => {
-  switch (type) {
-    case 'NOVO_CHECKLIST':
-      return 'bg-primary/10 text-primary';
-    case 'CHECKLIST_RESPONDIDO':
-      return 'bg-stable/10 text-stable';
-    case 'CHECKLIST_NAO_RESPONDIDO':
-      return 'bg-attention/10 text-attention-foreground';
-    case 'DOR_INTENSA':
-      return 'bg-critical/10 text-critical';
-    case 'FEBRE':
-      return 'bg-critical/10 text-critical';
-    case 'FOTO_ENVIADA':
-      return 'bg-primary/10 text-primary';
-    case 'AVALIACAO_MEDICA':
-      return 'bg-stable/10 text-stable';
-    case 'ALTA_CONCEDIDA':
-      return 'bg-stable/10 text-stable';
-    default:
-      return 'bg-foreground/10 text-foreground';
-  }
-};
-
-const getNotificationTitle = (type: string) => {
-  switch (type) {
-    case 'NOVO_CHECKLIST':
-      return 'Novo Checklist Recebido';
-    case 'CHECKLIST_RESPONDIDO':
-      return 'Paciente Respondeu Checklist';
-    case 'CHECKLIST_NAO_RESPONDIDO':
-      return 'Paciente Não Respondeu Checklist';
-    case 'DOR_INTENSA':
-      return 'Paciente Informou Dor Intensa';
-    case 'FEBRE':
-      return 'Paciente Apresentou Febre';
-    case 'FOTO_ENVIADA':
-      return 'Paciente Enviou Nova Foto';
-    case 'AVALIACAO_MEDICA':
-      return 'Médico Concluiu Avaliação';
-    case 'ALTA_CONCEDIDA':
-      return 'Paciente Recebeu Alta';
-    default:
-      return 'Nova Notificação';
-  }
-};
-
-export default function NotificationPanel({ recipientId, isOpen, onClose }: NotificationPanelProps) {
-  const [notifications, setNotifications] = useState<Notifications[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
+  // Close panel when clicking outside
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
     if (isOpen) {
-      loadNotifications();
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [isOpen]);
 
-  const loadNotifications = async () => {
-    try {
-      setIsLoading(true);
-      const result = await BaseCrudService.getAll<Notifications>('notificacoes');
-      const userNotifications = result.items
-        .filter(n => n.recipientId === recipientId)
-        .sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
-      setNotifications(userNotifications);
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-    } finally {
-      setIsLoading(false);
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'referral':
+        return <AlertCircle className="w-5 h-5 text-critical" />;
+      case 'checklist':
+        return <CheckCircle className="w-5 h-5 text-primary" />;
+      case 'critical':
+        return <AlertCircle className="w-5 h-5 text-critical" />;
+      case 'urgent':
+        return <AlertCircle className="w-5 h-5 text-attention-foreground" />;
+      default:
+        return <Bell className="w-5 h-5 text-primary" />;
     }
   };
 
-  const markAsRead = async (notificationId: string) => {
-    try {
-      await BaseCrudService.update<Notifications>('notificacoes', {
-        _id: notificationId,
-        isRead: true,
-      });
-      setNotifications(prev =>
-        prev.map(n => n._id === notificationId ? { ...n, isRead: true } : n)
-      );
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
+  const getNotificationColor = (type: string) => {
+    switch (type) {
+      case 'referral':
+        return 'border-l-4 border-l-primary';
+      case 'checklist':
+        return 'border-l-4 border-l-primary';
+      case 'critical':
+        return 'border-l-4 border-l-critical';
+      case 'urgent':
+        return 'border-l-4 border-l-attention-foreground';
+      default:
+        return 'border-l-4 border-l-secondary';
     }
   };
 
-  const deleteNotification = async (notificationId: string) => {
-    try {
-      await BaseCrudService.delete('notificacoes', notificationId);
-      setNotifications(prev => prev.filter(n => n._id !== notificationId));
-    } catch (error) {
-      console.error('Error deleting notification:', error);
+  const groupNotificationsByDate = (notifs: typeof notifications) => {
+    const today = new Date();
+    const yesterday = subDays(today, 1);
+    const sevenDaysAgo = subDays(today, 7);
+    const thirtyDaysAgo = subDays(today, 30);
+
+    const groups: Record<string, typeof notifications> = {
+      'Hoje': [],
+      'Ontem': [],
+      'Últimos 7 dias': [],
+      'Últimos 30 dias': [],
+      'Mais antigos': [],
+    };
+
+    notifs.forEach(notif => {
+      const notifDate = new Date(notif.timestamp || '');
+      
+      if (isToday(notifDate)) {
+        groups['Hoje'].push(notif);
+      } else if (isYesterday(notifDate)) {
+        groups['Ontem'].push(notif);
+      } else if (isWithinInterval(notifDate, { start: sevenDaysAgo, end: yesterday })) {
+        groups['Últimos 7 dias'].push(notif);
+      } else if (isWithinInterval(notifDate, { start: thirtyDaysAgo, end: sevenDaysAgo })) {
+        groups['Últimos 30 dias'].push(notif);
+      } else {
+        groups['Mais antigos'].push(notif);
+      }
+    });
+
+    return groups;
+  };
+
+  const handleNotificationClick = (notificationId: string, checklistId?: string) => {
+    markAsRead(notificationId);
+    if (onNotificationClick) {
+      onNotificationClick(notificationId, checklistId);
     }
   };
 
-  const markAllAsRead = async () => {
-    try {
-      const unreadNotifications = notifications.filter(n => !n.isRead);
-      await Promise.all(
-        unreadNotifications.map(n =>
-          BaseCrudService.update<Notifications>('notificacoes', {
-            _id: n._id,
-            isRead: true,
-          })
-        )
-      );
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    } catch (error) {
-      console.error('Error marking all as read:', error);
-    }
-  };
-
-  const clearOldNotifications = async () => {
-    try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-      const oldNotifications = notifications.filter(n => {
-        const notifDate = new Date(n.timestamp || 0);
-        return notifDate < thirtyDaysAgo;
-      });
-
-      await Promise.all(
-        oldNotifications.map(n => BaseCrudService.delete('notificacoes', n._id))
-      );
-
-      setNotifications(prev =>
-        prev.filter(n => {
-          const notifDate = new Date(n.timestamp || 0);
-          return notifDate >= thirtyDaysAgo;
-        })
-      );
-    } catch (error) {
-      console.error('Error clearing old notifications:', error);
-    }
-  };
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadNotifications = notifications.filter(n => !n.isRead);
+  const readNotifications = notifications.filter(n => n.isRead);
+  const displayNotifications = showHistory ? notifications : unreadNotifications;
+  const groupedNotifications = groupNotificationsByDate(displayNotifications);
 
   return (
-    <>
-      {/* Overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/20 z-40"
-          />
-        )}
-      </AnimatePresence>
+    <div className="relative" ref={panelRef}>
+      {/* Bell Icon Button */}
+      <motion.button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 hover:bg-background rounded-lg transition-colors"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <Bell className="w-6 h-6 text-foreground" />
+        
+        {/* Unread Badge */}
+        <AnimatePresence>
+          {unreadCount > 0 && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              className="absolute top-0 right-0 w-5 h-5 bg-critical text-critical-foreground text-xs font-bold rounded-full flex items-center justify-center"
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
 
-      {/* Panel */}
+      {/* Notification Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 20 }}
-            className="fixed right-0 top-0 h-screen w-full max-w-md bg-white shadow-2xl z-50 flex flex-col"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute right-0 mt-2 w-96 bg-white rounded-2xl border border-secondary/20 shadow-2xl z-50 max-h-[600px] flex flex-col"
           >
             {/* Header */}
-            <div className="border-b border-secondary/20 p-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Bell className="w-6 h-6 text-primary" />
-                <h2 className="font-heading text-xl font-bold text-foreground">Notificações</h2>
+            <div className="flex items-center justify-between p-6 border-b border-secondary/20">
+              <div>
+                <h3 className="font-heading text-lg font-bold text-foreground">Notificações</h3>
                 {unreadCount > 0 && (
-                  <span className="bg-critical text-critical-foreground text-xs font-bold px-2 py-1 rounded-full">
-                    {unreadCount}
-                  </span>
+                  <p className="font-paragraph text-xs text-foreground/60 mt-1">
+                    {unreadCount} não lida{unreadCount !== 1 ? 's' : ''}
+                  </p>
                 )}
               </div>
               <button
-                onClick={onClose}
-                className="p-2 hover:bg-background rounded-lg transition-colors"
+                onClick={() => setIsOpen(false)}
+                className="p-1 hover:bg-background rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-foreground" />
+                <X className="w-5 h-5 text-foreground/60" />
               </button>
             </div>
 
-            {/* Actions */}
-            {notifications.length > 0 && (
-              <div className="border-b border-secondary/20 p-4 flex gap-2">
-                <button
-                  onClick={markAllAsRead}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors font-paragraph text-sm font-semibold"
-                >
-                  <Check className="w-4 h-4" />
-                  Marcar Tudo
-                </button>
-                <button
-                  onClick={clearOldNotifications}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors font-paragraph text-sm font-semibold"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Limpar
-                </button>
-              </div>
-            )}
+            {/* Tabs */}
+            <div className="flex gap-2 px-6 pt-4 border-b border-secondary/20">
+              <button
+                onClick={() => setShowHistory(false)}
+                className={`px-4 py-2 font-paragraph text-sm font-semibold rounded-lg transition-colors ${
+                  !showHistory
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground/60 hover:text-foreground'
+                }`}
+              >
+                Não Lidas ({unreadNotifications.length})
+              </button>
+              <button
+                onClick={() => setShowHistory(true)}
+                className={`px-4 py-2 font-paragraph text-sm font-semibold rounded-lg transition-colors ${
+                  showHistory
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground/60 hover:text-foreground'
+                }`}
+              >
+                Histórico ({readNotifications.length})
+              </button>
+            </div>
 
             {/* Notifications List */}
             <div className="flex-1 overflow-y-auto">
-              {isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="font-paragraph text-sm text-foreground/60">Carregando...</p>
-                  </div>
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center px-6">
-                    <Bell className="w-12 h-12 text-foreground/20 mx-auto mb-4" />
-                    <p className="font-paragraph text-sm text-foreground/60">Nenhuma notificação</p>
-                  </div>
+              {displayNotifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-6">
+                  <Bell className="w-12 h-12 text-foreground/20 mb-3" />
+                  <p className="font-paragraph text-sm text-foreground/60 text-center">
+                    {showHistory
+                      ? 'Nenhuma notificação no histórico'
+                      : 'Você não possui novas notificações'}
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-2 p-4">
-                  {notifications.map((notification, index) => (
-                    <motion.div
-                      key={notification._id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={`rounded-lg p-4 border transition-all ${
-                        notification.isRead
-                          ? 'bg-background border-secondary/20'
-                          : 'bg-primary/5 border-primary/30'
-                      }`}
-                    >
-                      <div className="flex gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getNotificationColor(notification.notificationType || '')}`}>
-                          {getNotificationIcon(notification.notificationType || '')}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className="font-paragraph font-semibold text-sm text-foreground">
-                              {getNotificationTitle(notification.notificationType || '')}
-                            </h3>
-                            {!notification.isRead && (
-                              <button
-                                onClick={() => markAsRead(notification._id)}
-                                className="p-1 hover:bg-white rounded transition-colors flex-shrink-0"
-                              >
-                                <Check className="w-4 h-4 text-primary" />
-                              </button>
-                            )}
-                          </div>
-                          <p className="font-paragraph text-xs text-foreground/60 mb-2 line-clamp-2">
-                            {notification.message}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <span className="font-paragraph text-xs text-foreground/50">
-                              {format(new Date(notification.timestamp || 0), 'dd MMM HH:mm', { locale: ptBR })}
-                            </span>
-                            <button
-                              onClick={() => deleteNotification(notification._id)}
-                              className="p-1 hover:bg-destructive/10 rounded transition-colors"
+                <div className="p-4 space-y-2">
+                  {Object.entries(groupedNotifications).map(([dateGroup, notifs]) =>
+                    notifs.length > 0 ? (
+                      <div key={dateGroup}>
+                        <h4 className="font-paragraph text-xs font-semibold text-foreground/60 uppercase px-3 py-2">
+                          {dateGroup}
+                        </h4>
+                        <div className="space-y-2">
+                          {notifs.map((notification, index) => (
+                            <motion.div
+                              key={notification._id}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                              onClick={() => handleNotificationClick(notification._id, notification.relatedChecklistId)}
+                              className={`p-4 rounded-lg border bg-white hover:bg-background/50 cursor-pointer transition-all ${
+                                notification.isRead ? 'border-secondary/10' : 'border-primary/30 bg-primary/5'
+                              } ${getNotificationColor(notification.notificationType || 'default')}`}
                             >
-                              <Trash2 className="w-3 h-3 text-destructive" />
-                            </button>
-                          </div>
+                              <div className="flex gap-3">
+                                <div className="flex-shrink-0 mt-1">
+                                  {getNotificationIcon(notification.notificationType || 'default')}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1">
+                                      <p className="font-paragraph font-semibold text-sm text-foreground">
+                                        {notification.message}
+                                      </p>
+                                      {notification.patientName && (
+                                        <p className="font-paragraph text-xs text-foreground/60 mt-1">
+                                          Paciente: {notification.patientName}
+                                        </p>
+                                      )}
+                                      {notification.hospital && (
+                                        <p className="font-paragraph text-xs text-foreground/60">
+                                          Hospital: {notification.hospital}
+                                        </p>
+                                      )}
+                                    </div>
+                                    {!notification.isRead && (
+                                      <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2" />
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <Clock className="w-3 h-3 text-foreground/40" />
+                                    <span className="font-paragraph text-xs text-foreground/50">
+                                      {format(new Date(notification.timestamp || ''), 'HH:mm', { locale: ptBR })}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          ))}
                         </div>
                       </div>
-                    </motion.div>
-                  ))}
+                    ) : null
+                  )}
                 </div>
               )}
             </div>
+
+            {/* Footer Actions */}
+            {notifications.length > 0 && (
+              <div className="border-t border-secondary/20 p-4 flex gap-2">
+                {!showHistory && unreadNotifications.length > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors font-paragraph text-sm font-semibold"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Marcar todas como lidas
+                  </button>
+                )}
+                {showHistory && readNotifications.length > 0 && (
+                  <button
+                    onClick={clearReadNotifications}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-destructive/10 text-destructive rounded-lg hover:bg-destructive/20 transition-colors font-paragraph text-sm font-semibold"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Limpar histórico
+                  </button>
+                )}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

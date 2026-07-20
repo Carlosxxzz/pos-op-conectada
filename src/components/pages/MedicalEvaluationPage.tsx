@@ -10,6 +10,7 @@ import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas,
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 import { motion } from 'framer-motion';
+import { createNotification } from '@/lib/notificationHelper';
 
 export default function MedicalEvaluationPage() {
   const { id } = useParams<{ id: string }>();
@@ -189,6 +190,21 @@ export default function MedicalEvaluationPage() {
         responseDate: now,
         status: 'CONCLUIDO',
       });
+
+      // Mark the referral notification as read
+      const { items: notifications } = await BaseCrudService.getAll<any>('notificacoes');
+      const referralNotification = notifications.find(n =>
+        n.recipientId === professional._id &&
+        n.relatedChecklistId === referralChecklist._id &&
+        n.notificationType === 'referral'
+      );
+      
+      if (referralNotification) {
+        await BaseCrudService.update('notificacoes', {
+          _id: referralNotification._id,
+          isRead: true,
+        });
+      }
 
       // Create notification for patient about medical evaluation
       const notificationId = crypto.randomUUID();
