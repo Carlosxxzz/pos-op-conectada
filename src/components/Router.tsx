@@ -14,6 +14,7 @@ import PatientEvaluationsPage from '@/components/pages/PatientEvaluationsPage';
 import ProfessionalLoginPage from '@/components/pages/ProfessionalLoginPage';
 import NursingDashboardPage from '@/components/pages/NursingDashboardPage';
 import NursingEvaluationPage from '@/components/pages/NursingEvaluationPage';
+import NursingReferralViewPage from '@/components/pages/NursingReferralViewPage';
 import MedicalDashboardPage from '@/components/pages/MedicalDashboardPage';
 import MedicalEvaluationPage from '@/components/pages/MedicalEvaluationPage';
 import MedicalProfilePage from '@/components/pages/MedicalProfilePage';
@@ -92,6 +93,14 @@ const router = createBrowserRouter([
         element: (
           <ProfessionalProtectedRoute allowedProfiles={['Enfermeiro']}>
             <NursingEvaluationPage />
+          </ProfessionalProtectedRoute>
+        ),
+      },
+      {
+        path: "nursing-referral-view/:referralId",
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Enfermeiro']}>
+            <NursingReferralViewPage />
           </ProfessionalProtectedRoute>
         ),
       },

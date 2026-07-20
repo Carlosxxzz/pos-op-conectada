@@ -48,6 +48,7 @@ export default function NursingDashboardPage() {
   const [allPatients, setAllPatients] = useState<PatientEvaluationData[]>([]);
   const [professional, setProfessional] = useState<Profissionais | null>(null);
   const [error, setError] = useState<string>('');
+  const [referrals, setReferrals] = useState<EncaminhamentosMdicos[]>([]);
   const [filterType, setFilterType] = useState<FilterType>('TODOS');
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -700,6 +701,81 @@ export default function NursingDashboardPage() {
             )}
           </div>
         )}
+
+        {/* Encaminhado ao Médico Tab */}
+        {activeTab === 'encaminhados' && (() => {
+          // Get all referrals for patients in this hospital
+          const hospitalReferrals = allPatients
+            .filter(p => p.status === 'ENCAMINHADO_MEDICO')
+            .map(p => ({
+              patient: p.patient,
+              checklist: p.latestChecklist,
+              doctorName: p.doctorName,
+              referralDate: p.referralDate,
+            }));
+
+          return (
+            <div>
+              <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Pacientes Encaminhados ao Médico</h2>
+              {hospitalReferrals.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
+                  <CheckCircle className="w-16 h-16 text-stable mx-auto mb-4" />
+                  <h3 className="font-heading text-2xl font-bold text-foreground mb-2">Nenhum encaminhamento pendente</h3>
+                  <p className="font-paragraph text-lg text-foreground/70">Todos os encaminhamentos foram processados</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {hospitalReferrals.map((item, index) => (
+                    <motion.div
+                      key={`${item.patient._id}-referral`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white rounded-2xl p-6 border border-secondary/20 hover:shadow-lg transition-all"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="font-heading text-lg font-bold text-foreground mb-2">{item.patient.fullName}</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                            <div>
+                              <p className="font-paragraph text-xs text-foreground/60 mb-1">CPF</p>
+                              <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient.cpf || '-'}</p>
+                            </div>
+                            <div>
+                              <p className="font-paragraph text-xs text-foreground/60 mb-1">Médico</p>
+                              <p className="font-paragraph text-sm font-semibold text-foreground">{item.doctorName || '-'}</p>
+                            </div>
+                            <div>
+                              <p className="font-paragraph text-xs text-foreground/60 mb-1">Data Encaminhamento</p>
+                              <p className="font-paragraph text-sm font-semibold text-foreground">
+                                {item.referralDate ? new Date(item.referralDate).toLocaleDateString('pt-BR') : '-'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="font-paragraph text-xs text-foreground/60 mb-1">Status</p>
+                              <span className="inline-block bg-attention/10 text-attention-foreground text-xs font-semibold px-3 py-1 rounded-full">
+                                Aguardando Médico
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <Link
+                          to={`/nursing-referral-view/${item.checklist?._id}`}
+                          className="ml-4 flex-shrink-0"
+                        >
+                          <Button className="bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold flex items-center gap-2">
+                            <Eye className="w-4 h-4" />
+                            Ver
+                          </Button>
+                        </Link>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Agenda Tab */}
         {activeTab === 'agenda' && (
