@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Activity, Users, AlertCircle, CheckCircle, Clock, ArrowRight, LogOut, Filter, Eye,
   Bell, Search, TrendingUp, Calendar, BarChart3, User, FileText, Zap, Clipboard, Heart, Stethoscope, TrendingDown,
-  ClipboardCheck, UserCheck, AlertTriangle
+  ClipboardCheck, UserCheck, AlertTriangle, ClipboardList
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
@@ -436,8 +436,8 @@ export default function NursingDashboardPage() {
               {[
                 { label: 'Aguardando Avaliação', value: stats.awaitingEvaluation, icon: Clock, colorKey: 'primary', filterId: 'AGUARDANDO_ENFERMAGEM' as FilterType },
                 { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, colorKey: 'attention', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
-                { label: 'Avaliados Enfermagem', value: stats.evaluatedByNurse, icon: CheckCircle, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
-                { label: 'Avaliados Médico', value: stats.evaluatedByDoctor, icon: Stethoscope, colorKey: 'stable', filterId: 'AVALIADO_MEDICO' as FilterType },
+                { label: 'Avaliados Enfermagem', value: stats.evaluatedByNurse, icon: ClipboardCheck, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
+                { label: 'Avaliados Médico', value: stats.evaluatedByDoctor, icon: UserCheck, colorKey: 'stable', filterId: 'AVALIADO_MEDICO' as FilterType },
               ].map((stat, index) => {
                 const Icon = stat.icon;
                 const colors = colorMap[stat.colorKey as keyof typeof colorMap];
@@ -475,7 +475,7 @@ export default function NursingDashboardPage() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-critical rounded-lg flex items-center justify-center">
-                    <AlertCircle className="w-6 h-6 text-critical-foreground" />
+                    <AlertTriangle className="w-6 h-6 text-critical-foreground" />
                   </div>
                   <span className="font-heading text-3xl font-bold text-critical">{stats.critical}</span>
                 </div>
@@ -492,7 +492,7 @@ export default function NursingDashboardPage() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                    <Clipboard className="w-6 h-6 text-primary-foreground" />
+                    <ClipboardList className="w-6 h-6 text-primary-foreground" />
                   </div>
                   <span className="font-heading text-3xl font-bold text-primary">{stats.totalChecklistsToday}</span>
                 </div>
@@ -509,7 +509,7 @@ export default function NursingDashboardPage() {
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-stable rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-6 h-6 text-stable-foreground" />
+                    <Activity className="w-6 h-6 text-stable-foreground" />
                   </div>
                   <span className="font-heading text-3xl font-bold text-stable">{stats.inFollowUp}</span>
                 </div>
