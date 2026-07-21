@@ -21,6 +21,7 @@ import MedicalEvaluationHistoryPage from '@/components/pages/MedicalEvaluationHi
 import MedicalProfilePage from '@/components/pages/MedicalProfilePage';
 import NursingProfilePage from '@/components/pages/NursingProfilePage';
 import AdminDashboardPage from '@/components/pages/AdminDashboardPage';
+import AdminProfilePage from '@/components/pages/AdminProfilePage';
 import { ProfessionalProtectedRoute } from '@/components/ProfessionalProtectedRoute';
 
 // Layout component that includes ScrollToTop
@@ -151,6 +152,14 @@ const router = createBrowserRouter([
         element: (
           <ProfessionalProtectedRoute allowedProfiles={['Administrador']}>
             <AdminDashboardPage />
+          </ProfessionalProtectedRoute>
+        ),
+      },
+      {
+        path: "admin-profile",
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Administrador']}>
+            <AdminProfilePage />
           </ProfessionalProtectedRoute>
         ),
       },

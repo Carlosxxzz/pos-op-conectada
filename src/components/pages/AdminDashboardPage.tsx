@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, Users, AlertCircle, CheckCircle, TrendingDown, BarChart3, LogOut } from 'lucide-react';
+import { Activity, Users, AlertCircle, CheckCircle, TrendingDown, BarChart3, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas, Profissionais } from '@/entities';
@@ -114,13 +114,21 @@ export default function AdminDashboardPage() {
                 )}
               </div>
             </Link>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
-            >
-              <LogOut className="w-4 h-4" />
-              Sair
-            </button>
+            <div className="flex items-center gap-4">
+              <Link to="/admin-profile">
+                <button className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity">
+                  <User className="w-4 h-4" />
+                  Meu Perfil
+                </button>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
+              >
+                <LogOut className="w-4 h-4" />
+                Sair
+              </button>
+            </div>
           </div>
         </div>
       </header>
