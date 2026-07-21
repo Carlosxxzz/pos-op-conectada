@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, Send, AlertTriangle, Image as ImageIcon, Pill, AlertCircle, ChevronRight, Clock, User, Building2, ArrowRight, CheckCircle, Calendar, FileText, Stethoscope, TrendingUp } from 'lucide-react';
+import { Activity, ArrowLeft, Send, AlertTriangle, Image as ImageIcon, Pill, AlertCircle, ChevronRight, Clock, User, Building2, ArrowRight, CheckCircle, Calendar, FileText, Stethoscope, TrendingUp, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { BaseCrudService } from '@/integrations';
-import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, Profissionais, MedicacoesChecklist } from '@/entities';
+import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, Profissionais, MedicacoesChecklist, EncaminhamentosMdicos } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +30,8 @@ export default function NursingEvaluationPage() {
   const [referralReason, setReferralReason] = useState('');
   const [evaluationTimestamp, setEvaluationTimestamp] = useState<string>('')
   const [evaluationId, setEvaluationId] = useState<string>('')
+  const [isReadOnly, setIsReadOnly] = useState(false);
+  const [referral, setReferral] = useState<EncaminhamentosMdicos | null>(null);
     
   const [formData, setFormData] = useState({
     clinicalObservations: '',
@@ -99,6 +101,15 @@ export default function NursingEvaluationPage() {
         setSelectedChecklist(sortedChecklists[0]);
       } else {
         setError('Nenhum checklist pendente para este paciente. Todos já foram avaliados.');
+      }
+
+      // Check if patient has a referral (ENCAMINHADO_MEDICO status)
+      const { items: allReferrals } = await BaseCrudService.getAll<EncaminhamentosMdicos>('encaminhamentosmedicos');
+      const patientReferral = allReferrals.find(r => r.patientId === id && r.status === 'Encaminhado ao Médico');
+      
+      if (patientReferral) {
+        setReferral(patientReferral);
+        setIsReadOnly(true);
       }
 
       // Load medications for each checklist
@@ -630,6 +641,31 @@ export default function NursingEvaluationPage() {
 
           {/* Right Sidebar - Evaluation Form with Referral Section */}
           <div className="lg:col-span-1">
+            {isReadOnly && referral && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-critical/10 border-2 border-critical rounded-2xl p-6 mb-6"
+              >
+                <div className="flex items-start gap-3">
+                  <Lock className="w-6 h-6 text-critical flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-heading text-lg font-bold text-foreground mb-2">
+                      Paciente Referido ao Médico
+                    </h3>
+                    <p className="font-paragraph text-sm text-foreground/70 mb-3">
+                      Este paciente já foi encaminhado para avaliação médica e este registro está em modo somente leitura.
+                    </p>
+                    <div className="bg-white rounded-lg p-3 border border-critical/20">
+                      <p className="font-paragraph text-xs text-foreground/60 mb-1">Médico Responsável</p>
+                      <p className="font-paragraph text-sm font-semibold text-foreground">{referral.doctorName}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+            
             <motion.form
               onSubmit={handleSubmitEvaluation}
               initial={{ opacity: 0, y: 20 }}
@@ -638,7 +674,7 @@ export default function NursingEvaluationPage() {
               className="bg-white rounded-2xl p-8 border border-secondary/20 sticky top-8"
             >
               <h2 className="font-heading text-2xl font-bold text-foreground mb-6">
-                Avaliação de Enfermagem
+                {isReadOnly ? 'Visualização de Encaminhamento' : 'Avaliação de Enfermagem'}
               </h2>
 
               <div className="space-y-6">
@@ -680,7 +716,7 @@ export default function NursingEvaluationPage() {
                 </div>
 
                 <div className="border-t border-secondary/30 pt-6">
-                  {!formData.referredToDoctor ? (
+                  {!formData.referredToDoctor && !isReadOnly ? (
                     <>
                       <div className="mb-6">
                         <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">

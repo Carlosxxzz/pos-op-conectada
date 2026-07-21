@@ -21,7 +21,7 @@ import { Image } from '@/components/ui/image';
 import { useNotifications } from '@/hooks/useNotifications';
 
 type EvaluationStatus = 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'CONCLUIDO';
-type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'URGENTE' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS';
+type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'URGENTE' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS' | 'REFERIDO_MEDICO' | 'AVALIADO_MEDICO_COMPLETO';
 
 interface PatientEvaluationData {
   patient: Pacientes;
@@ -270,6 +270,10 @@ export default function NursingDashboardPage() {
         const checklistDate = new Date(item.latestChecklist?.checklistDate || 0);
         return checklistDate >= thirtyDaysAgo;
       });
+    } else if (filterType === 'REFERIDO_MEDICO') {
+      return result.filter(item => item.status === 'ENCAMINHADO_MEDICO');
+    } else if (filterType === 'AVALIADO_MEDICO_COMPLETO') {
+      return result.filter(item => item.status === 'AVALIADO_MEDICO');
     } else {
       return result.filter(item => item.status === filterType);
     }
