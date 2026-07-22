@@ -6,18 +6,14 @@ import {
   Briefcase,
   Calendar,
   Clock,
-  Users,
-  CheckCircle,
-  Award,
   Shield,
   Lock,
   Eye,
   EyeOff,
-  Bell,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
-import type { Profissionais, AvaliaesMdicas } from '@/entities';
+import type { Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
@@ -25,17 +21,11 @@ import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 
 export default function MedicalProfilePage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [professional, setProfessional] = useState<Profissionais | null>(null);
-  const [stats, setStats] = useState({
-    totalEvaluations: 0,
-    totalDischarges: 0,
-    totalPatients: 0,
-  });
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -47,11 +37,6 @@ export default function MedicalProfilePage() {
   });
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
-  const [notificationSettings, setNotificationSettings] = useState({
-    newReferrals: true,
-    criticalPatients: true,
-    newEvaluations: true,
-  });
 
   useEffect(() => {
     loadData();
@@ -65,25 +50,11 @@ export default function MedicalProfilePage() {
         return;
       }
 
-      const professionalData = await BaseCrudService.getById<Profissionais>('profissionais', professionalId);
+      const professionalData = await BaseCrudService.getById<Profissionais>(
+        'profissionais',
+        professionalId
+      );
       setProfessional(professionalData);
-
-      // Get statistics
-      const { items: allEvaluations } = await BaseCrudService.getAll<AvaliaesMdicas>('avaliacoesmedicas');
-      const { items: allReferrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
-
-      const evaluationsByThisDoctor = allEvaluations.filter(e => e.doctorName === professionalData?.fullName);
-      const discharges = evaluationsByThisDoctor.filter(e => e.status === 'Alta').length;
-      const uniquePatients = new Set(allReferrals
-        .filter((r: any) => r.doctorId === professionalId)
-        .map((r: any) => r.patientId)
-      ).size;
-
-      setStats({
-        totalEvaluations: evaluationsByThisDoctor.length,
-        totalDischarges: discharges,
-        totalPatients: uniquePatients,
-      });
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -206,7 +177,7 @@ export default function MedicalProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Profile Menu */}
+      {/* Header */}
       <ProfessionalProfileHeader
         professional={professional}
         dashboardLink="/medical-dashboard"
@@ -233,25 +204,37 @@ export default function MedicalProfilePage() {
                   size="lg"
                   showEditIcon={true}
                 />
-                <h2 className="font-heading text-2xl font-bold text-foreground mt-6">{professional?.fullName}</h2>
+                <h2 className="font-heading text-2xl font-bold text-foreground mt-6">
+                  {professional?.fullName}
+                </h2>
                 <p className="font-paragraph text-sm text-foreground/60 mt-1">{professional?.profile}</p>
               </div>
 
               <div className="space-y-4 border-t border-secondary/20 pt-6">
                 <div>
-                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-1">Especialidade</p>
-                  <p className="font-paragraph text-sm font-semibold text-foreground">{professional?.specialty || '-'}</p>
+                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-1">
+                    Hospital
+                  </p>
+                  <p className="font-paragraph text-sm font-semibold text-foreground">
+                    {professional?.hospital || '-'}
+                  </p>
                 </div>
                 <div>
-                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-1">Hospital</p>
-                  <p className="font-paragraph text-sm font-semibold text-foreground">{professional?.hospital || '-'}</p>
-                </div>
-                <div>
-                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-1">Status</p>
+                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-1">
+                    Status
+                  </p>
                   <p className="font-paragraph text-sm font-semibold text-foreground">
                     <span className="inline-block px-3 py-1 bg-stable/20 text-stable rounded-full text-xs">
                       {professional?.status || 'Ativo'}
                     </span>
+                  </p>
+                </div>
+                <div>
+                  <p className="font-paragraph text-xs text-foreground/60 uppercase tracking-wide mb-1">
+                    ID Interno
+                  </p>
+                  <p className="font-paragraph text-xs font-mono text-foreground">
+                    {professional?._id?.substring(0, 8)}...
                   </p>
                 </div>
               </div>
@@ -261,15 +244,12 @@ export default function MedicalProfilePage() {
           {/* Profile Details with Tabs */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="info" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-8 bg-white border border-secondary/20 rounded-2xl p-1">
+              <TabsList className="grid w-full grid-cols-2 mb-8 bg-white border border-secondary/20 rounded-2xl p-1">
                 <TabsTrigger value="info" className="font-paragraph">
                   Informações
                 </TabsTrigger>
                 <TabsTrigger value="security" className="font-paragraph">
                   Segurança
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="font-paragraph">
-                  Configurações
                 </TabsTrigger>
               </TabsList>
 
@@ -358,44 +338,6 @@ export default function MedicalProfilePage() {
                         </p>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
-
-                {/* Statistics */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="grid grid-cols-1 md:grid-cols-3 gap-6"
-                >
-                  <div className="bg-white rounded-2xl p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Users className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">{stats.totalPatients}</span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Pacientes Acompanhados</p>
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">{stats.totalEvaluations}</span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Avaliações Realizadas</p>
-                  </div>
-
-                  <div className="bg-white rounded-2xl p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-stable/10 rounded-lg flex items-center justify-center">
-                        <Award className="w-6 h-6 text-stable" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">{stats.totalDischarges}</span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Altas Concedidas</p>
                   </div>
                 </motion.div>
               </TabsContent>
@@ -537,82 +479,6 @@ export default function MedicalProfilePage() {
                       </div>
                     </div>
                   )}
-                </motion.div>
-              </TabsContent>
-
-              {/* Settings Tab */}
-              <TabsContent value="settings" className="space-y-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl p-8 border border-secondary/20"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <Bell className="w-6 h-6 text-primary" />
-                    <h3 className="font-heading text-2xl font-bold text-foreground">Preferências de Notificações</h3>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
-                      <div>
-                        <p className="font-paragraph font-semibold text-foreground">Novos Encaminhamentos</p>
-                        <p className="font-paragraph text-sm text-foreground/60 mt-1">
-                          Receba notificações quando houver novos encaminhamentos de pacientes
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.newReferrals}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            newReferrals: checked,
-                          })
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
-                      <div>
-                        <p className="font-paragraph font-semibold text-foreground">Pacientes Críticos</p>
-                        <p className="font-paragraph text-sm text-foreground/60 mt-1">
-                          Receba notificações sobre pacientes com status crítico
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.criticalPatients}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            criticalPatients: checked,
-                          })
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
-                      <div>
-                        <p className="font-paragraph font-semibold text-foreground">Novas Avaliações</p>
-                        <p className="font-paragraph text-sm text-foreground/60 mt-1">
-                          Receba notificações quando houver novas avaliações de enfermagem
-                        </p>
-                      </div>
-                      <Switch
-                        checked={notificationSettings.newEvaluations}
-                        onCheckedChange={(checked) =>
-                          setNotificationSettings({
-                            ...notificationSettings,
-                            newEvaluations: checked,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-8 p-4 bg-attention/10 border border-attention/20 rounded-lg">
-                    <p className="font-paragraph text-sm text-foreground">
-                      <span className="font-semibold">Nota:</span> Idioma e Tema serão adicionados em futuras versões do sistema.
-                    </p>
-                  </div>
                 </motion.div>
               </TabsContent>
             </Tabs>
