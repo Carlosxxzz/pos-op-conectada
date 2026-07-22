@@ -11,6 +11,7 @@ import PatientPhotoUploadPage from '@/components/pages/PatientPhotoUploadPage';
 import PatientPhotosPage from '@/components/pages/PatientPhotosPage';
 import PatientHistoryPage from '@/components/pages/PatientHistoryPage';
 import PatientEvaluationsPage from '@/components/pages/PatientEvaluationsPage';
+import PatientProfilePage from '@/components/pages/PatientProfilePage';
 import ProfessionalLoginPage from '@/components/pages/ProfessionalLoginPage';
 import NursingDashboardPage from '@/components/pages/NursingDashboardPage';
 import NursingEvaluationPage from '@/components/pages/NursingEvaluationPage';
@@ -78,6 +79,10 @@ const router = createBrowserRouter([
       {
         path: "patient-evaluations",
         element: <PatientEvaluationsPage />,
+      },
+      {
+        path: "patient-profile",
+        element: <PatientProfilePage />,
       },
       {
         path: "professional-login",

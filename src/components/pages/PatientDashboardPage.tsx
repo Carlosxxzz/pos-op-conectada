@@ -7,6 +7,7 @@ import type { Pacientes, ChecklistsDirios } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { logger } from '@/lib/logger';
 import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import PatientProfileHeader from '@/components/PatientProfileHeader';
 
 export default function PatientDashboardPage() {
   const navigate = useNavigate();
@@ -116,30 +117,13 @@ export default function PatientDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b-2 border-secondary/30 flex-shrink-0 sticky top-0 z-40">
-        <div className="w-full px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <Link to="/" className="flex items-center gap-3 flex-1">
-              <div className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
-                <Activity className="w-7 h-7 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="font-heading text-xl font-bold text-foreground leading-tight">Pós-Op</h1>
-                <p className="font-paragraph text-xs text-foreground/60">Conectado</p>
-              </div>
-            </Link>
-            <Button
-              onClick={handleLogout}
-              variant="outline"
-              className="flex items-center gap-2 font-paragraph font-bold py-3 px-4 rounded-2xl border-2 h-14 text-base"
-            >
-              <LogOut className="w-5 h-5" />
-              Sair
-            </Button>
-          </div>
-        </div>
-      </header>
+      {/* Header with Profile Dropdown */}
+      <PatientProfileHeader
+        patient={patient}
+        dashboardLink="/patient-dashboard"
+        profileLink="/patient-profile"
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
