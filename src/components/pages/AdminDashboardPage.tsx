@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, Users, AlertCircle, CheckCircle, TrendingDown, BarChart3, LogOut, User } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Activity, Users, AlertCircle, CheckCircle, TrendingDown, BarChart3 } from 'lucide-react';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -97,41 +97,12 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b border-secondary/30">
-        <div className="max-w-[120rem] mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                <Activity className="w-7 h-7 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
-                <p className="font-paragraph text-sm text-foreground/60">Dashboard Administrativo</p>
-                {professional && (
-                  <p className="font-paragraph text-xs text-foreground/50 mt-1">
-                    Hospital: {professional.hospital}
-                  </p>
-                )}
-              </div>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link to="/admin-profile">
-                <button className="flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity">
-                  <User className="w-4 h-4" />
-                  Meu Perfil
-                </button>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
-              >
-                <LogOut className="w-4 h-4" />
-                Sair
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <ProfessionalProfileHeader
+        professional={professional}
+        dashboardLink="/admin-dashboard"
+        profileLink="/admin-profile"
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <div className="max-w-[120rem] mx-auto px-8 py-12">

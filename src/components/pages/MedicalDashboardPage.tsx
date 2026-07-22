@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, Stethoscope, AlertCircle, ArrowRight, LogOut, Search, Filter, User, Clock, Users, CheckCircle, TrendingUp, ClipboardCheck, UserCheck } from 'lucide-react';
+import { Activity, Stethoscope, AlertCircle, ArrowRight, Search, Filter, Clock, Users, CheckCircle, TrendingUp, ClipboardCheck, UserCheck, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BaseCrudService } from '@/integrations';
@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
 import { Image } from '@/components/ui/image';
 import NotificationPanel from '@/components/NotificationPanel';
+import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
 
 interface ReferredCase {
   checklist: ChecklistsDirios;

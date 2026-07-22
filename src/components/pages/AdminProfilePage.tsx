@@ -7,45 +7,22 @@ import {
   Mail,
   Building2,
   Briefcase,
-  Users,
-  CheckCircle,
-  Award,
+  Calendar,
+  Clock,
+  Shield,
   Lock,
   Eye,
   EyeOff,
-  Bell,
-  Moon,
-  Globe,
-  Calendar,
-  AlertCircle,
-  Clock,
-  Shield,
-  Settings,
-  History,
-  MapPin,
-  Phone,
-  FileText,
-  UserCog,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
-import type {
-  Profissionais,
-  Pacientes,
-  ChecklistsDirios,
-  AvaliaesdeEnfermagem,
-  AvaliaesMdicas,
-  ActivityHistory,
-  Notifications,
-  PriorityAlerts,
-} from '@/entities';
+import type { Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
 
 export default function AdminProfilePage() {
   const navigate = useNavigate();
@@ -62,41 +39,6 @@ export default function AdminProfilePage() {
   });
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
-
-  const [preferences, setPreferences] = useState({
-    notifications: true,
-    theme: 'light',
-    language: 'pt-BR',
-    dateFormat: 'DD/MM/YYYY',
-  });
-
-  const [stats, setStats] = useState({
-    totalPatients: 0,
-    patientsInFollowUp: 0,
-    dischargedPatients: 0,
-    checklistsToday: 0,
-    pendingChecklists: 0,
-    nurses: 0,
-    doctors: 0,
-    admins: 0,
-    referrals: 0,
-    medicalEvaluations: 0,
-    nursingEvaluations: 0,
-    criticalAlerts: 0,
-    pendingNotifications: 0,
-  });
-
-  const [recentActivities, setRecentActivities] = useState<ActivityHistory[]>([]);
-  const [hospitalData, setHospitalData] = useState({
-    name: '',
-    address: '',
-    phone: '',
-    cnpj: '',
-    email: '',
-    technicalResponsible: '',
-    beds: 0,
-    professionals: 0,
-  });
 
   useEffect(() => {
     loadData();
@@ -115,82 +57,6 @@ export default function AdminProfilePage() {
         professionalId
       );
       setProfessional(professionalData);
-
-      // Load statistics
-      const { items: patients } = await BaseCrudService.getAll<Pacientes>('pacientes');
-      const { items: checklists } = await BaseCrudService.getAll<ChecklistsDirios>(
-        'checklistsdiarios'
-      );
-      const { items: nursingEvals } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>(
-        'avaliacoesenfermagem'
-      );
-      const { items: medicalEvals } = await BaseCrudService.getAll<AvaliaesMdicas>(
-        'avaliacoesmedicas'
-      );
-      const { items: referrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
-      const { items: professionals } = await BaseCrudService.getAll<Profissionais>('profissionais');
-      const { items: activities } = await BaseCrudService.getAll<ActivityHistory>(
-        'historicoatividades',
-        {},
-        { limit: 10 }
-      );
-      const { items: alerts } = await BaseCrudService.getAll<PriorityAlerts>('alertasprioritarios');
-      const { items: notifications } = await BaseCrudService.getAll<Notifications>('notificacoes');
-
-      // Calculate statistics
-      const today = new Date().toDateString();
-      const checklistsToday = checklists.filter(
-        (c) => new Date(c.checklistDate || '').toDateString() === today
-      ).length;
-      const pendingChecklists = checklists.filter((c) => c.status === 'pending').length;
-      const dischargedPatients = patients.filter((p) => p.followUpStatus === 'Alta').length;
-      const patientsInFollowUp = patients.filter((p) => p.followUpStatus === 'Em Acompanhamento')
-        .length;
-
-      const nurses = professionals.filter((p) => p.profile === 'Enfermeiro').length;
-      const doctors = professionals.filter((p) => p.profile === 'Médico').length;
-      const admins = professionals.filter((p) => p.profile === 'Administrador').length;
-
-      const criticalAlerts = alerts.filter((a) => a.severity === 'critical').length;
-      const pendingNotifications = notifications.filter((n) => !n.isRead).length;
-
-      setStats({
-        totalPatients: patients.length,
-        patientsInFollowUp,
-        dischargedPatients,
-        checklistsToday,
-        pendingChecklists,
-        nurses,
-        doctors,
-        admins,
-        referrals: referrals.length,
-        medicalEvaluations: medicalEvals.length,
-        nursingEvaluations: nursingEvals.length,
-        criticalAlerts,
-        pendingNotifications,
-      });
-
-      setRecentActivities(activities);
-
-      // Set hospital data from professional's hospital field
-      if (professionalData?.hospital) {
-        setHospitalData({
-          name: professionalData.hospital,
-          address: '-',
-          phone: '-',
-          cnpj: '-',
-          email: '-',
-          technicalResponsible: professionalData.fullName,
-          beds: 0,
-          professionals: professionals.length,
-        });
-      }
-
-      // Load preferences from localStorage
-      const savedPreferences = localStorage.getItem('adminPreferences');
-      if (savedPreferences) {
-        setPreferences(JSON.parse(savedPreferences));
-      }
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -293,12 +159,6 @@ export default function AdminProfilePage() {
     }
   };
 
-  const handlePreferencesChange = (key: string, value: any) => {
-    const newPreferences = { ...preferences, [key]: value };
-    setPreferences(newPreferences);
-    localStorage.setItem('adminPreferences', JSON.stringify(newPreferences));
-  };
-
   const formatDate = (date: Date | string | undefined) => {
     if (!date) return '-';
     const d = new Date(date);
@@ -306,15 +166,6 @@ export default function AdminProfilePage() {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-    });
-  };
-
-  const formatTime = (date: Date | string | undefined) => {
-    if (!date) return '-';
-    const d = new Date(date);
-    return d.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
@@ -419,18 +270,12 @@ export default function AdminProfilePage() {
           {/* Profile Details with Tabs */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="info" className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-8 bg-white border border-secondary/20 rounded-2xl p-1">
+              <TabsList className="grid w-full grid-cols-2 mb-8 bg-white border border-secondary/20 rounded-2xl p-1">
                 <TabsTrigger value="info" className="font-paragraph">
                   Informações
                 </TabsTrigger>
                 <TabsTrigger value="security" className="font-paragraph">
                   Segurança
-                </TabsTrigger>
-                <TabsTrigger value="preferences" className="font-paragraph">
-                  Preferências
-                </TabsTrigger>
-                <TabsTrigger value="stats" className="font-paragraph">
-                  Estatísticas
                 </TabsTrigger>
               </TabsList>
 
@@ -662,457 +507,9 @@ export default function AdminProfilePage() {
                   )}
                 </motion.div>
               </TabsContent>
-
-              {/* Preferences Tab */}
-              <TabsContent value="preferences" className="space-y-8">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl p-8 border border-secondary/20"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <Settings className="w-6 h-6 text-primary" />
-                    <h3 className="font-heading text-2xl font-bold text-foreground">Preferências</h3>
-                  </div>
-
-                  <div className="space-y-6">
-                    {/* Notifications */}
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
-                      <div className="flex items-center gap-3">
-                        <Bell className="w-5 h-5 text-primary" />
-                        <div>
-                          <p className="font-paragraph font-semibold text-foreground">
-                            Receber Notificações
-                          </p>
-                          <p className="font-paragraph text-sm text-foreground/60">
-                            Ativar notificações do sistema
-                          </p>
-                        </div>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={preferences.notifications}
-                        onChange={(e) => handlePreferencesChange('notifications', e.target.checked)}
-                        className="w-5 h-5 rounded cursor-pointer"
-                      />
-                    </div>
-
-                    {/* Theme */}
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
-                      <div className="flex items-center gap-3">
-                        <Moon className="w-5 h-5 text-primary" />
-                        <div>
-                          <p className="font-paragraph font-semibold text-foreground">Tema</p>
-                          <p className="font-paragraph text-sm text-foreground/60">
-                            Selecione o tema da interface
-                          </p>
-                        </div>
-                      </div>
-                      <select
-                        value={preferences.theme}
-                        onChange={(e) => handlePreferencesChange('theme', e.target.value)}
-                        className="font-paragraph px-3 py-2 border border-secondary/20 rounded-lg bg-white"
-                      >
-                        <option value="light">Claro</option>
-                        <option value="dark">Escuro</option>
-                      </select>
-                    </div>
-
-                    {/* Language */}
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
-                      <div className="flex items-center gap-3">
-                        <Globe className="w-5 h-5 text-primary" />
-                        <div>
-                          <p className="font-paragraph font-semibold text-foreground">Idioma</p>
-                          <p className="font-paragraph text-sm text-foreground/60">
-                            Selecione o idioma da interface
-                          </p>
-                        </div>
-                      </div>
-                      <select
-                        value={preferences.language}
-                        onChange={(e) => handlePreferencesChange('language', e.target.value)}
-                        className="font-paragraph px-3 py-2 border border-secondary/20 rounded-lg bg-white"
-                      >
-                        <option value="pt-BR">Português (Brasil)</option>
-                        <option value="en-US">English</option>
-                        <option value="es-ES">Español</option>
-                      </select>
-                    </div>
-
-                    {/* Date Format */}
-                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-5 h-5 text-primary" />
-                        <div>
-                          <p className="font-paragraph font-semibold text-foreground">Formato de Data</p>
-                          <p className="font-paragraph text-sm text-foreground/60">
-                            Selecione o formato de data
-                          </p>
-                        </div>
-                      </div>
-                      <select
-                        value={preferences.dateFormat}
-                        onChange={(e) => handlePreferencesChange('dateFormat', e.target.value)}
-                        className="font-paragraph px-3 py-2 border border-secondary/20 rounded-lg bg-white"
-                      >
-                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                      </select>
-                    </div>
-                  </div>
-                </motion.div>
-              </TabsContent>
-
-              {/* Statistics Tab */}
-              <TabsContent value="stats" className="space-y-8">
-                {/* Admin Statistics */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                >
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Users className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.totalPatients}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Total de Pacientes</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.patientsInFollowUp}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Em Acompanhamento</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-stable/10 rounded-lg flex items-center justify-center">
-                        <Award className="w-6 h-6 text-stable" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.dischargedPatients}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Pacientes de Alta</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.checklistsToday}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Checklists Hoje</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-attention/10 rounded-lg flex items-center justify-center">
-                        <AlertCircle className="w-6 h-6 text-attention" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.pendingChecklists}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Checklists Pendentes</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Users className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.nurses}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Enfermeiros</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <Users className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.doctors}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Médicos</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <UserCog className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.admins}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Administradores</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.referrals}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Encaminhamentos</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.medicalEvaluations}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Avaliações Médicas</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.nursingEvaluations}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Avaliações Enfermagem</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-critical/10 rounded-lg flex items-center justify-center">
-                        <AlertCircle className="w-6 h-6 text-critical" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.criticalAlerts}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Alertas Críticos</p>
-                  </Card>
-
-                  <Card className="p-6 border border-secondary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 bg-attention/10 rounded-lg flex items-center justify-center">
-                        <Bell className="w-6 h-6 text-attention" />
-                      </div>
-                      <span className="font-heading text-3xl font-bold text-foreground">
-                        {stats.pendingNotifications}
-                      </span>
-                    </div>
-                    <p className="font-paragraph text-sm text-foreground/70">Notificações Pendentes</p>
-                  </Card>
-                </motion.div>
-              </TabsContent>
             </Tabs>
           </div>
         </div>
-
-        {/* Recent Activities Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-12 bg-white rounded-2xl p-8 border border-secondary/20"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <History className="w-6 h-6 text-primary" />
-            <h3 className="font-heading text-2xl font-bold text-foreground">Atividades Recentes</h3>
-          </div>
-
-          {recentActivities.length > 0 ? (
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
-                <div
-                  key={activity._id}
-                  className="flex items-start gap-4 p-4 bg-background rounded-lg border border-secondary/20 hover:border-primary/30 transition-colors"
-                >
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Activity className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-paragraph font-semibold text-foreground">
-                      {activity.actionDescription}
-                    </p>
-                    <p className="font-paragraph text-sm text-foreground/60 mt-1">
-                      {activity.actionDetails}
-                    </p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-foreground/50">
-                      <span>{formatDate(activity.actionTimestamp)}</span>
-                      <span>{formatTime(activity.actionTimestamp)}</span>
-                      <span>{activity.nurseName}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="font-paragraph text-center text-foreground/60 py-8">
-              Nenhuma atividade recente
-            </p>
-          )}
-        </motion.div>
-
-        {/* Hospital Data Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-12 bg-white rounded-2xl p-8 border border-secondary/20"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <Building2 className="w-6 h-6 text-primary" />
-            <h3 className="font-heading text-2xl font-bold text-foreground">Dados do Hospital</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex items-start gap-4">
-              <Building2 className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Nome do Hospital</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {hospitalData.name || '-'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <MapPin className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Endereço</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {hospitalData.address}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <Phone className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Telefone</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {hospitalData.phone}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <FileText className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">CNPJ</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {hospitalData.cnpj}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <Mail className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">E-mail Institucional</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {hospitalData.email}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <Users className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Responsável Técnico</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {hospitalData.technicalResponsible}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <Building2 className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Quantidade de Leitos</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {hospitalData.beds || '-'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <Users className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-              <div>
-                <p className="font-paragraph text-sm text-foreground/60 mb-1">Profissionais</p>
-                <p className="font-paragraph text-base font-semibold text-foreground">
-                  {hospitalData.professionals}
-                </p>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Management Shortcuts */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="mt-12 bg-white rounded-2xl p-8 border border-secondary/20"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <UserCog className="w-6 h-6 text-primary" />
-            <h3 className="font-heading text-2xl font-bold text-foreground">Gestão de Usuários</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link to="/admin-dashboard">
-              <Button className="w-full bg-primary text-primary-foreground font-paragraph font-semibold">
-                <Users className="w-4 h-4 mr-2" />
-                Gerenciar Médicos
-              </Button>
-            </Link>
-            <Link to="/admin-dashboard">
-              <Button className="w-full bg-primary text-primary-foreground font-paragraph font-semibold">
-                <Users className="w-4 h-4 mr-2" />
-                Gerenciar Enfermeiros
-              </Button>
-            </Link>
-            <Link to="/admin-dashboard">
-              <Button className="w-full bg-primary text-primary-foreground font-paragraph font-semibold">
-                <Users className="w-4 h-4 mr-2" />
-                Gerenciar Pacientes
-              </Button>
-            </Link>
-            <Link to="/admin-dashboard">
-              <Button className="w-full bg-primary text-primary-foreground font-paragraph font-semibold">
-                <UserCog className="w-4 h-4 mr-2" />
-                Gerenciar Administradores
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
       </div>
     </div>
   );
