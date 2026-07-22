@@ -1,12 +1,31 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, LogOut, User, Mail, Building2, Briefcase, Calendar, Users, CheckCircle, Award } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Mail,
+  Building2,
+  Briefcase,
+  Calendar,
+  Clock,
+  Users,
+  CheckCircle,
+  Award,
+  Shield,
+  Lock,
+  Eye,
+  EyeOff,
+  Bell,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
 import type { Profissionais, AvaliaesMdicas } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
+import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 
 export default function MedicalProfilePage() {
   const navigate = useNavigate();
@@ -16,6 +35,22 @@ export default function MedicalProfilePage() {
     totalEvaluations: 0,
     totalDischarges: 0,
     totalPatients: 0,
+  });
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [notificationSettings, setNotificationSettings] = useState({
+    newReferrals: true,
+    criticalPatients: true,
+    newEvaluations: true,
   });
 
   useEffect(() => {
@@ -100,6 +135,67 @@ export default function MedicalProfilePage() {
     }
   };
 
+  const handlePasswordChange = async () => {
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setPasswordError('Todos os campos são obrigatórios');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('As senhas não coincidem');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('A nova senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    if (passwordData.currentPassword !== professional?.password) {
+      setPasswordError('Senha atual incorreta');
+      return;
+    }
+
+    try {
+      const professionalId = localStorage.getItem('professionalId');
+      if (!professionalId) return;
+
+      await BaseCrudService.update<Profissionais>('profissionais', {
+        _id: professionalId,
+        password: passwordData.newPassword,
+      });
+
+      setProfessional({
+        ...professional!,
+        password: passwordData.newPassword,
+      });
+
+      setPasswordSuccess('Senha alterada com sucesso!');
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+      setTimeout(() => setShowPasswordForm(false), 2000);
+    } catch (error) {
+      console.error('Error changing password:', error);
+      setPasswordError('Erro ao alterar senha');
+    }
+  };
+
+  const formatDate = (date: Date | string | undefined) => {
+    if (!date) return '-';
+    const d = new Date(date);
+    return d.toLocaleDateString('pt-BR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -110,37 +206,13 @@ export default function MedicalProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-white border-b border-secondary/30 sticky top-0 z-50">
-        <div className="max-w-[120rem] mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            <Link to="/medical-dashboard" className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                <Activity className="w-7 h-7 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
-                <p className="font-paragraph text-sm text-foreground/60">Perfil do Médico</p>
-              </div>
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link to="/medical-dashboard">
-                <Button variant="outline" className="flex items-center gap-2 font-paragraph">
-                  <ArrowLeft className="w-4 h-4" />
-                  Voltar
-                </Button>
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-6 py-2 bg-destructive text-destructive-foreground font-paragraph font-semibold rounded-lg hover:opacity-90 transition-opacity"
-              >
-                <LogOut className="w-4 h-4" />
-                Sair
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Header with Profile Menu */}
+      <ProfessionalProfileHeader
+        professional={professional}
+        dashboardLink="/medical-dashboard"
+        profileLink="/medical-profile"
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <div className="max-w-[120rem] mx-auto px-8 py-12">
@@ -186,90 +258,364 @@ export default function MedicalProfilePage() {
             </div>
           </motion.div>
 
-          {/* Profile Details */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Contact Information */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-8 border border-secondary/20"
-            >
-              <h3 className="font-heading text-2xl font-bold text-foreground mb-6">Informações de Contato</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <Mail className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">E-mail</p>
-                    <p className="font-paragraph text-base font-semibold text-foreground">{professional?.email}</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+          {/* Profile Details with Tabs */}
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="info" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-8 bg-white border border-secondary/20 rounded-2xl p-1">
+                <TabsTrigger value="info" className="font-paragraph">
+                  Informações
+                </TabsTrigger>
+                <TabsTrigger value="security" className="font-paragraph">
+                  Segurança
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="font-paragraph">
+                  Configurações
+                </TabsTrigger>
+              </TabsList>
 
-            {/* Professional Information */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-8 border border-secondary/20"
-            >
-              <h3 className="font-heading text-2xl font-bold text-foreground mb-6">Informações Profissionais</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="flex items-start gap-4">
-                  <Briefcase className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Perfil</p>
-                    <p className="font-paragraph text-base font-semibold text-foreground">{professional?.profile}</p>
+              {/* Information Tab */}
+              <TabsContent value="info" className="space-y-8">
+                {/* Contact Information */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl p-8 border border-secondary/20"
+                >
+                  <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
+                    Informações de Contato
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      <Mail className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">E-mail</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {professional?.email}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <Building2 className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/60 mb-1">Hospital</p>
-                    <p className="font-paragraph text-base font-semibold text-foreground">{professional?.hospital}</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+                </motion.div>
 
-            {/* Statistics */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
-            >
-              <div className="bg-white rounded-2xl p-6 border border-secondary/20">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Users className="w-6 h-6 text-primary" />
+                {/* Professional Information */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-white rounded-2xl p-8 border border-secondary/20"
+                >
+                  <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
+                    Informações Profissionais
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex items-start gap-4">
+                      <Briefcase className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Cargo</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {professional?.profile}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <Building2 className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Hospital</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {professional?.hospital}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <span className="font-heading text-3xl font-bold text-foreground">{stats.totalPatients}</span>
-                </div>
-                <p className="font-paragraph text-sm text-foreground/70">Pacientes Acompanhados</p>
-              </div>
+                </motion.div>
 
-              <div className="bg-white rounded-2xl p-6 border border-secondary/20">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-primary" />
+                {/* Account Information */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-white rounded-2xl p-8 border border-secondary/20"
+                >
+                  <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
+                    Informações da Conta
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex items-start gap-4">
+                      <Calendar className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Data de Criação</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {formatDate(professional?._createdDate)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <Clock className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                      <div>
+                        <p className="font-paragraph text-sm text-foreground/60 mb-1">Último Acesso</p>
+                        <p className="font-paragraph text-base font-semibold text-foreground">
+                          {formatDate(professional?._updatedDate)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <span className="font-heading text-3xl font-bold text-foreground">{stats.totalEvaluations}</span>
-                </div>
-                <p className="font-paragraph text-sm text-foreground/70">Avaliações Realizadas</p>
-              </div>
+                </motion.div>
 
-              <div className="bg-white rounded-2xl p-6 border border-secondary/20">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-stable/10 rounded-lg flex items-center justify-center">
-                    <Award className="w-6 h-6 text-stable" />
+                {/* Statistics */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                >
+                  <div className="bg-white rounded-2xl p-6 border border-secondary/20">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Users className="w-6 h-6 text-primary" />
+                      </div>
+                      <span className="font-heading text-3xl font-bold text-foreground">{stats.totalPatients}</span>
+                    </div>
+                    <p className="font-paragraph text-sm text-foreground/70">Pacientes Acompanhados</p>
                   </div>
-                  <span className="font-heading text-3xl font-bold text-foreground">{stats.totalDischarges}</span>
-                </div>
-                <p className="font-paragraph text-sm text-foreground/70">Altas Concedidas</p>
-              </div>
-            </motion.div>
+
+                  <div className="bg-white rounded-2xl p-6 border border-secondary/20">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-6 h-6 text-primary" />
+                      </div>
+                      <span className="font-heading text-3xl font-bold text-foreground">{stats.totalEvaluations}</span>
+                    </div>
+                    <p className="font-paragraph text-sm text-foreground/70">Avaliações Realizadas</p>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-6 border border-secondary/20">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 bg-stable/10 rounded-lg flex items-center justify-center">
+                        <Award className="w-6 h-6 text-stable" />
+                      </div>
+                      <span className="font-heading text-3xl font-bold text-foreground">{stats.totalDischarges}</span>
+                    </div>
+                    <p className="font-paragraph text-sm text-foreground/70">Altas Concedidas</p>
+                  </div>
+                </motion.div>
+              </TabsContent>
+
+              {/* Security Tab */}
+              <TabsContent value="security" className="space-y-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl p-8 border border-secondary/20"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <Shield className="w-6 h-6 text-primary" />
+                    <h3 className="font-heading text-2xl font-bold text-foreground">Alterar Senha</h3>
+                  </div>
+
+                  {!showPasswordForm ? (
+                    <Button
+                      onClick={() => setShowPasswordForm(true)}
+                      className="w-full bg-primary text-primary-foreground font-paragraph font-semibold"
+                    >
+                      <Lock className="w-4 h-4 mr-2" />
+                      Alterar Senha
+                    </Button>
+                  ) : (
+                    <div className="space-y-4">
+                      {passwordError && (
+                        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                          <p className="font-paragraph text-sm text-destructive">{passwordError}</p>
+                        </div>
+                      )}
+                      {passwordSuccess && (
+                        <div className="p-4 bg-stable/10 border border-stable/20 rounded-lg">
+                          <p className="font-paragraph text-sm text-stable">{passwordSuccess}</p>
+                        </div>
+                      )}
+
+                      <div>
+                        <Label className="font-paragraph text-sm mb-2">Senha Atual</Label>
+                        <div className="relative">
+                          <Input
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            value={passwordData.currentPassword}
+                            onChange={(e) =>
+                              setPasswordData({
+                                ...passwordData,
+                                currentPassword: e.target.value,
+                              })
+                            }
+                            className="font-paragraph pr-10"
+                            placeholder="Digite sua senha atual"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2"
+                          >
+                            {showCurrentPassword ? (
+                              <EyeOff className="w-4 h-4 text-foreground/60" />
+                            ) : (
+                              <Eye className="w-4 h-4 text-foreground/60" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="font-paragraph text-sm mb-2">Nova Senha</Label>
+                        <div className="relative">
+                          <Input
+                            type={showNewPassword ? 'text' : 'password'}
+                            value={passwordData.newPassword}
+                            onChange={(e) =>
+                              setPasswordData({
+                                ...passwordData,
+                                newPassword: e.target.value,
+                              })
+                            }
+                            className="font-paragraph pr-10"
+                            placeholder="Digite sua nova senha"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2"
+                          >
+                            {showNewPassword ? (
+                              <EyeOff className="w-4 h-4 text-foreground/60" />
+                            ) : (
+                              <Eye className="w-4 h-4 text-foreground/60" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="font-paragraph text-sm mb-2">Confirmar Nova Senha</Label>
+                        <div className="relative">
+                          <Input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            value={passwordData.confirmPassword}
+                            onChange={(e) =>
+                              setPasswordData({
+                                ...passwordData,
+                                confirmPassword: e.target.value,
+                              })
+                            }
+                            className="font-paragraph pr-10"
+                            placeholder="Confirme sua nova senha"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2"
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="w-4 h-4 text-foreground/60" />
+                            ) : (
+                              <Eye className="w-4 h-4 text-foreground/60" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-4">
+                        <Button
+                          onClick={handlePasswordChange}
+                          className="flex-1 bg-primary text-primary-foreground font-paragraph font-semibold"
+                        >
+                          Salvar Alterações
+                        </Button>
+                        <Button
+                          onClick={() => setShowPasswordForm(false)}
+                          variant="outline"
+                          className="flex-1 font-paragraph"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </TabsContent>
+
+              {/* Settings Tab */}
+              <TabsContent value="settings" className="space-y-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl p-8 border border-secondary/20"
+                >
+                  <div className="flex items-center gap-3 mb-6">
+                    <Bell className="w-6 h-6 text-primary" />
+                    <h3 className="font-heading text-2xl font-bold text-foreground">Preferências de Notificações</h3>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
+                      <div>
+                        <p className="font-paragraph font-semibold text-foreground">Novos Encaminhamentos</p>
+                        <p className="font-paragraph text-sm text-foreground/60 mt-1">
+                          Receba notificações quando houver novos encaminhamentos de pacientes
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notificationSettings.newReferrals}
+                        onCheckedChange={(checked) =>
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            newReferrals: checked,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
+                      <div>
+                        <p className="font-paragraph font-semibold text-foreground">Pacientes Críticos</p>
+                        <p className="font-paragraph text-sm text-foreground/60 mt-1">
+                          Receba notificações sobre pacientes com status crítico
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notificationSettings.criticalPatients}
+                        onCheckedChange={(checked) =>
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            criticalPatients: checked,
+                          })
+                        }
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-background rounded-lg border border-secondary/20">
+                      <div>
+                        <p className="font-paragraph font-semibold text-foreground">Novas Avaliações</p>
+                        <p className="font-paragraph text-sm text-foreground/60 mt-1">
+                          Receba notificações quando houver novas avaliações de enfermagem
+                        </p>
+                      </div>
+                      <Switch
+                        checked={notificationSettings.newEvaluations}
+                        onCheckedChange={(checked) =>
+                          setNotificationSettings({
+                            ...notificationSettings,
+                            newEvaluations: checked,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-8 p-4 bg-attention/10 border border-attention/20 rounded-lg">
+                    <p className="font-paragraph text-sm text-foreground">
+                      <span className="font-semibold">Nota:</span> Idioma e Tema serão adicionados em futuras versões do sistema.
+                    </p>
+                  </div>
+                </motion.div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
