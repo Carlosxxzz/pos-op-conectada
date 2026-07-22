@@ -5,6 +5,7 @@ export default function MedicalProfilePage() {
     <SharedProfilePage
       dashboardLink="/medical-dashboard"
       profileLabel="Perfil do Médico"
+      userType="doctor"
     />
   );
 }

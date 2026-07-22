@@ -5,6 +5,7 @@ export default function NursingProfilePage() {
     <SharedProfilePage
       dashboardLink="/nursing-dashboard"
       profileLabel="Perfil do Enfermeiro"
+      userType="nurse"
     />
   );
 }

@@ -5,6 +5,7 @@ export default function AdminProfilePage() {
     <SharedProfilePage
       dashboardLink="/admin-dashboard"
       profileLabel="Perfil do Administrador"
+      userType="admin"
     />
   );
 }

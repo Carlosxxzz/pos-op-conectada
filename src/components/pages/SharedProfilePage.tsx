@@ -31,11 +31,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import SettingsTab from '@/components/SettingsTab';
 
 interface SharedProfilePageProps {
   dashboardLink: string;
   profileLabel: string;
-  userType?: 'admin' | 'patient';
+  userType?: 'admin' | 'doctor' | 'nurse' | 'patient';
 }
 
 export default function SharedProfilePage({
@@ -480,11 +481,9 @@ export default function SharedProfilePage({
                 <TabsTrigger value="security" className="font-paragraph">
                   Segurança
                 </TabsTrigger>
-                {userType === 'patient' && (
-                  <TabsTrigger value="settings" className="font-paragraph">
-                    Configurações
-                  </TabsTrigger>
-                )}
+                <TabsTrigger value="settings" className="font-paragraph">
+                  Configurações
+                </TabsTrigger>
               </TabsList>
 
               {/* Information Tab */}
@@ -949,127 +948,13 @@ export default function SharedProfilePage({
                 </motion.div>
               </TabsContent>
 
-              {/* Settings Tab - Patient Only */}
-              {userType === 'patient' && (
-                <TabsContent value="settings" className="space-y-8">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl p-8 border border-secondary/20"
-                  >
-                    <div className="flex items-center gap-3 mb-6">
-                      <Bell className="w-6 h-6 text-primary" />
-                      <h3 className="font-heading text-2xl font-bold text-foreground">Notificações</h3>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-background rounded-lg">
-                        <div>
-                          <p className="font-paragraph font-semibold text-foreground">Notificações por E-mail</p>
-                          <p className="font-paragraph text-sm text-foreground/60">Receba atualizações por e-mail</p>
-                        </div>
-                        <Switch
-                          checked={notificationSettings.emailNotifications}
-                          onCheckedChange={(checked) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              emailNotifications: checked,
-                            })
-                          }
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-background rounded-lg">
-                        <div>
-                          <p className="font-paragraph font-semibold text-foreground">Notificações Push</p>
-                          <p className="font-paragraph text-sm text-foreground/60">Receba notificações no navegador</p>
-                        </div>
-                        <Switch
-                          checked={notificationSettings.pushNotifications}
-                          onCheckedChange={(checked) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              pushNotifications: checked,
-                            })
-                          }
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-background rounded-lg">
-                        <div>
-                          <p className="font-paragraph font-semibold text-foreground">Lembretes de Medicamentos</p>
-                          <p className="font-paragraph text-sm text-foreground/60">Receba lembretes para tomar medicamentos</p>
-                        </div>
-                        <Switch
-                          checked={notificationSettings.medicationReminders}
-                          onCheckedChange={(checked) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              medicationReminders: checked,
-                            })
-                          }
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-background rounded-lg">
-                        <div>
-                          <p className="font-paragraph font-semibold text-foreground">Lembretes de Checklists</p>
-                          <p className="font-paragraph text-sm text-foreground/60">Receba lembretes para preencher checklists</p>
-                        </div>
-                        <Switch
-                          checked={notificationSettings.checklistReminders}
-                          onCheckedChange={(checked) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              checklistReminders: checked,
-                            })
-                          }
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-background rounded-lg">
-                        <div>
-                          <p className="font-paragraph font-semibold text-foreground">Lembretes de Consultas</p>
-                          <p className="font-paragraph text-sm text-foreground/60">Receba lembretes de consultas agendadas</p>
-                        </div>
-                        <Switch
-                          checked={notificationSettings.appointmentReminders}
-                          onCheckedChange={(checked) =>
-                            setNotificationSettings({
-                              ...notificationSettings,
-                              appointmentReminders: checked,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Privacy and Terms */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="bg-white rounded-2xl p-8 border border-secondary/20"
-                  >
-                    <h3 className="font-heading text-2xl font-bold text-foreground mb-6">Políticas</h3>
-                    <div className="space-y-3">
-                      <a
-                        href="#"
-                        className="block p-4 bg-background rounded-lg hover:bg-background/80 transition-colors"
-                      >
-                        <p className="font-paragraph font-semibold text-primary">Política de Privacidade</p>
-                      </a>
-                      <a
-                        href="#"
-                        className="block p-4 bg-background rounded-lg hover:bg-background/80 transition-colors"
-                      >
-                        <p className="font-paragraph font-semibold text-primary">Termos de Uso</p>
-                      </a>
-                    </div>
-                  </motion.div>
-                </TabsContent>
-              )}
+              {/* Settings Tab - All Users */}
+              <TabsContent value="settings" className="space-y-8">
+                <SettingsTab
+                  userType={userType}
+                  userId={userType === 'patient' ? localStorage.getItem('patientId') || '' : localStorage.getItem('professionalId') || ''}
+                />
+              </TabsContent>
             </Tabs>
           </div>
         </div>
