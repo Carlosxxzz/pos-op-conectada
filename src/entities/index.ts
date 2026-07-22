@@ -213,6 +213,27 @@ export interface EncaminhamentosMdicos {
 
 
 /**
+ * Collection ID: especialidades
+ * Interface for Especialidades
+ */
+export interface Especialidades {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  name?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType text */
+  professionalType?: string;
+  /** @wixFieldType text */
+  specialtyCode?: string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+}
+
+
+/**
  * Collection ID: historicoatividades
  * Interface for ActivityHistory
  */
@@ -236,6 +257,52 @@ export interface ActivityHistory {
   actionDescription?: string;
   /** @wixFieldType text */
   actionDetails?: string;
+}
+
+
+/**
+ * Collection ID: hospitais
+ * Interface for Hospitais
+ */
+export interface Hospitais {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  name?: string;
+  /** @wixFieldType text */
+  city?: string;
+  /** @wixFieldType text */
+  state?: string;
+  /** @wixFieldType text */
+  phone?: string;
+  /** @wixFieldType text */
+  email?: string;
+  /** @wixFieldType text */
+  address?: string;
+}
+
+
+/**
+ * Collection ID: logsauditoria
+ * Interface for LogsdeAuditoria
+ */
+export interface LogsdeAuditoria {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  action?: string;
+  /** @wixFieldType text */
+  user?: string;
+  /** @wixFieldType date */
+  date?: Date | string;
+  /** @wixFieldType time */
+  time?: any;
+  /** @wixFieldType text */
+  details?: string;
+  /** @wixFieldType text */
+  ipAddress?: string;
 }
 
 
@@ -362,6 +429,33 @@ export interface Pacientes {
 
 
 /**
+ * Collection ID: permissoes
+ * Interface for Permisses
+ */
+export interface Permisses {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  permissionName?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType text */
+  professionalType?: string;
+  /** @wixFieldType boolean */
+  canDeletePatients?: boolean;
+  /** @wixFieldType boolean */
+  canRegisterProfessionals?: boolean;
+  /** @wixFieldType boolean */
+  canEditHospitals?: boolean;
+  /** @wixFieldType boolean */
+  canViewAllHospitals?: boolean;
+  /** @wixFieldType boolean */
+  canAccessSettings?: boolean;
+}
+
+
+/**
  * Collection ID: profissionais
  * Interface for Profissionais
  */
@@ -369,8 +463,44 @@ export interface Profissionais {
   _id: string;
   _createdDate?: Date;
   _updatedDate?: Date;
+  /** @wixFieldType date */
+  dataNascimento?: Date | string;
+  /** @wixFieldType text */
+  permissoes?: string;
+  /** @wixFieldType text */
+  criadoPor?: string;
+  /** @wixFieldType datetime */
+  ultimoAcesso?: Date | string;
+  /** @wixFieldType date */
+  dataAdmissao?: Date | string;
+  /** @wixFieldType text */
+  cargaHoraria?: string;
+  /** @wixFieldType text */
+  turno?: string;
+  /** @wixFieldType text */
+  registroProfissional?: string;
+  /** @wixFieldType text */
+  complemento?: string;
+  /** @wixFieldType text */
+  numero?: string;
+  /** @wixFieldType text */
+  endereco?: string;
+  /** @wixFieldType text */
+  cidade?: string;
+  /** @wixFieldType text */
+  estado?: string;
+  /** @wixFieldType text */
+  cep?: string;
+  /** @wixFieldType text */
+  whatsapp?: string;
+  /** @wixFieldType text */
+  telefone?: string;
+  /** @wixFieldType text */
+  sexo?: string;
   /** @wixFieldType text */
   fullName?: string;
+  /** @wixFieldType text */
+  cpf?: string;
   /** @wixFieldType image - Contains image URL, render with <Image> component, NOT as text */
   profilePhoto?: string;
   /** @wixFieldType text */
@@ -385,6 +515,27 @@ export interface Profissionais {
   specialty?: string;
   /** @wixFieldType text */
   status?: string;
+}
+
+
+/**
+ * Collection ID: setores
+ * Interface for Sectors
+ */
+export interface Sectors {
+  _id: string;
+  _createdDate?: Date;
+  _updatedDate?: Date;
+  /** @wixFieldType text */
+  name?: string;
+  /** @wixFieldType text */
+  hospitalId?: string;
+  /** @wixFieldType text */
+  description?: string;
+  /** @wixFieldType boolean */
+  isActive?: boolean;
+  /** @wixFieldType datetime */
+  creationDate?: Date | string;
 }
 
 

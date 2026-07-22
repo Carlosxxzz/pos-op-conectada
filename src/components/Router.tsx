@@ -23,6 +23,9 @@ import MedicalProfilePage from '@/components/pages/MedicalProfilePage';
 import NursingProfilePage from '@/components/pages/NursingProfilePage';
 import AdminDashboardPage from '@/components/pages/AdminDashboardPage';
 import AdminProfilePage from '@/components/pages/AdminProfilePage';
+import AdminProfessionalsPage from '@/components/pages/AdminProfessionalsPage';
+import AdminProfessionalFormPage from '@/components/pages/AdminProfessionalFormPage';
+import AdminProfessionalViewPage from '@/components/pages/AdminProfessionalViewPage';
 import { ProfessionalProtectedRoute } from '@/components/ProfessionalProtectedRoute';
 
 // Layout component that includes ScrollToTop
@@ -165,6 +168,38 @@ const router = createBrowserRouter([
         element: (
           <ProfessionalProtectedRoute allowedProfiles={['Administrador']}>
             <AdminProfilePage />
+          </ProfessionalProtectedRoute>
+        ),
+      },
+      {
+        path: "admin-professionals",
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Administrador']}>
+            <AdminProfessionalsPage />
+          </ProfessionalProtectedRoute>
+        ),
+      },
+      {
+        path: "admin-professional-form",
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Administrador']}>
+            <AdminProfessionalFormPage />
+          </ProfessionalProtectedRoute>
+        ),
+      },
+      {
+        path: "admin-professional-form/:id",
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Administrador']}>
+            <AdminProfessionalFormPage />
+          </ProfessionalProtectedRoute>
+        ),
+      },
+      {
+        path: "admin-professional-view/:id",
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Administrador']}>
+            <AdminProfessionalViewPage />
           </ProfessionalProtectedRoute>
         ),
       },

@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
+import AdminSidebar from '@/components/AdminSidebar';
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -96,7 +97,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <ProfessionalProfileHeader
         professional={professional}
         dashboardLink="/admin-dashboard"
@@ -104,8 +104,11 @@ export default function AdminDashboardPage() {
         onLogout={handleLogout}
       />
 
-      {/* Main Content */}
-      <div className="max-w-[120rem] mx-auto px-8 py-12">
+      <div className="flex">
+        <AdminSidebar onLogout={handleLogout} />
+
+        {/* Main Content */}
+        <div className="flex-1 ml-64 px-8 py-12">
         <div className="mb-8">
           <h2 className="font-heading text-4xl font-bold text-foreground mb-2">
             Visão Geral do Sistema
@@ -256,7 +259,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Summary Section */}
-        <div className="bg-white rounded-2xl p-8 border border-secondary/20">
+        <div className="bg-white rounded-2xl p-8 border border-secondary/20 mb-8">
           <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
             Resumo do Sistema
           </h3>
@@ -272,6 +275,39 @@ export default function AdminDashboardPage() {
               <p className="font-paragraph text-xs text-foreground/50 mt-1">Gestão de hospitais em desenvolvimento</p>
             </div>
           </div>
+        </div>
+
+        {/* Management Links */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-primary/10 rounded-2xl p-8 border border-primary/20 cursor-pointer hover:bg-primary/20 transition"
+            onClick={() => navigate('/admin-professionals')}
+          >
+            <h4 className="font-heading text-xl font-bold text-foreground mb-3">Gestão de Profissionais</h4>
+            <p className="font-paragraph text-sm text-foreground/70 mb-4">
+              Administre todos os profissionais do sistema, crie novos usuários e gerencie permissões
+            </p>
+            <Link to="/admin-professionals" className="text-primary font-heading font-bold hover:underline">
+              Acessar →
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-secondary/10 rounded-2xl p-8 border border-secondary/20 cursor-pointer hover:bg-secondary/20 transition"
+          >
+            <h4 className="font-heading text-xl font-bold text-foreground mb-3">Gestão de Hospitais</h4>
+            <p className="font-paragraph text-sm text-foreground/70 mb-4">
+              Gerencie hospitais, setores e especialidades cadastradas no sistema
+            </p>
+            <span className="text-foreground/50 font-heading font-bold">Em desenvolvimento</span>
+          </motion.div>
+        </div>
         </div>
       </div>
     </div>
