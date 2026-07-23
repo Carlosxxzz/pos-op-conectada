@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
-import AdminSidebar from '@/components/AdminSidebar';
 import { ArrowLeft, Edit2, Trash2, ToggleRight, ToggleLeft } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 
@@ -127,11 +126,8 @@ export default function AdminProfessionalViewPage() {
         onLogout={handleLogout}
       />
 
-      <div className="flex">
-        <AdminSidebar onLogout={handleLogout} />
-
-        {/* Main Content */}
-        <div className="flex-1 ml-64 px-8 py-12">
+      {/* Main Content - Full Width */}
+      <div className="px-8 py-12 max-w-[100rem] mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -379,7 +375,6 @@ export default function AdminProfessionalViewPage() {
             </div>
           </div>
         </motion.div>
-        </div>
       </div>
     </div>
   );

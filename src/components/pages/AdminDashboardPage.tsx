@@ -7,7 +7,6 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
-import AdminSidebar from '@/components/AdminSidebar';
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
@@ -22,6 +21,7 @@ export default function AdminDashboardPage() {
     nursingEvaluations: 0,
     medicalEvaluations: 0,
     averagePain: 0,
+    totalProfessionals: 0,
   });
 
   useEffect(() => {
@@ -44,6 +44,7 @@ export default function AdminDashboardPage() {
       const { items: checklists } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
       const { items: nursingEvals } = await BaseCrudService.getAll<AvaliaesdeEnfermagem>('avaliacoesenfermagem');
       const { items: medicalEvals } = await BaseCrudService.getAll<AvaliaesMdicas>('avaliacoesmedicas');
+      const { items: allProfessionals } = await BaseCrudService.getAll<Profissionais>('profissionais');
 
       const criticalCount = checklists.filter(c => c.riskLevel === 'critical').length;
       const attentionCount = checklists.filter(c => c.riskLevel === 'attention').length;
@@ -51,6 +52,12 @@ export default function AdminDashboardPage() {
 
       const totalPain = checklists.reduce((sum, c) => sum + (c.painLevel || 0), 0);
       const avgPain = checklists.length > 0 ? totalPain / checklists.length : 0;
+
+      // Filter professionals by admin's hospital
+      const adminHospital = professionalData?.hospital;
+      const hospitalProfessionals = adminHospital 
+        ? allProfessionals.filter(p => p.hospital === adminHospital).length 
+        : 0;
 
       setStats({
         totalPatients: patients.length,
@@ -61,6 +68,7 @@ export default function AdminDashboardPage() {
         nursingEvaluations: nursingEvals.length,
         medicalEvaluations: medicalEvals.length,
         averagePain: Math.round(avgPain * 10) / 10,
+        totalProfessionals: hospitalProfessionals,
       });
     } catch (error) {
       console.error('Error loading data:', error);
@@ -104,11 +112,8 @@ export default function AdminDashboardPage() {
         onLogout={handleLogout}
       />
 
-      <div className="flex">
-        <AdminSidebar onLogout={handleLogout} />
-
-        {/* Main Content */}
-        <div className="flex-1 ml-64 px-8 py-12">
+      {/* Main Content - Full Width */}
+      <div className="px-8 py-12 max-w-[100rem] mx-auto">
         <div className="mb-8">
           <h2 className="font-heading text-4xl font-bold text-foreground mb-2">
             Visão Geral do Sistema
@@ -263,52 +268,31 @@ export default function AdminDashboardPage() {
           <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
             Resumo do Sistema
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-8">
             <div>
               <p className="font-paragraph text-sm text-foreground/60 mb-2">Total de Profissionais</p>
-              <p className="font-heading text-3xl font-bold text-foreground">-</p>
-              <p className="font-paragraph text-xs text-foreground/50 mt-1">Gestão de profissionais em desenvolvimento</p>
-            </div>
-            <div>
-              <p className="font-paragraph text-sm text-foreground/60 mb-2">Total de Hospitais</p>
-              <p className="font-heading text-3xl font-bold text-foreground">-</p>
-              <p className="font-paragraph text-xs text-foreground/50 mt-1">Gestão de hospitais em desenvolvimento</p>
+              <p className="font-heading text-3xl font-bold text-foreground">{stats.totalProfessionals}</p>
+              <p className="font-paragraph text-xs text-foreground/50 mt-1">Profissionais do seu hospital</p>
             </div>
           </div>
         </div>
 
         {/* Management Links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-primary/10 rounded-2xl p-8 border border-primary/20 cursor-pointer hover:bg-primary/20 transition"
-            onClick={() => navigate('/admin-professionals')}
-          >
-            <h4 className="font-heading text-xl font-bold text-foreground mb-3">Gestão de Profissionais</h4>
-            <p className="font-paragraph text-sm text-foreground/70 mb-4">
-              Administre todos os profissionais do sistema, crie novos usuários e gerencie permissões
-            </p>
-            <Link to="/admin-professionals" className="text-primary font-heading font-bold hover:underline">
-              Acessar →
-            </Link>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-secondary/10 rounded-2xl p-8 border border-secondary/20 cursor-pointer hover:bg-secondary/20 transition"
-          >
-            <h4 className="font-heading text-xl font-bold text-foreground mb-3">Gestão de Hospitais</h4>
-            <p className="font-paragraph text-sm text-foreground/70 mb-4">
-              Gerencie hospitais, setores e especialidades cadastradas no sistema
-            </p>
-            <span className="text-foreground/50 font-heading font-bold">Em desenvolvimento</span>
-          </motion.div>
-        </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-primary/10 rounded-2xl p-8 border border-primary/20 cursor-pointer hover:bg-primary/20 transition"
+          onClick={() => navigate('/admin-professionals')}
+        >
+          <h4 className="font-heading text-xl font-bold text-foreground mb-3">Gestão de Profissionais</h4>
+          <p className="font-paragraph text-sm text-foreground/70 mb-4">
+            Administre todos os profissionais do sistema, crie novos usuários e gerencie permissões
+          </p>
+          <Link to="/admin-professionals" className="text-primary font-heading font-bold hover:underline">
+            Acessar →
+          </Link>
+        </motion.div>
       </div>
     </div>
   );

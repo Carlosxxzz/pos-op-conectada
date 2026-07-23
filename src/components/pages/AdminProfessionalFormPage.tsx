@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { motion } from 'framer-motion';
 import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
-import AdminSidebar from '@/components/AdminSidebar';
 import { ArrowLeft } from 'lucide-react';
 
 export default function AdminProfessionalFormPage() {
@@ -227,11 +226,8 @@ export default function AdminProfessionalFormPage() {
         onLogout={handleLogout}
       />
 
-      <div className="flex">
-        <AdminSidebar onLogout={handleLogout} />
-
-        {/* Main Content */}
-        <div className="flex-1 ml-64 px-8 py-12">
+      {/* Main Content - Full Width */}
+      <div className="px-8 py-12 max-w-[100rem] mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center gap-4">
           <button
@@ -618,7 +614,6 @@ export default function AdminProfessionalFormPage() {
             </Button>
           </div>
         </motion.form>
-        </div>
       </div>
     </div>
   );

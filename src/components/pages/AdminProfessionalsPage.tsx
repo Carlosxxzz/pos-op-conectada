@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { Plus, Search, Edit2, Trash2, Eye, ToggleRight, ToggleLeft } from 'lucide-react';
 import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
-import AdminSidebar from '@/components/AdminSidebar';
 import { Image } from '@/components/ui/image';
 
 interface ProfessionalWithDetails extends Profissionais {
@@ -62,7 +61,13 @@ export default function AdminProfessionalsPage() {
       setSetores(setorList);
       setEspecialidades(espList);
 
-      const enrichedProfessionals = profsList.map(prof => ({
+      // Filter professionals by admin's hospital
+      const adminHospital = professionalData?.hospital;
+      const filteredProfsList = adminHospital 
+        ? profsList.filter(p => p.hospital === adminHospital)
+        : profsList;
+
+      const enrichedProfessionals = filteredProfsList.map(prof => ({
         ...prof,
         hospitalName: hospList.find(h => h._id === prof.hospital)?.name,
         setorName: setorList.find(s => s._id === prof.specialty)?.name,
@@ -158,11 +163,8 @@ export default function AdminProfessionalsPage() {
         onLogout={handleLogout}
       />
 
-      <div className="flex">
-        <AdminSidebar onLogout={handleLogout} />
-
-        {/* Main Content */}
-        <div className="flex-1 ml-64 px-8 py-12">
+      {/* Main Content - Full Width */}
+      <div className="px-8 py-12 max-w-[100rem] mx-auto">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
           <div>
@@ -406,7 +408,6 @@ export default function AdminProfessionalsPage() {
               {professionals.filter(p => p.status === 'Ativo').length}
             </p>
           </motion.div>
-        </div>
         </div>
       </div>
     </div>
