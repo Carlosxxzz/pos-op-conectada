@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
 import { ArrowLeft } from 'lucide-react';
+import { verifyProfessionalHospitalAccess } from '@/lib/hospitalFilter';
 
 // Utility functions for formatting
 const formatCPF = (value: string) => {
@@ -120,6 +121,12 @@ export default function AdminProfessionalFormPage() {
       if (id) {
         const profData = await BaseCrudService.getById<Profissionais>('profissionais', id);
         if (profData) {
+          // Verify that the professional belongs to the admin's hospital
+          if (!verifyProfessionalHospitalAccess(profData)) {
+            alert('Você não tem permissão para editar este profissional');
+            navigate('/admin-professionals');
+            return;
+          }
           setFormData({
             fullName: profData.fullName || '',
             email: profData.email || '',
@@ -145,6 +152,14 @@ export default function AdminProfessionalFormPage() {
             dataAdmissao: profData.dataAdmissao ? new Date(profData.dataAdmissao).toISOString().split('T')[0] : '',
             status: profData.status || 'Ativo',
           });
+        }
+      } else {
+        // For new professionals, set hospital to admin's hospital
+        if (adminData?.hospital) {
+          setFormData(prev => ({
+            ...prev,
+            hospital: adminData.hospital || '',
+          }));
         }
       }
     } catch (error) {
