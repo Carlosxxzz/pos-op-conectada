@@ -1,3 +1,4 @@
+
 // HPI 1.7-G
 import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
@@ -31,20 +32,20 @@ export default function HomePage() {
         }
         .mesh-bg {
           background-color: #0A192F;
-          background-image: 
+          background-image:
             radial-gradient(at 0% 0%, rgba(0, 191, 255, 0.15) 0px, transparent 50%),
             radial-gradient(at 100% 100%, rgba(173, 216, 230, 0.1) 0px, transparent 50%);
         }
         .hairline-grid {
           background-size: 40px 40px;
-          background-image: 
+          background-image:
             linear-gradient(to right, rgba(173, 216, 230, 0.2) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(173, 216, 230, 0.2) 1px, transparent 1px);
         }
       `}</style>
 
       <Header scrollYProgress={scrollYProgress} />
-      
+
       <main>
         <HeroSection />
         <StatsSection />
@@ -76,9 +77,9 @@ function Header({ scrollYProgress }: { scrollYProgress: any }) {
   );
 
   return (
-    <motion.header 
-      style={{ 
-        backgroundColor: headerBg, 
+    <motion.header
+      style={{
+        backgroundColor: headerBg,
         borderColor: headerBorder,
         backdropFilter: headerBlur,
         WebkitBackdropFilter: headerBlur
@@ -101,9 +102,9 @@ function Header({ scrollYProgress }: { scrollYProgress: any }) {
             { name: 'Área do Paciente', path: '/patient-login' },
             { name: 'Acesso Profissional', path: '/professional-login' }
           ].map((link) => (
-            <Link 
-              key={link.name} 
-              to={link.path} 
+            <Link
+              key={link.name}
+              to={link.path}
               className="text-sm font-semibold text-foreground/80 hover:text-primary transition-colors relative group py-2"
             >
               {link.name}
@@ -131,7 +132,7 @@ function HeroSection() {
     target: sectionRef,
     offset: ["start start", "end start"]
   });
-  
+
   const yImage = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const opacityText = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const yText = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
@@ -143,8 +144,8 @@ function HeroSection() {
       </div>
 
       <div className="w-full max-w-[120rem] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start lg:items-center relative z-10">
-        
-        <motion.div 
+
+        <motion.div
           style={{ opacity: opacityText, y: yText }}
           className="lg:col-span-6 flex flex-col justify-center pt-8 md:pt-12 lg:pt-0"
         >
@@ -152,16 +153,16 @@ function HeroSection() {
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             <span className="text-xs font-bold text-primary tracking-wider uppercase">Monitoramento Contínuo</span>
           </div>
-          
+
           <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] mb-4 md:mb-6 tracking-tight">
             Precisão no <br/>
             <span className="text-gradient">Pós-Operatório.</span>
           </h1>
-          
+
           <p className="text-base md:text-lg lg:text-xl text-foreground/70 mb-8 md:mb-10 max-w-2xl leading-relaxed">
             Plataforma digital para hospitais públicos. Reduzimos complicações após a alta hospitalar através de monitoramento remoto, triagem inteligente e conexão direta entre pacientes e equipes médicas.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 pb-4">
             <Link
               to="/patient-login"
@@ -184,16 +185,16 @@ function HeroSection() {
 
         <div className="lg:col-span-6 relative h-[50vh] md:h-[60vh] lg:h-[80vh] w-full rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 border border-white/20">
           <motion.div style={{ y: yImage }} className="absolute inset-[-10%] w-[120%] h-[120%]">
-            <Image 
-              src={PLACEHOLDER_IMG} 
-              alt="Interface do sistema Pós-Op Conectado" 
+            <Image
+              src={PLACEHOLDER_IMG}
+              alt="Interface do sistema Pós-Op Conectado"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-dark-background/40 to-transparent mix-blend-multiply" />
           </motion.div>
-          
+
           {/* Floating UI Element */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
@@ -285,9 +286,9 @@ function SystemArchitectureSection() {
   return (
     <section ref={containerRef} className="w-full bg-background py-32 relative">
       <div className="max-w-[120rem] mx-auto px-6 md:px-12">
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-          
+
           {/* Sticky Left Column */}
           <div className="lg:col-span-4 relative">
             <div className="sticky top-32">
@@ -297,10 +298,10 @@ function SystemArchitectureSection() {
               <p className="text-lg text-foreground/70 mb-8">
                 Três interfaces especializadas trabalhando em sincronia para garantir a segurança do paciente e a eficiência da equipe hospitalar.
               </p>
-              
+
               {/* Progress Indicator */}
               <div className="hidden lg:block w-1 h-48 bg-secondary/30 rounded-full overflow-hidden relative">
-                <motion.div 
+                <motion.div
                   className="absolute top-0 left-0 w-full bg-primary"
                   style={{ height: useTransform(scrollYProgress, [0, 1], ["0%", "100%"]) }}
                 />
@@ -326,14 +327,14 @@ function PillarCard({ pillar, index }: { pillar: any, index: number }) {
   const isInView = useInView(cardRef, { margin: "-20% 0px -20% 0px" });
 
   return (
-    <div 
+    <div
       ref={cardRef}
       className={`transition-all duration-700 ${isInView ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-12'}`}
     >
       <div className="bg-white rounded-3xl p-8 md:p-12 border border-secondary/20 shadow-xl shadow-primary/5 relative overflow-hidden group">
         {/* Decorative background element */}
         <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors duration-500" />
-        
+
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div>
             <div className="w-16 h-16 bg-background rounded-2xl flex items-center justify-center mb-8 border border-secondary/30 shadow-sm">
@@ -341,7 +342,7 @@ function PillarCard({ pillar, index }: { pillar: any, index: number }) {
             </div>
             <h3 className="font-heading text-3xl font-bold text-foreground mb-4">{pillar.title}</h3>
             <p className="text-foreground/70 mb-8 leading-relaxed">{pillar.description}</p>
-            
+
             <ul className="space-y-4 mb-8">
               {pillar.features.map((feature: string, i: number) => (
                 <li key={i} className="flex items-start gap-3">
@@ -363,8 +364,8 @@ function PillarCard({ pillar, index }: { pillar: any, index: number }) {
           </div>
 
           <div className="relative h-[400px] rounded-2xl overflow-hidden border border-secondary/20">
-            <Image 
-              src={PLACEHOLDER_IMG} 
+            <Image
+              src={PLACEHOLDER_IMG}
               alt={pillar.title}
               className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
             />
@@ -381,15 +382,15 @@ function VisualBreather() {
     target: sectionRef,
     offset: ["start end", "end start"]
   });
-  
+
   const yBg = useTransform(scrollYProgress, [0, 1], ["-20%", "20%"]);
 
   return (
     <section ref={sectionRef} className="relative w-full h-[80vh] overflow-hidden flex items-center justify-center">
       <motion.div style={{ y: yBg }} className="absolute inset-[-20%] w-[140%] h-[140%] z-0">
-        <Image 
-          src={PLACEHOLDER_IMG} 
-          alt="Equipe médica" 
+        <Image
+          src={PLACEHOLDER_IMG}
+          alt="Equipe médica"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-dark-background/80 mix-blend-multiply" />
@@ -433,7 +434,7 @@ function TriageSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          
+
           {/* Stable Card */}
           <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 hover:bg-white/10 transition-colors group relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-stable transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
@@ -490,7 +491,7 @@ function Footer() {
     <footer className="bg-white border-t border-secondary/30 pt-20 pb-10">
       <div className="max-w-[120rem] mx-auto px-6 md:px-12">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
-          
+
           <div className="md:col-span-4">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
