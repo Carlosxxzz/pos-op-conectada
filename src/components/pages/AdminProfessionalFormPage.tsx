@@ -110,7 +110,25 @@ export default function AdminProfessionalFormPage() {
       const adminData = await BaseCrudService.getById<Profissionais>('profissionais', adminId);
       setAdminUser(adminData);
 
+      // Load all hospitals
       const { items: hospList } = await BaseCrudService.getAll<Hospitais>('hospitais');
+      
+      // Ensure admin's hospital exists in the database
+      if (adminData?.hospital) {
+        const adminHospitalExists = hospList.some(h => h._id === adminData.hospital);
+        
+        if (!adminHospitalExists) {
+          // Create the admin's hospital if it doesn't exist
+          const newHospital: Hospitais = {
+            _id: adminData.hospital,
+            name: adminData.hospital, // Use hospital name as the ID value
+          };
+          await BaseCrudService.create('hospitais', newHospital);
+          // Add to local list
+          hospList.push(newHospital);
+        }
+      }
+
       const { items: setorList } = await BaseCrudService.getAll<Setores>('setores');
       const { items: espList } = await BaseCrudService.getAll<Especialidades>('especialidades');
 
