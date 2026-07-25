@@ -69,9 +69,9 @@ export default function AdminProfessionalsPage() {
 
       const enrichedProfessionals = filteredProfsList.map(prof => ({
         ...prof,
-        hospitalName: hospList.find(h => h._id === prof.hospital)?.name,
+        hospitalName: prof.hospital,
         setorName: setorList.find(s => s._id === prof.specialty)?.name,
-        especialidadeName: espList.find(e => e._id === prof.specialty)?.name,
+        especialidadeName: prof.specialty,
       }));
 
       setProfessionals(enrichedProfessionals);

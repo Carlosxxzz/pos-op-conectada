@@ -166,6 +166,7 @@ export default function AdminProfessionalFormPage() {
       }
     } catch (error) {
       console.error('Error loading data:', error);
+      alert('Erro ao carregar dados');
     } finally {
       setIsLoading(false);
     }
@@ -213,6 +214,8 @@ export default function AdminProfessionalFormPage() {
       return especialidades.filter(e => e.professionalType === 'Médico' || !e.professionalType);
     } else if (formData.profile === 'Enfermeiro') {
       return especialidades.filter(e => e.professionalType === 'Enfermeiro' || !e.professionalType);
+    } else if (formData.profile === 'Administrador') {
+      return especialidades.filter(e => e.professionalType === 'Administrador' || !e.professionalType);
     }
     return [];
   };
@@ -458,7 +461,7 @@ export default function AdminProfessionalFormPage() {
                 >
                   <option value="">Selecione um hospital</option>
                   {hospitals.map(h => (
-                    <option key={h._id} value={h._id}>{h.name}</option>
+                    <option key={h._id} value={h.name}>{h.name}</option>
                   ))}
                 </CustomSelect>
               </div>
@@ -474,7 +477,7 @@ export default function AdminProfessionalFormPage() {
                   >
                     <option value="">Selecione uma especialidade</option>
                     {getFilteredSpecialties().map(e => (
-                      <option key={e._id} value={e._id}>{e.name}</option>
+                      <option key={e._id} value={e.name}>{e.name}</option>
                     ))}
                   </CustomSelect>
                 </div>

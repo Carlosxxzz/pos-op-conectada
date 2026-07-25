@@ -34,7 +34,7 @@ export async function getCurrentUserHospital(): Promise<string | null> {
 }
 
 /**
- * Get the hospital ID from localStorage (faster, no DB call)
+ * Get the hospital name from localStorage (faster, no DB call)
  * Use this when you already have the hospital stored
  */
 export function getStoredHospitalId(): string | null {
