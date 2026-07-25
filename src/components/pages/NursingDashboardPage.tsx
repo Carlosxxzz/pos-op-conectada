@@ -59,7 +59,7 @@ export default function NursingDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'agenda' | 'historico' | 'perfil'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'encaminhados' | 'avaliados-medico' | 'historico' | 'perfil'>('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     awaitingEvaluation: 0,
     referredToDoctor: 0,
@@ -75,7 +75,7 @@ export default function NursingDashboardPage() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 30000); // Refresh every 30 seconds
+    const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -98,7 +98,6 @@ export default function NursingDashboardPage() {
 
       setProfessional(professionalData);
 
-      // Load all data
       const [patientsRes, checklistsRes, nursingEvalsRes, referralsRes, medicalEvalsRes] = await Promise.all([
         BaseCrudService.getAll<Pacientes>('pacientes'),
         BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios'),
@@ -112,7 +111,6 @@ export default function NursingDashboardPage() {
       const allReferrals = referralsRes.items;
       const allMedicalEvals = medicalEvalsRes.items;
 
-      // Build patient evaluation data
       const patientsList: PatientEvaluationData[] = [];
       const statsData: DashboardStats = {
         awaitingEvaluation: 0,
@@ -166,7 +164,6 @@ export default function NursingDashboardPage() {
             }
           }
 
-          // Determine priority
           let isPriority = false;
           let priorityReason = '';
 
@@ -195,7 +192,6 @@ export default function NursingDashboardPage() {
 
           patientsList.push(data);
 
-          // Update stats
           if (status === 'AGUARDANDO_ENFERMAGEM') statsData.awaitingEvaluation++;
           if (status === 'ENCAMINHADO_MEDICO') statsData.referredToDoctor++;
           if (status === 'AVALIADO_ENFERMAGEM') statsData.evaluatedByNurse++;
@@ -231,18 +227,14 @@ export default function NursingDashboardPage() {
 
   const handleNotificationClick = (notificationId: string, checklistId?: string) => {
     setShowNotifications(false);
-    
-    // Navigate based on checklist
     if (checklistId) {
       navigate(`/nursing-evaluation/${checklistId}`);
     }
   };
 
-  // Filter and search logic
   const filteredPatients = useMemo(() => {
     let result = allPatients;
 
-    // Apply search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(item =>
@@ -252,7 +244,6 @@ export default function NursingDashboardPage() {
       );
     }
 
-    // Apply status filter
     if (filterType === 'TODOS') {
       return result;
     } else if (filterType === 'URGENTE') {
@@ -280,7 +271,6 @@ export default function NursingDashboardPage() {
     }
   }, [allPatients, filterType, searchQuery]);
 
-  // Priority patients
   const priorityPatients = useMemo(() => {
     return allPatients.filter(item => item.isPriority).sort((a, b) => {
       const aPriority = a.latestChecklist?.riskLevel === 'critical' ? 0 : 1;
@@ -342,7 +332,6 @@ export default function NursingDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="bg-white border-b border-secondary/30 sticky top-0 z-40">
         <div className="max-w-[120rem] mx-auto px-8 py-6">
           <div className="flex items-center justify-between mb-6">
@@ -362,7 +351,6 @@ export default function NursingDashboardPage() {
                 onNotificationClick={handleNotificationClick}
               />
 
-              {/* Profile Menu */}
               <div className="relative">
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -402,12 +390,12 @@ export default function NursingDashboardPage() {
             </div>
           </div>
 
-          {/* Navigation Tabs */}
           <div className="flex gap-2 overflow-x-auto pb-2">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
               { id: 'prioritarios', label: 'Prioritários', icon: AlertCircle },
-              { id: 'agenda', label: 'Agenda', icon: Calendar },
+              { id: 'encaminhados', label: 'Encaminhados', icon: Stethoscope },
+              { id: 'avaliados-medico', label: 'Avaliados Médico', icon: CheckCircle },
               { id: 'historico', label: 'Histórico', icon: FileText },
               { id: 'perfil', label: 'Meu Perfil', icon: User },
             ].map(tab => {
@@ -431,12 +419,10 @@ export default function NursingDashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <div className="max-w-[120rem] mx-auto px-8 py-12">
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
           <>
-            {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {[
                 { label: 'Aguardando Avaliação', value: stats.awaitingEvaluation, icon: Clock, colorKey: 'primary', filterId: 'AGUARDANDO_ENFERMAGEM' as FilterType },
@@ -468,7 +454,6 @@ export default function NursingDashboardPage() {
               })}
             </div>
 
-            {/* Critical Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               <motion.button
                 initial={{ opacity: 0, y: 20 }}
@@ -522,7 +507,6 @@ export default function NursingDashboardPage() {
               </motion.button>
             </div>
 
-            {/* Search and Filter */}
             <div className="mb-8">
               <div className="flex flex-col md:flex-row gap-4 mb-6">
                 <div className="flex-1 relative">
@@ -537,7 +521,6 @@ export default function NursingDashboardPage() {
                 </div>
               </div>
 
-              {/* Filters */}
               <div className="flex flex-wrap gap-2">
                 {[
                   { value: 'TODOS', label: 'Todos' },
@@ -565,7 +548,6 @@ export default function NursingDashboardPage() {
               </div>
             </div>
 
-            {/* Patients List */}
             {filteredPatients.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
                 <Users className="w-16 h-16 text-foreground/20 mx-auto mb-4" />
@@ -696,9 +678,8 @@ export default function NursingDashboardPage() {
           </div>
         )}
 
-        {/* Encaminhado ao Médico Tab */}
+        {/* Encaminhados Tab */}
         {activeTab === 'encaminhados' && (() => {
-          // Get all referrals for patients in this hospital
           const hospitalReferrals = allPatients
             .filter(p => p.status === 'ENCAMINHADO_MEDICO')
             .map(p => ({
@@ -771,43 +752,98 @@ export default function NursingDashboardPage() {
           );
         })()}
 
-        {/* Agenda Tab */}
-        {activeTab === 'agenda' && (
-          <div>
-            <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Agenda Diária</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                { title: 'Devem responder hoje', count: stats.totalChecklistsToday, icon: Clock, color: 'primary' },
-                { title: 'Aguardando avaliação', count: stats.awaitingEvaluation, icon: Users, color: 'attention-foreground' },
-                { title: 'Encaminhados ao médico', count: stats.referredToDoctor, icon: ArrowRight, color: 'attention-foreground' },
-                { title: 'Aguardando resposta médica', count: stats.referredToDoctor, icon: Clock, color: 'primary' },
-              ].map((item, index) => (
-                <motion.div
-                  key={item.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className={`bg-${item.color}/10 rounded-2xl p-6 border border-${item.color}/20`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-paragraph text-sm text-foreground/70 mb-2">{item.title}</p>
-                      <p className="font-heading text-4xl font-bold text-foreground">{item.count}</p>
-                    </div>
-                    <item.icon className={`w-12 h-12 text-${item.color}`} />
-                  </div>
-                </motion.div>
-              ))}
+        {/* Avaliados Médico Tab */}
+        {activeTab === 'avaliados-medico' && (() => {
+          const evaluatedByDoctor = allPatients.filter(p => p.status === 'AVALIADO_MEDICO');
+
+          return (
+            <div>
+              <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Pacientes Avaliados pelo Médico</h2>
+              {evaluatedByDoctor.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
+                  <CheckCircle className="w-16 h-16 text-stable mx-auto mb-4" />
+                  <h3 className="font-heading text-2xl font-bold text-foreground mb-2">Nenhum paciente avaliado</h3>
+                  <p className="font-paragraph text-lg text-foreground/70">Nenhum paciente foi avaliado pelo médico ainda</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {evaluatedByDoctor.map((item, index) => (
+                    <motion.div
+                      key={`${item.patient._id}-evaluated`}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white rounded-2xl p-6 border border-secondary/20 hover:shadow-lg transition-all"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">Paciente</p>
+                          <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient.fullName}</p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">CPF / SUS</p>
+                          <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient.cpf || item.patient.susNumber || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">Médico</p>
+                          <p className="font-paragraph text-sm font-semibold text-foreground">{item.doctorName || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">Status</p>
+                          <span className="bg-stable/10 text-stable text-xs font-semibold px-3 py-1 rounded-full inline-block">
+                            ✓ Avaliado Médico
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Histórico Tab */}
         {activeTab === 'historico' && (
           <div>
-            <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Histórico de Atividades</h2>
-            <div className="bg-white rounded-2xl border border-secondary/20 p-8">
-              <p className="font-paragraph text-foreground/70 text-center">Histórico de atividades será exibido aqui</p>
+            <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Histórico de Avaliações</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Link to="/nursing-evaluation-history">
+                <motion.button
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ y: -4 }}
+                  className="bg-white rounded-2xl p-8 border border-secondary/20 hover:shadow-lg transition-all text-left w-full"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                      <FileText className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <ArrowRight className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-heading text-lg font-bold text-foreground mb-2">Histórico de Avaliações</h3>
+                  <p className="font-paragraph text-sm text-foreground/70">Visualize todas as avaliações realizadas</p>
+                </motion.button>
+              </Link>
+
+              <Link to="/nursing-patients-evaluated-by-doctor">
+                <motion.button
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  whileHover={{ y: -4 }}
+                  className="bg-white rounded-2xl p-8 border border-secondary/20 hover:shadow-lg transition-all text-left w-full"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-stable rounded-lg flex items-center justify-center">
+                      <CheckCircle className="w-6 h-6 text-stable-foreground" />
+                    </div>
+                    <ArrowRight className="w-6 h-6 text-stable" />
+                  </div>
+                  <h3 className="font-heading text-lg font-bold text-foreground mb-2">Avaliados pelo Médico</h3>
+                  <p className="font-paragraph text-sm text-foreground/70">Pacientes já avaliados (somente leitura)</p>
+                </motion.button>
+              </Link>
             </div>
           </div>
         )}

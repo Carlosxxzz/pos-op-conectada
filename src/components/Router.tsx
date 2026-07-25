@@ -16,6 +16,8 @@ import ProfessionalLoginPage from '@/components/pages/ProfessionalLoginPage';
 import NursingDashboardPage from '@/components/pages/NursingDashboardPage';
 import NursingEvaluationPage from '@/components/pages/NursingEvaluationPage';
 import NursingReferralViewPage from '@/components/pages/NursingReferralViewPage';
+import NursingEvaluationHistoryPage from '@/components/pages/NursingEvaluationHistoryPage';
+import NursingPatientsEvaluatedByDoctorPage from '@/components/pages/NursingPatientsEvaluatedByDoctorPage';
 import MedicalDashboardPage from '@/components/pages/MedicalDashboardPage';
 import MedicalEvaluationPage from '@/components/pages/MedicalEvaluationPage';
 import MedicalEvaluationHistoryPage from '@/components/pages/MedicalEvaluationHistoryPage';
@@ -112,6 +114,22 @@ const router = createBrowserRouter([
         element: (
           <ProfessionalProtectedRoute allowedProfiles={['Enfermeiro']}>
             <NursingReferralViewPage />
+          </ProfessionalProtectedRoute>
+        ),
+      },
+      {
+        path: "nursing-evaluation-history",
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Enfermeiro']}>
+            <NursingEvaluationHistoryPage />
+          </ProfessionalProtectedRoute>
+        ),
+      },
+      {
+        path: "nursing-patients-evaluated-by-doctor",
+        element: (
+          <ProfessionalProtectedRoute allowedProfiles={['Enfermeiro']}>
+            <NursingPatientsEvaluatedByDoctorPage />
           </ProfessionalProtectedRoute>
         ),
       },
