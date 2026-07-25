@@ -152,11 +152,13 @@ export default function NursingDashboardPage() {
             nurseName = nursingEval.nurseName;
             evaluationDate = nursingEval.checklistDate;
           } else if (referral) {
-            if (medicalEval) {
+            // CRITICAL FIX: Check referral status - if CONCLUIDO or has medical eval, show as AVALIADO_MEDICO
+            if (referral.status === 'CONCLUIDO' || medicalEval) {
               status = 'AVALIADO_MEDICO';
-              doctorName = medicalEval.doctorName;
-              evaluationDate = medicalEval.evaluationDate;
+              doctorName = medicalEval?.doctorName || referral.doctorName;
+              evaluationDate = medicalEval?.evaluationDate || referral.responseDate;
             } else {
+              // Only show as ENCAMINHADO_MEDICO if referral is still pending (not CONCLUIDO)
               status = 'ENCAMINHADO_MEDICO';
               nurseName = referral.nurseName;
               doctorName = referral.doctorName;
