@@ -110,54 +110,8 @@ export default function AdminProfessionalFormPage() {
       const adminData = await BaseCrudService.getById<Profissionais>('profissionais', adminId);
       setAdminUser(adminData);
 
-      // Load all hospitals
-      let { items: hospList } = await BaseCrudService.getAll<Hospitais>('hospitais');
-      
-      // Default hospitals to ensure exist
-      const defaultHospitals = [
-        { name: 'Hospital Central', id: 'hospital-central' },
-        { name: 'Hospital Santa Casa de Misericórdia', id: 'hospital-santa-casa' },
-        { name: 'Hospital Albert Einstein', id: 'hospital-albert-einstein' },
-        { name: 'Hospital Moinhos de Vento', id: 'hospital-moinhos-vento' },
-        { name: 'Hospital Sírio-Libanês', id: 'hospital-sirio-libanes' },
-        { name: 'Hospital Copa D\'Or', id: 'hospital-copa-dor' },
-      ];
-
-      // Ensure default hospitals exist in the database
-      for (const defaultHosp of defaultHospitals) {
-        const exists = hospList.some(h => h._id === defaultHosp.id);
-        if (!exists) {
-          const newHospital: Hospitais = {
-            _id: defaultHosp.id,
-            name: defaultHosp.name,
-          };
-          try {
-            await BaseCrudService.create('hospitais', newHospital);
-            hospList.push(newHospital);
-          } catch (err) {
-            console.warn(`Could not create hospital ${defaultHosp.name}:`, err);
-          }
-        }
-      }
-      
-      // Ensure admin's hospital exists in the database
-      if (adminData?.hospital) {
-        const adminHospitalExists = hospList.some(h => h._id === adminData.hospital);
-        
-        if (!adminHospitalExists) {
-          // Create the admin's hospital if it doesn't exist
-          const newHospital: Hospitais = {
-            _id: adminData.hospital,
-            name: adminData.hospital,
-          };
-          try {
-            await BaseCrudService.create('hospitais', newHospital);
-            hospList.push(newHospital);
-          } catch (err) {
-            console.warn(`Could not create admin hospital:`, err);
-          }
-        }
-      }
+      // Load all hospitals from database - use them exactly as they exist
+      const { items: hospList } = await BaseCrudService.getAll<Hospitais>('hospitais');
 
       const { items: setorList } = await BaseCrudService.getAll<Setores>('setores');
       const { items: espList } = await BaseCrudService.getAll<Especialidades>('especialidades');
