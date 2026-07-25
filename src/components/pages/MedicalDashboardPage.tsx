@@ -18,6 +18,12 @@ interface ReferredCase {
   referral: any;
 }
 
+interface CompletedEvaluation {
+  evaluation: AvaliaesMdicas;
+  patient: Pacientes | null;
+  referral: any;
+}
+
 interface DashboardStats {
   pendingCount: number;
   evaluatedTodayCount: number;
@@ -30,7 +36,7 @@ export default function MedicalDashboardPage() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [referredCases, setReferredCases] = useState<ReferredCase[]>([]);
-  const [evaluatedCases, setEvaluatedCases] = useState<any[]>([]);
+  const [completedEvaluations, setCompletedEvaluations] = useState<CompletedEvaluation[]>([]);
   const [professional, setProfessional] = useState<Profissionais | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
     pendingCount: 0,
@@ -66,7 +72,7 @@ export default function MedicalDashboardPage() {
       const { items: allReferrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
       const { items: allEvaluations } = await BaseCrudService.getAll<AvaliaesMdicas>('avaliacoesmedicas');
 
-      // Filter pending referrals for this doctor
+      // Filter pending referrals for this doctor (only those NOT completed)
       const referralsForThisDoctor = allReferrals.filter((referral: any) => 
         referral.doctorId === professionalId && referral.status === 'Encaminhado ao Médico'
       );
@@ -82,19 +88,24 @@ export default function MedicalDashboardPage() {
           return dateB - dateA;
         });
 
-      // Get evaluated cases (completed evaluations by this doctor)
-      const evaluatedByThisDoctor = allEvaluations.filter(e => e.doctorName === professionalData?.fullName);
-      const evaluated = evaluatedByThisDoctor.map(evaluation => {
-        const patient = allPatients.find(p => p._id === evaluation.patientId);
-        return { evaluation, patient };
-      }).sort((a, b) => {
-        const dateA = new Date(a.evaluation.evaluationDate || 0).getTime();
-        const dateB = new Date(b.evaluation.evaluationDate || 0).getTime();
-        return dateB - dateA;
-      });
+      // Get completed evaluations (CONCLUIDO status) by this doctor
+      const completedReferrals = allReferrals.filter((referral: any) => 
+        referral.doctorId === professionalId && referral.status === 'CONCLUIDO'
+      );
+
+      const completed = completedReferrals.map((referral: any) => {
+        const evaluation = allEvaluations.find(e => e.checklistId === referral.checklistId && e.patientId === referral.patientId);
+        const patient = allPatients.find(p => p._id === referral.patientId);
+        return { evaluation, patient, referral };
+      }).filter(item => item.evaluation && item.patient)
+        .sort((a, b) => {
+          const dateA = new Date(a.evaluation?.evaluationDate || 0).getTime();
+          const dateB = new Date(b.evaluation?.evaluationDate || 0).getTime();
+          return dateB - dateA;
+        });
 
       setReferredCases(referred as any);
-      setEvaluatedCases(evaluated);
+      setCompletedEvaluations(completed as any);
 
       // Calculate statistics
       const today = new Date();
@@ -102,6 +113,8 @@ export default function MedicalDashboardPage() {
       
       const weekAgo = new Date(today);
       weekAgo.setDate(weekAgo.getDate() - 7);
+
+      const evaluatedByThisDoctor = allEvaluations.filter(e => e.doctorName === professionalData?.fullName);
 
       const evaluatedToday = evaluatedByThisDoctor.filter(e => {
         const evalDate = new Date(e.evaluationDate || '');
@@ -119,7 +132,7 @@ export default function MedicalDashboardPage() {
         .map((r: any) => r.patientId)
       ).size;
 
-      const lastEval = evaluated[0];
+      const lastEval = completed[0];
 
       setStats({
         pendingCount: referred.length,
@@ -154,7 +167,7 @@ export default function MedicalDashboardPage() {
     return matchesSearch && matchesFilter;
   });
 
-  const filteredEvaluated = evaluatedCases.filter(item => {
+  const filteredCompleted = completedEvaluations.filter(item => {
     const searchLower = searchTerm.toLowerCase();
     return !searchTerm || 
       item.patient?.fullName?.toLowerCase().includes(searchLower) ||
@@ -162,7 +175,7 @@ export default function MedicalDashboardPage() {
       item.patient?.susNumber?.includes(searchTerm);
   });
 
-  const handleEvaluatedCaseClick = (patientId: string) => {
+  const handleCompletedCaseClick = (patientId: string) => {
     navigate(`/medical-evaluation-history/${patientId}`);
   };
 
@@ -569,55 +582,82 @@ export default function MedicalDashboardPage() {
           </>
         ) : null}
 
-        {/* Evaluated Cases Section */}
-        {filterStatus === 'all' && evaluatedCases.length > 0 && (
+        {/* Evaluation History Section - Read-Only */}
+        {filterStatus === 'all' && completedEvaluations.length > 0 && (
           <div className="mt-12">
             <div className="flex items-center gap-3 mb-6">
               <CheckCircle className="w-6 h-6 text-stable" />
               <h2 className="font-heading text-2xl font-bold text-foreground">
-                Pacientes Avaliados ({filteredEvaluated.length})
+                Histórico de Avaliações Médicas ({filteredCompleted.length})
               </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {filteredEvaluated.slice(0, 6).map((item, index) => (
+            <div className="bg-stable/10 border border-stable/30 rounded-2xl p-6 mb-6">
+              <p className="font-paragraph text-sm text-foreground/70">
+                Avaliações concluídas. Clique em "Visualizar" para ver os detalhes completos.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              {filteredCompleted.map((item, index) => (
                 <motion.div
                   key={item.evaluation._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <button
-                    onClick={() => handleEvaluatedCaseClick(item.patient?._id || '')}
-                    className="w-full text-left block bg-white border border-secondary/20 rounded-2xl p-6 hover:bg-secondary/5 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-heading text-lg font-bold text-foreground">{item.patient?.fullName}</h3>
-                        <p className="font-paragraph text-sm text-foreground/60 mt-1">
-                          Avaliado em {new Date(item.evaluation.evaluationDate || '').toLocaleDateString('pt-BR')}
-                        </p>
+                  <div className="bg-white border border-secondary/20 rounded-2xl p-6 hover:border-secondary/40 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                          <div>
+                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Paciente</p>
+                            <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient?.fullName}</p>
+                          </div>
+                          <div>
+                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Prontuário</p>
+                            <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient?.susNumber || '-'}</p>
+                          </div>
+                          <div>
+                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Hospital</p>
+                            <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient?.hospital}</p>
+                          </div>
+                          <div>
+                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Data da Avaliação</p>
+                            <p className="font-paragraph text-sm font-semibold text-foreground">
+                              {new Date(item.evaluation.evaluationDate || '').toLocaleDateString('pt-BR')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div>
+                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Hora da Avaliação</p>
+                            <p className="font-paragraph text-sm font-semibold text-foreground">
+                              {new Date(item.evaluation.evaluationDate || '').toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Médico Responsável</p>
+                            <p className="font-paragraph text-sm font-semibold text-foreground">{item.evaluation.doctorName}</p>
+                          </div>
+                          <div>
+                            <p className="font-paragraph text-xs text-foreground/60 mb-1">Status</p>
+                            <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${
+                              item.evaluation.status === 'Alta'
+                                ? 'bg-stable/20 text-stable'
+                                : 'bg-primary/20 text-primary'
+                            }`}>
+                              {item.evaluation.status === 'Alta' ? 'ALTA' : 'CONTINUIDADE'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                        item.evaluation.status === 'Alta' 
-                          ? 'bg-stable/20 text-stable'
-                          : 'bg-primary/20 text-primary'
-                      }`}>
-                        {item.evaluation.status === 'Alta' ? 'ALTA' : 'CONTINUIDADE'}
-                      </span>
+                      <button
+                        onClick={() => handleCompletedCaseClick(item.patient?._id || '')}
+                        className="flex-shrink-0 px-6 py-2 bg-primary text-primary-foreground font-paragraph text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap"
+                      >
+                        Visualizar
+                      </button>
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="font-paragraph text-sm text-foreground/60">Hospital:</span>
-                        <span className="font-paragraph text-sm font-semibold text-foreground">{item.patient?.hospital}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-paragraph text-sm text-foreground/60">Condição:</span>
-                        <span className="font-paragraph text-sm font-semibold text-foreground">
-                          {item.evaluation.clinicalCondition}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
+                  </div>
                 </motion.div>
               ))}
             </div>
