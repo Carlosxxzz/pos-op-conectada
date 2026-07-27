@@ -399,7 +399,6 @@ export default function NursingDashboardPage() {
               { id: 'encaminhados', label: 'Encaminhados', icon: Stethoscope },
               { id: 'avaliados-medico', label: 'Avaliados Médico', icon: CheckCircle },
               { id: 'historico', label: 'Histórico', icon: FileText },
-              { id: 'perfil', label: 'Meu Perfil', icon: User },
             ].map(tab => {
               const Icon = tab.icon;
               return (
