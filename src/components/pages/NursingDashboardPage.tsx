@@ -59,7 +59,7 @@ export default function NursingDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'encaminhados' | 'avaliados-medico' | 'historico' | 'perfil'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'encaminhados' | 'avaliados-medico' | 'historico'>('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     awaitingEvaluation: 0,
     referredToDoctor: 0,
@@ -392,30 +392,34 @@ export default function NursingDashboardPage() {
             </div>
           </div>
 
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-8 px-8">
-            {[
-              { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-              { id: 'prioritarios', label: 'Prioritários', icon: AlertCircle },
-              { id: 'encaminhados', label: 'Encaminhados ao Médico', icon: Stethoscope },
-              { id: 'avaliados-medico', label: 'Avaliados pelo Médico', icon: CheckCircle },
-              { id: 'historico', label: 'Histórico', icon: FileText },
-            ].map(tab => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-5 py-3 rounded-lg font-paragraph text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
-                    activeTab === tab.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-white border border-secondary/20 text-foreground hover:border-primary/50'
-                  }`}
-                >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  {tab.label}
-                </button>
-              );
-            })}
+          {/* Navigation Tabs - Horizontal Scrollable */}
+          <div className="overflow-x-auto -mx-8 px-8 pb-2">
+            <div className="flex gap-3 min-w-min">
+              {[
+                { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+                { id: 'prioritarios', label: 'Prioritários', icon: AlertCircle },
+                { id: 'encaminhados', label: 'Encaminhados ao Médico', icon: Stethoscope },
+                { id: 'avaliados-medico', label: 'Avaliados pelo Médico', icon: CheckCircle },
+                { id: 'historico', label: 'Histórico', icon: FileText },
+              ].map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-lg font-paragraph text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0 border ${
+                      activeTab === tab.id
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-white border-secondary/20 text-foreground hover:border-primary/50 hover:bg-background'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="sm:hidden text-xs">{tab.label.split(' ')[0]}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </header>
@@ -452,8 +456,6 @@ export default function NursingDashboardPage() {
                 );
               })}
             </div>
-
-
 
             <div className="mb-8">
               <div className="flex flex-col md:flex-row gap-4 mb-6">
