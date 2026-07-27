@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { usePasswordRecovery } from '@/hooks/usePasswordRecovery';
+import PasswordInput from '@/components/PasswordInput';
+import PasswordConfirmation from '@/components/PasswordConfirmation';
 
 export default function PatientPasswordRecoveryPage() {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ export default function PatientPasswordRecoveryPage() {
   const [emailInput, setEmailInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [newPasswordValidation, setNewPasswordValidation] = useState({ isValid: false, requirements: {}, errors: [] });
 
   const handleRequestRecovery = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -254,113 +257,34 @@ export default function PatientPasswordRecoveryPage() {
                     <Label htmlFor="new-password" className="font-paragraph text-sm font-semibold text-foreground">
                       Nova Senha
                     </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40" />
-                      <Input
-                        id="new-password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="pl-11 pr-11 font-paragraph"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-
-                    {/* Password Strength Indicator */}
-                    {newPassword && (
-                      <div className="space-y-2 mt-3">
-                        <div className="flex items-center justify-between">
-                          <span className="font-paragraph text-xs text-foreground/60">Força da senha:</span>
-                          <span className={`font-paragraph text-xs font-semibold ${
-                            passwordStrength.strength === 'strong'
-                              ? 'text-stable'
-                              : passwordStrength.strength === 'medium'
-                              ? 'text-attention'
-                              : 'text-destructive'
-                          }`}>
-                            {getStrengthText()}
-                          </span>
-                        </div>
-                        <div className="w-full h-2 bg-foreground/10 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full ${getStrengthColor()} transition-all duration-300`}
-                            style={{ width: `${passwordStrength.percentage}%` }}
-                          />
-                        </div>
-
-                        {/* Validation Requirements */}
-                        <div className="space-y-1 mt-3">
-                          {[
-                            { met: newPassword.length >= 8, text: 'Mínimo 8 caracteres' },
-                            { met: /[a-zA-Z]/.test(newPassword), text: 'Pelo menos 1 letra' },
-                            { met: /[0-9]/.test(newPassword), text: 'Pelo menos 1 número' },
-                          ].map((req, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                                req.met ? 'bg-stable' : 'bg-foreground/10'
-                              }`}>
-                                {req.met && <CheckCircle className="w-3 h-3 text-primary-foreground" />}
-                              </div>
-                              <span className={`font-paragraph text-xs ${
-                                req.met ? 'text-foreground/70' : 'text-foreground/40'
-                              }`}>
-                                {req.text}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <PasswordInput
+                      label=""
+                      value={newPassword}
+                      onChange={setNewPassword}
+                      onValidationChange={setNewPasswordValidation}
+                      placeholder="••••••••"
+                      showRequirements={true}
+                      showLabel={false}
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password" className="font-paragraph text-sm font-semibold text-foreground">
                       Confirmar Senha
                     </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40" />
-                      <Input
-                        id="confirm-password"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="pl-11 pr-11 font-paragraph"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/40 hover:text-foreground"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </button>
-                    </div>
-
-                    {confirmPassword && newPassword !== confirmPassword && (
-                      <p className="font-paragraph text-xs text-destructive">As senhas não coincidem</p>
-                    )}
+                    <PasswordConfirmation
+                      password={newPassword}
+                      confirmPassword={confirmPassword}
+                      onConfirmPasswordChange={setConfirmPassword}
+                      placeholder="••••••••"
+                      label=""
+                      showLabel={false}
+                    />
                   </div>
 
                   <Button
                     type="submit"
-                    disabled={isLoading || !passwordValidation.valid || newPassword !== confirmPassword}
+                    disabled={isLoading || !newPasswordValidation.isValid || newPassword !== confirmPassword}
                     className="w-full bg-primary text-primary-foreground hover:opacity-90 font-paragraph font-semibold py-6 rounded-lg disabled:opacity-50"
                   >
                     {isLoading ? 'Alterando...' : 'Alterar Senha'}

@@ -717,6 +717,7 @@ export default function AdminProfessionalFormPage() {
                         onValidationChange={setPasswordValidation}
                         placeholder="••••••••"
                         showRequirements={true}
+                        showLabel={false}
                       />
                     )}
                     {!formData.password && (
@@ -737,6 +738,8 @@ export default function AdminProfessionalFormPage() {
                         confirmPassword={formData.confirmPassword}
                         onConfirmPasswordChange={(value) => setFormData({ ...formData, confirmPassword: value })}
                         placeholder="••••••••"
+                        label="Confirmar Nova Senha"
+                        showLabel={true}
                       />
                       {passwordMatchError && (
                         <p className="text-destructive text-sm mt-2">{passwordMatchError}</p>

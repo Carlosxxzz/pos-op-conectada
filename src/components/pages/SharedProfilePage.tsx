@@ -861,12 +861,13 @@ export default function SharedProfilePage({
                           <button
                             type="button"
                             onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground/60 hover:text-foreground/80 transition-colors focus:outline-none"
+                            aria-label={showCurrentPassword ? 'Ocultar senha' : 'Mostrar senha'}
                           >
                             {showCurrentPassword ? (
-                              <EyeOff className="w-4 h-4 text-foreground/60" />
+                              <EyeOff className="w-4 h-4" />
                             ) : (
-                              <Eye className="w-4 h-4 text-foreground/60" />
+                              <Eye className="w-4 h-4" />
                             )}
                           </button>
                         </div>
@@ -881,6 +882,7 @@ export default function SharedProfilePage({
                           onValidationChange={setNewPasswordValidation}
                           placeholder="Digite sua nova senha"
                           showRequirements={true}
+                          showLabel={false}
                         />
                       </div>
 
@@ -893,6 +895,8 @@ export default function SharedProfilePage({
                             setPasswordData({ ...passwordData, confirmPassword: value })
                           }
                           placeholder="Confirme sua nova senha"
+                          label=""
+                          showLabel={false}
                         />
                         {passwordMatchError && (
                           <p className="text-destructive text-sm mt-2">{passwordMatchError}</p>

@@ -8,6 +8,8 @@ interface PasswordConfirmationProps {
   onConfirmPasswordChange: (value: string) => void;
   placeholder?: string;
   error?: string;
+  label?: string;
+  showLabel?: boolean;
 }
 
 export default function PasswordConfirmation({
@@ -16,15 +18,19 @@ export default function PasswordConfirmation({
   onConfirmPasswordChange,
   placeholder = 'Confirme sua senha',
   error,
+  label = 'Confirmar Senha',
+  showLabel = true,
 }: PasswordConfirmationProps) {
   const [showPassword, setShowPassword] = useState(false);
   const matchValidation = validatePasswordMatch(password, confirmPassword);
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-foreground mb-2">
-        Confirmar Senha
-      </label>
+      {showLabel && (
+        <label className="block text-sm font-medium text-foreground mb-2">
+          {label}
+        </label>
+      )}
 
       <div className="relative">
         <input
@@ -37,7 +43,7 @@ export default function PasswordConfirmation({
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
           aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
         >
           {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

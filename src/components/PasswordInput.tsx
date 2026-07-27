@@ -10,6 +10,7 @@ interface PasswordInputProps {
   placeholder?: string;
   showRequirements?: boolean;
   error?: string;
+  showLabel?: boolean;
 }
 
 export default function PasswordInput({
@@ -20,6 +21,7 @@ export default function PasswordInput({
   placeholder = 'Digite sua senha',
   showRequirements = true,
   error,
+  showLabel = true,
 }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
   const validation = validatePassword(value);
@@ -32,9 +34,11 @@ export default function PasswordInput({
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-foreground mb-2">
-        {label}
-      </label>
+      {showLabel && label && (
+        <label className="block text-sm font-medium text-foreground mb-2">
+          {label}
+        </label>
+      )}
 
       <div className="relative">
         <input
@@ -47,7 +51,7 @@ export default function PasswordInput({
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors"
           aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
         >
           {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

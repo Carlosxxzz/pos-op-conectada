@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, Mail, Lock, User, Phone, MapPin, Calendar, Stethoscope, Building2, UserPlus, AlertCircle } from 'lucide-react';
+import { Activity, Mail, Lock, User, Phone, MapPin, Calendar, Stethoscope, Building2, UserPlus, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +30,7 @@ export default function PatientLoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   // Login state
@@ -298,13 +299,21 @@ export default function PatientLoginPage() {
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-foreground/40" />
                       <Input
                         id="password"
-                        type="password"
+                        type={showLoginPassword ? 'text' : 'password'}
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="pl-14 font-paragraph text-lg h-14 rounded-2xl border-2"
+                        className="pl-14 pr-14 font-paragraph text-lg h-14 rounded-2xl border-2"
                         required
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/60 hover:text-foreground/80 transition-colors focus:outline-none"
+                        aria-label={showLoginPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      >
+                        {showLoginPassword ? <EyeOff size={24} /> : <Eye size={24} />}
+                      </button>
                     </div>
                   </div>
 
