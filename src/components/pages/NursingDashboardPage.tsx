@@ -442,10 +442,13 @@ export default function NursingDashboardPage() {
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {[
                 { label: 'Aguardando Avaliação', value: stats.awaitingEvaluation, icon: Clock, colorKey: 'primary', filterId: 'AGUARDANDO_ENFERMAGEM' as FilterType },
+                { label: 'Prioritários', value: allPatients.filter(p => p.isPriority && p.status === 'AGUARDANDO_ENFERMAGEM').length, icon: AlertTriangle, colorKey: 'attention', filterId: 'URGENTE' as FilterType },
                 { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, colorKey: 'attention', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
+                { label: 'Avaliados pela Enfermagem', value: stats.evaluatedByNurse, icon: UserCheck, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
+                { label: 'Avaliados pelo Médico', value: stats.evaluatedByDoctor, icon: CheckCircle, colorKey: 'stable', filterId: 'AVALIADO_MEDICO_COMPLETO' as FilterType },
               ].map((stat, index) => {
                 const Icon = stat.icon;
                 const colors = colorMap[stat.colorKey as keyof typeof colorMap];
