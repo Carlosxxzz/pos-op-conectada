@@ -7,12 +7,27 @@ import { Label } from '@/components/ui/label';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes } from '@/entities';
 import { logger } from '@/lib/logger';
+import {
+  formatCPF,
+  formatSUSNumber,
+  formatPhoneNumber,
+  isValidCPF,
+  isValidSUSNumber,
+  isValidPhoneNumber,
+  getCPFErrorMessage,
+  getSUSErrorMessage,
+  getPhoneErrorMessage,
+  validateRegistrationFields,
+  hasValidationErrors,
+  type ValidationErrors,
+} from '@/lib/fieldValidation';
 
 export default function PatientLoginPage() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
@@ -64,9 +79,58 @@ export default function PatientLoginPage() {
     }
   };
 
+  const handleCPFChange = (value: string) => {
+    const formatted = formatCPF(value);
+    setFormData({ ...formData, cpf: formatted });
+    
+    // Clear error if field is being edited
+    if (validationErrors.cpf) {
+      const newErrors = { ...validationErrors };
+      delete newErrors.cpf;
+      setValidationErrors(newErrors);
+    }
+  };
+
+  const handleSUSChange = (value: string) => {
+    const formatted = formatSUSNumber(value);
+    setFormData({ ...formData, susNumber: formatted });
+    
+    // Clear error if field is being edited
+    if (validationErrors.susNumber) {
+      const newErrors = { ...validationErrors };
+      delete newErrors.susNumber;
+      setValidationErrors(newErrors);
+    }
+  };
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatPhoneNumber(value);
+    setFormData({ ...formData, phoneNumber: formatted });
+    
+    // Clear error if field is being edited
+    if (validationErrors.phoneNumber) {
+      const newErrors = { ...validationErrors };
+      delete newErrors.phoneNumber;
+      setValidationErrors(newErrors);
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate critical fields
+    const errors = validateRegistrationFields({
+      cpf: formData.cpf,
+      susNumber: formData.susNumber,
+      phoneNumber: formData.phoneNumber,
+    });
+
+    if (hasValidationErrors(errors)) {
+      setValidationErrors(errors);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -82,6 +146,7 @@ export default function PatientLoginPage() {
       logger.info('PatientLogin', 'handleRegister', 'Registration successful', { patientId: newPatient._id.substring(0, 8) });
       
       setError('');
+      setValidationErrors({});
       setIsLogin(true);
       setFormData({
         fullName: '',
@@ -99,9 +164,6 @@ export default function PatientLoginPage() {
         password: '',
         hospital: '',
       });
-      
-      // Show success message
-      setError('');
     } catch (error) {
       logger.error('PatientLogin', 'handleRegister', 'Registration error', error);
       setError('Erro ao realizar cadastro. Tente novamente.');
@@ -252,14 +314,21 @@ export default function PatientLoginPage() {
                   </div>
 
                   <div className="space-y-3">
-                    <Label className="font-paragraph text-base font-bold text-foreground">CPF</Label>
+                    <Label className={`font-paragraph text-base font-bold ${validationErrors.cpf ? 'text-destructive' : 'text-foreground'}`}>
+                      CPF
+                    </Label>
                     <Input
                       value={formData.cpf}
-                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                      onChange={(e) => handleCPFChange(e.target.value)}
                       placeholder="000.000.000-00"
-                      className="font-paragraph text-lg h-14 rounded-2xl border-2"
+                      className={`font-paragraph text-lg h-14 rounded-2xl border-2 ${
+                        validationErrors.cpf ? 'border-destructive bg-destructive/5' : ''
+                      }`}
                       required
                     />
+                    {validationErrors.cpf && (
+                      <p className="font-paragraph text-sm text-destructive font-semibold">{validationErrors.cpf}</p>
+                    )}
                   </div>
 
                   <div className="space-y-3">
@@ -277,28 +346,42 @@ export default function PatientLoginPage() {
                   </div>
 
                   <div className="space-y-3">
-                    <Label className="font-paragraph text-base font-bold text-foreground">Telefone</Label>
+                    <Label className={`font-paragraph text-base font-bold ${validationErrors.phoneNumber ? 'text-destructive' : 'text-foreground'}`}>
+                      Telefone
+                    </Label>
                     <div className="relative">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-foreground/40" />
                       <Input
                         value={formData.phoneNumber}
-                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
                         placeholder="(11) 99999-9999"
-                        className="pl-14 font-paragraph text-lg h-14 rounded-2xl border-2"
+                        className={`pl-14 font-paragraph text-lg h-14 rounded-2xl border-2 ${
+                          validationErrors.phoneNumber ? 'border-destructive bg-destructive/5' : ''
+                        }`}
                         required
                       />
                     </div>
+                    {validationErrors.phoneNumber && (
+                      <p className="font-paragraph text-sm text-destructive font-semibold">{validationErrors.phoneNumber}</p>
+                    )}
                   </div>
 
                   <div className="space-y-3">
-                    <Label className="font-paragraph text-base font-bold text-foreground">Número do SUS</Label>
+                    <Label className={`font-paragraph text-base font-bold ${validationErrors.susNumber ? 'text-destructive' : 'text-foreground'}`}>
+                      Número do SUS
+                    </Label>
                     <Input
                       value={formData.susNumber}
-                      onChange={(e) => setFormData({ ...formData, susNumber: e.target.value })}
+                      onChange={(e) => handleSUSChange(e.target.value)}
                       placeholder="000 0000 0000 0000"
-                      className="font-paragraph text-lg h-14 rounded-2xl border-2"
+                      className={`font-paragraph text-lg h-14 rounded-2xl border-2 ${
+                        validationErrors.susNumber ? 'border-destructive bg-destructive/5' : ''
+                      }`}
                       required
                     />
+                    {validationErrors.susNumber && (
+                      <p className="font-paragraph text-sm text-destructive font-semibold">{validationErrors.susNumber}</p>
+                    )}
                   </div>
 
                   <div className="space-y-3">
@@ -431,10 +514,10 @@ export default function PatientLoginPage() {
 
                   <Button
                     type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-primary text-white hover:opacity-90 font-paragraph font-bold py-4 rounded-2xl text-lg h-16 mt-8"
+                    disabled={isLoading || hasValidationErrors(validationErrors)}
+                    className="w-full bg-primary text-white hover:opacity-90 font-paragraph font-bold py-4 rounded-2xl text-lg h-16 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? 'Cadastrando...' : 'Criar Conta'}
+                    {isLoading ? 'Cadastrando...' : 'Cadastrar Paciente'}
                   </Button>
                 </form>
               )}
