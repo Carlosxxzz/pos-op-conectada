@@ -2,7 +2,7 @@
 // HPI 1.7-G
 import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, Users, Stethoscope, Shield, TrendingDown, Clock, ArrowRight, CheckCircle2, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { Activity, Users, Stethoscope, Shield, ArrowRight, CheckCircle2, AlertTriangle, ShieldAlert, CheckSquare, Eye } from 'lucide-react';
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { Image } from '@/components/ui/image';
 
@@ -222,22 +222,44 @@ function HeroSection() {
 }
 
 function StatsSection() {
-  const stats = [
-    { icon: Shield, value: "98%", label: "Taxa de Recuperação", color: "text-stable" },
-    { icon: TrendingDown, value: "45%", label: "Redução de Reinternações", color: "text-primary" },
-    { icon: Clock, value: "24/7", label: "Monitoramento Contínuo", color: "text-attention" },
-    { icon: Users, value: "1.2k+", label: "Pacientes Ativos", color: "text-foreground" }
+  const features = [
+    { 
+      icon: Shield, 
+      title: "Acompanhamento Seguro", 
+      description: "Acompanhamento remoto realizado por profissionais de saúde de forma organizada e segura.",
+      color: "text-primary" 
+    },
+    { 
+      icon: CheckSquare, 
+      title: "Checklists Inteligentes", 
+      description: "Os pacientes respondem checklists personalizados conforme o plano definido pela equipe de saúde.",
+      color: "text-stable" 
+    },
+    { 
+      icon: Users, 
+      title: "Equipe Integrada", 
+      description: "Médicos, enfermeiros e administradores trabalham de forma integrada dentro do mesmo hospital.",
+      color: "text-attention" 
+    },
+    { 
+      icon: Eye, 
+      title: "Monitoramento Contínuo", 
+      description: "A evolução do paciente pode ser acompanhada diariamente conforme necessidade clínica.",
+      color: "text-foreground" 
+    }
   ];
 
   return (
     <section className="w-full bg-white border-y border-secondary/30 relative z-20">
-      <div className="max-w-[120rem] mx-auto px-6 md:px-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-secondary/30">
-          {stats.map((stat, index) => (
-            <div key={index} className="py-12 px-6 flex flex-col items-center text-center group">
-              <stat.icon className={`w-8 h-8 mb-4 opacity-70 group-hover:opacity-100 transition-opacity ${stat.color}`} />
-              <p className="font-heading text-4xl md:text-5xl font-bold text-foreground mb-2 tracking-tight">{stat.value}</p>
-              <p className="text-sm font-semibold text-foreground/60 uppercase tracking-wider">{stat.label}</p>
+      <div className="max-w-[120rem] mx-auto px-6 md:px-12 py-16 md:py-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {features.map((feature, index) => (
+            <div key={index} className="flex flex-col items-start group">
+              <div className={`w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors ${feature.color}`}>
+                <feature.icon className="w-6 h-6" />
+              </div>
+              <h3 className="font-heading text-xl font-bold text-foreground mb-3">{feature.title}</h3>
+              <p className="text-sm text-foreground/70 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
