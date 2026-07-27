@@ -154,7 +154,7 @@ function HeroSection() {
             <span className="text-xs font-bold text-primary tracking-wider uppercase">Monitoramento Contínuo</span>
           </div>
 
-          <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-[1.1] mb-4 md:mb-6 tracking-tight break-words overflow-hidden">
+          <h1 className="font-heading text-[clamp(2rem,5vw,4.5rem)] font-bold text-foreground leading-[1.1] mb-4 md:mb-6 tracking-tight overflow-hidden" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
             Acompanhamento Clínico <br/>
             <span className="text-gradient">Remoto Inteligente.</span>
           </h1>
