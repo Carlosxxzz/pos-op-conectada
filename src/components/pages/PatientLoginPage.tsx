@@ -21,6 +21,9 @@ import {
   hasValidationErrors,
   type ValidationErrors,
 } from '@/lib/fieldValidation';
+import PasswordInput from '@/components/PasswordInput';
+import PasswordConfirmation from '@/components/PasswordConfirmation';
+import { validatePassword, validatePasswordMatch, type PasswordValidationResult } from '@/lib/passwordValidator';
 
 export default function PatientLoginPage() {
   const navigate = useNavigate();
@@ -50,6 +53,21 @@ export default function PatientLoginPage() {
     password: '',
     hospital: '',
   });
+
+  // Password validation state
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult>({
+    isValid: false,
+    requirements: {
+      minLength: false,
+      maxLength: true,
+      hasUppercase: false,
+      hasLowercase: false,
+      hasNumber: false,
+    },
+    errors: [],
+  });
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMatchError, setPasswordMatchError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,6 +149,19 @@ export default function PatientLoginPage() {
       return;
     }
 
+    // Validate password
+    if (!passwordValidation.isValid) {
+      setError('A senha não atende aos requisitos de segurança.');
+      return;
+    }
+
+    // Validate password match
+    const matchValidation = validatePasswordMatch(formData.password, confirmPassword);
+    if (!matchValidation.isMatch) {
+      setPasswordMatchError(matchValidation.error);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -164,6 +195,8 @@ export default function PatientLoginPage() {
         password: '',
         hospital: '',
       });
+      setConfirmPassword('');
+      setPasswordMatchError('');
     } catch (error) {
       logger.error('PatientLogin', 'handleRegister', 'Registration error', error);
       setError('Erro ao realizar cadastro. Tente novamente.');
@@ -499,22 +532,31 @@ export default function PatientLoginPage() {
 
                   <div className="space-y-3">
                     <Label className="font-paragraph text-base font-bold text-foreground">Senha</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-foreground/40" />
-                      <Input
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        placeholder="••••••••"
-                        className="pl-14 font-paragraph text-lg h-14 rounded-2xl border-2"
-                        required
-                      />
-                    </div>
+                    <PasswordInput
+                      label=""
+                      value={formData.password}
+                      onChange={(value) => setFormData({ ...formData, password: value })}
+                      onValidationChange={setPasswordValidation}
+                      placeholder="••••••••"
+                      showRequirements={true}
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <PasswordConfirmation
+                      password={formData.password}
+                      confirmPassword={confirmPassword}
+                      onConfirmPasswordChange={setConfirmPassword}
+                      placeholder="Confirme sua senha"
+                    />
+                    {passwordMatchError && (
+                      <p className="text-destructive text-sm">{passwordMatchError}</p>
+                    )}
                   </div>
 
                   <Button
                     type="submit"
-                    disabled={isLoading || hasValidationErrors(validationErrors)}
+                    disabled={isLoading || hasValidationErrors(validationErrors) || !passwordValidation.isValid || !validatePasswordMatch(formData.password, confirmPassword).isMatch}
                     className="w-full bg-primary text-white hover:opacity-90 font-paragraph font-bold py-4 rounded-2xl text-lg h-16 mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? 'Cadastrando...' : 'Cadastrar Paciente'}

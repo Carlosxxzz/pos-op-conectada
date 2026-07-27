@@ -9,6 +9,9 @@ import { motion } from 'framer-motion';
 import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
 import { ArrowLeft } from 'lucide-react';
 import { verifyProfessionalHospitalAccess } from '@/lib/hospitalFilter';
+import PasswordInput from '@/components/PasswordInput';
+import PasswordConfirmation from '@/components/PasswordConfirmation';
+import { validatePassword, validatePasswordMatch, type PasswordValidationResult } from '@/lib/passwordValidator';
 
 // Utility functions for formatting
 const formatCPF = (value: string) => {
@@ -94,6 +97,20 @@ export default function AdminProfessionalFormPage() {
     dataAdmissao: '',
     status: 'Ativo',
   });
+
+  // Password validation state
+  const [passwordValidation, setPasswordValidation] = useState<PasswordValidationResult>({
+    isValid: false,
+    requirements: {
+      minLength: false,
+      maxLength: true,
+      hasUppercase: false,
+      hasLowercase: false,
+      hasNumber: false,
+    },
+    errors: [],
+  });
+  const [passwordMatchError, setPasswordMatchError] = useState('');
 
   useEffect(() => {
     loadData();
@@ -193,8 +210,20 @@ export default function AdminProfessionalFormPage() {
       alert('Senha é obrigatória para novo profissional');
       return false;
     }
-    if (!id && formData.password !== formData.confirmPassword) {
-      alert('Senhas não conferem');
+    if (!id && !passwordValidation.isValid) {
+      alert('A senha não atende aos requisitos de segurança.');
+      return false;
+    }
+    if (!id && !validatePasswordMatch(formData.password, formData.confirmPassword).isMatch) {
+      alert('As senhas não coincidem');
+      return false;
+    }
+    if (id && formData.password && !passwordValidation.isValid) {
+      alert('A nova senha não atende aos requisitos de segurança.');
+      return false;
+    }
+    if (id && formData.password && !validatePasswordMatch(formData.password, formData.confirmPassword).isMatch) {
+      alert('As senhas não coincidem');
       return false;
     }
     if (formData.cpf && !validateCPF(formData.cpf)) {
@@ -650,48 +679,71 @@ export default function AdminProfessionalFormPage() {
               {!id && (
                 <>
                   <div className="md:col-span-2">
-                    <label className="block font-paragraph text-sm font-semibold text-foreground mb-3">
-                      Senha Inicial *
-                    </label>
-                    <Input
-                      type="password"
+                    <PasswordInput
+                      label="Senha Inicial *"
                       value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      onChange={(value) => setFormData({ ...formData, password: value })}
+                      onValidationChange={setPasswordValidation}
                       placeholder="••••••••"
-                      required={!id}
-                      className="w-full"
+                      showRequirements={true}
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block font-paragraph text-sm font-semibold text-foreground mb-3">
-                      Confirmar Senha *
-                    </label>
-                    <Input
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    <PasswordConfirmation
+                      password={formData.password}
+                      confirmPassword={formData.confirmPassword}
+                      onConfirmPasswordChange={(value) => setFormData({ ...formData, confirmPassword: value })}
                       placeholder="••••••••"
-                      required={!id}
-                      className="w-full"
                     />
+                    {passwordMatchError && (
+                      <p className="text-destructive text-sm mt-2">{passwordMatchError}</p>
+                    )}
                   </div>
                 </>
               )}
 
               {id && (
-                <div className="md:col-span-2">
-                  <label className="block font-paragraph text-sm font-semibold text-foreground mb-3">
-                    Nova Senha (deixe em branco para manter)
-                  </label>
-                  <Input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="••••••••"
-                    className="w-full"
-                  />
-                </div>
+                <>
+                  <div className="md:col-span-2">
+                    <label className="block font-paragraph text-sm font-semibold text-foreground mb-3">
+                      Nova Senha (deixe em branco para manter)
+                    </label>
+                    {formData.password && (
+                      <PasswordInput
+                        label=""
+                        value={formData.password}
+                        onChange={(value) => setFormData({ ...formData, password: value })}
+                        onValidationChange={setPasswordValidation}
+                        placeholder="••••••••"
+                        showRequirements={true}
+                      />
+                    )}
+                    {!formData.password && (
+                      <Input
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        placeholder="••••••••"
+                        className="w-full"
+                      />
+                    )}
+                  </div>
+
+                  {formData.password && (
+                    <div className="md:col-span-2">
+                      <PasswordConfirmation
+                        password={formData.password}
+                        confirmPassword={formData.confirmPassword}
+                        onConfirmPasswordChange={(value) => setFormData({ ...formData, confirmPassword: value })}
+                        placeholder="••••••••"
+                      />
+                      {passwordMatchError && (
+                        <p className="text-destructive text-sm mt-2">{passwordMatchError}</p>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

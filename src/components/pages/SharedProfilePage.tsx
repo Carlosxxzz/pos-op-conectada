@@ -29,6 +29,9 @@ import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import PasswordInput from '@/components/PasswordInput';
+import PasswordConfirmation from '@/components/PasswordConfirmation';
+import { validatePassword, validatePasswordMatch, type PasswordValidationResult } from '@/lib/passwordValidator';
 
 interface SharedProfilePageProps {
   dashboardLink: string;
@@ -62,6 +65,20 @@ export default function SharedProfilePage({
   const [editValues, setEditValues] = useState({
     email: '',
   });
+
+  // Password validation state
+  const [newPasswordValidation, setNewPasswordValidation] = useState<PasswordValidationResult>({
+    isValid: false,
+    requirements: {
+      minLength: false,
+      maxLength: true,
+      hasUppercase: false,
+      hasLowercase: false,
+      hasNumber: false,
+    },
+    errors: [],
+  });
+  const [passwordMatchError, setPasswordMatchError] = useState('');
 
   useEffect(() => {
     loadData();
@@ -193,13 +210,16 @@ export default function SharedProfilePage({
       return;
     }
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordError('As senhas não coincidem');
+    // Validate new password meets security requirements
+    if (!newPasswordValidation.isValid) {
+      setPasswordError('A nova senha não atende aos requisitos de segurança.');
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      setPasswordError('A nova senha deve ter pelo menos 6 caracteres');
+    // Validate password match
+    const matchValidation = validatePasswordMatch(passwordData.newPassword, passwordData.confirmPassword);
+    if (!matchValidation.isMatch) {
+      setPasswordMatchError(matchValidation.error);
       return;
     }
 
@@ -244,6 +264,7 @@ export default function SharedProfilePage({
         newPassword: '',
         confirmPassword: '',
       });
+      setPasswordMatchError('');
       setTimeout(() => setShowPasswordForm(false), 2000);
     } catch (error) {
       console.error('Error changing password:', error);
@@ -853,71 +874,50 @@ export default function SharedProfilePage({
 
                       <div>
                         <Label className="font-paragraph text-sm mb-2">Nova Senha</Label>
-                        <div className="relative">
-                          <Input
-                            type={showNewPassword ? 'text' : 'password'}
-                            value={passwordData.newPassword}
-                            onChange={(e) =>
-                              setPasswordData({
-                                ...passwordData,
-                                newPassword: e.target.value,
-                              })
-                            }
-                            className="font-paragraph pr-10"
-                            placeholder="Digite sua nova senha"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowNewPassword(!showNewPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2"
-                          >
-                            {showNewPassword ? (
-                              <EyeOff className="w-4 h-4 text-foreground/60" />
-                            ) : (
-                              <Eye className="w-4 h-4 text-foreground/60" />
-                            )}
-                          </button>
-                        </div>
+                        <PasswordInput
+                          label=""
+                          value={passwordData.newPassword}
+                          onChange={(value) => setPasswordData({ ...passwordData, newPassword: value })}
+                          onValidationChange={setNewPasswordValidation}
+                          placeholder="Digite sua nova senha"
+                          showRequirements={true}
+                        />
                       </div>
 
                       <div>
                         <Label className="font-paragraph text-sm mb-2">Confirmar Nova Senha</Label>
-                        <div className="relative">
-                          <Input
-                            type={showConfirmPassword ? 'text' : 'password'}
-                            value={passwordData.confirmPassword}
-                            onChange={(e) =>
-                              setPasswordData({
-                                ...passwordData,
-                                confirmPassword: e.target.value,
-                              })
-                            }
-                            className="font-paragraph pr-10"
-                            placeholder="Confirme sua nova senha"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2"
-                          >
-                            {showConfirmPassword ? (
-                              <EyeOff className="w-4 h-4 text-foreground/60" />
-                            ) : (
-                              <Eye className="w-4 h-4 text-foreground/60" />
-                            )}
-                          </button>
-                        </div>
+                        <PasswordConfirmation
+                          password={passwordData.newPassword}
+                          confirmPassword={passwordData.confirmPassword}
+                          onConfirmPasswordChange={(value) =>
+                            setPasswordData({ ...passwordData, confirmPassword: value })
+                          }
+                          placeholder="Confirme sua nova senha"
+                        />
+                        {passwordMatchError && (
+                          <p className="text-destructive text-sm mt-2">{passwordMatchError}</p>
+                        )}
                       </div>
 
                       <div className="flex gap-4">
                         <Button
                           onClick={handlePasswordChange}
-                          className="flex-1 bg-primary text-primary-foreground font-paragraph font-semibold"
+                          disabled={!newPasswordValidation.isValid || !validatePasswordMatch(passwordData.newPassword, passwordData.confirmPassword).isMatch}
+                          className="flex-1 bg-primary text-primary-foreground font-paragraph font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Salvar Alterações
                         </Button>
                         <Button
-                          onClick={() => setShowPasswordForm(false)}
+                          onClick={() => {
+                            setShowPasswordForm(false);
+                            setPasswordData({
+                              currentPassword: '',
+                              newPassword: '',
+                              confirmPassword: '',
+                            });
+                            setPasswordError('');
+                            setPasswordMatchError('');
+                          }}
                           variant="outline"
                           className="flex-1 font-paragraph"
                         >
