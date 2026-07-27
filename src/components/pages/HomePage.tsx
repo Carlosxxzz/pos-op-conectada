@@ -92,8 +92,8 @@ function Header({ scrollYProgress }: { scrollYProgress: any }) {
             <Activity className="w-6 h-6 text-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <span className="font-heading text-xl font-bold text-foreground leading-tight tracking-tight">Pós-Op Conectado</span>
-            <span className="text-xs text-foreground/60 font-medium tracking-wider uppercase">Healthtech System</span>
+            <span className="font-heading text-xl font-bold text-foreground leading-tight tracking-tight">AcompanhaMed</span>
+            <span className="text-xs text-foreground/60 font-medium tracking-wider uppercase">Tecknomed</span>
           </div>
         </Link>
 
@@ -155,12 +155,12 @@ function HeroSection() {
           </div>
 
           <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-[1.1] mb-4 md:mb-6 tracking-tight">
-            Precisão no <br/>
-            <span className="text-gradient">Pós-Operatório.</span>
+            Acompanhamento Clínico <br/>
+            <span className="text-gradient">Remoto Inteligente.</span>
           </h1>
 
           <p className="text-base md:text-lg lg:text-xl text-foreground/70 mb-8 md:mb-10 max-w-2xl leading-relaxed">
-            Plataforma digital para hospitais públicos. Reduzimos complicações após a alta hospitalar através de monitoramento remoto, triagem inteligente e conexão direta entre pacientes e equipes médicas.
+            O AcompanhaMed conecta pacientes e profissionais de saúde para garantir um acompanhamento contínuo, seguro e eficiente após a alta hospitalar, promovendo um cuidado humanizado e reduzindo riscos durante a recuperação.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 pb-4">
@@ -187,7 +187,7 @@ function HeroSection() {
           <motion.div style={{ y: yImage }} className="absolute inset-[-10%] w-[120%] h-[120%]">
             <Image
               src={PLACEHOLDER_IMG}
-              alt="Interface do sistema Pós-Op Conectado"
+              alt="Interface do AcompanhaMed"
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-dark-background/40 to-transparent mix-blend-multiply" />
@@ -258,8 +258,8 @@ function SystemArchitectureSection() {
       id: "patient",
       title: "Área do Paciente",
       icon: Users,
-      description: "Interface simplificada para o paciente reportar seu estado diário, garantindo adesão ao tratamento.",
-      features: ["Checklist diário de sintomas", "Upload de fotos da cicatriz", "Histórico de recuperação", "Orientações personalizadas"],
+      description: "Interface simplificada para o paciente reportar seu estado diário, garantindo adesão ao acompanhamento.",
+      features: ["Checklist diário de acompanhamento", "Upload de fotos da área avaliada", "Histórico de evolução", "Orientações personalizadas"],
       link: "/patient-login",
       linkText: "Acessar Portal do Paciente"
     },
@@ -403,7 +403,7 @@ function VisualBreather() {
           <span className="text-primary">Ela o amplifica.</span>
         </h2>
         <p className="text-xl text-white/70 font-light">
-          Conectando pacientes e profissionais para recuperações mais seguras.
+          Conectando pacientes e profissionais para um cuidado contínuo.
         </p>
       </div>
     </section>
@@ -442,11 +442,11 @@ function TriageSection() {
               <CheckCircle2 className="w-7 h-7 text-stable" />
             </div>
             <h3 className="font-heading text-2xl font-bold text-white mb-2">Verde - Estável</h3>
-            <p className="text-white/60 text-sm mb-6">Recuperação progredindo dentro do esperado. Sem sinais de alerta.</p>
+            <p className="text-white/60 text-sm mb-6">Acompanhamento progredindo dentro do esperado. Sem sinais de alerta.</p>
             <ul className="space-y-2">
               <li className="text-xs text-white/40 flex items-center gap-2"><span className="w-1 h-1 bg-stable rounded-full"/> Dor controlada (0-3)</li>
               <li className="text-xs text-white/40 flex items-center gap-2"><span className="w-1 h-1 bg-stable rounded-full"/> Sem febre</li>
-              <li className="text-xs text-white/40 flex items-center gap-2"><span className="w-1 h-1 bg-stable rounded-full"/> Cicatriz limpa</li>
+              <li className="text-xs text-white/40 flex items-center gap-2"><span className="w-1 h-1 bg-stable rounded-full"/> Área limpa</li>
             </ul>
           </div>
 
@@ -497,10 +497,10 @@ function Footer() {
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
                 <Activity className="w-5 h-5 text-primary-foreground" />
               </div>
-              <h4 className="font-heading text-xl font-bold text-foreground">Pós-Op Conectado</h4>
+              <h4 className="font-heading text-xl font-bold text-foreground">AcompanhaMed</h4>
             </div>
             <p className="text-sm text-foreground/60 leading-relaxed max-w-sm">
-              Plataforma digital de monitoramento pós-operatório para hospitais públicos. Elevando o padrão de cuidado após a alta.
+              Plataforma inteligente de acompanhamento clínico remoto para hospitais. Elevando o padrão de cuidado após a alta hospitalar.
             </p>
           </div>
 
@@ -517,7 +517,7 @@ function Footer() {
             <ul className="space-y-4">
               <li className="text-sm text-foreground/60">Central de Ajuda</li>
               <li className="text-sm text-foreground/60">0800 123 4567</li>
-              <li className="text-sm text-foreground/60">suporte@posopconectado.gov.br</li>
+              <li className="text-sm text-foreground/60">suporte@acompanhamed.gov.br</li>
             </ul>
           </div>
 
@@ -534,7 +534,7 @@ function Footer() {
 
         <div className="border-t border-secondary/30 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-foreground/50 font-semibold tracking-wide">
-            © {new Date().getFullYear()} Pós-Op Conectado. Sistema de Monitoramento Pós-Operatório Digital.
+            © {new Date().getFullYear()} AcompanhaMed. Plataforma de Acompanhamento Clínico Remoto.
           </p>
           <div className="flex items-center gap-2 text-xs text-foreground/50">
             <span>Desenvolvido para a Saúde Pública</span>

@@ -120,7 +120,7 @@ export default function PatientLoginPage() {
               <Activity className="w-7 h-7 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-heading text-xl font-bold text-foreground leading-tight">Pós-Op Conectado</h1>
+              <h1 className="font-heading text-xl font-bold text-foreground leading-tight">AcompanhaMed</h1>
               <p className="font-paragraph text-xs text-foreground/60">Área do Paciente</p>
             </div>
           </Link>

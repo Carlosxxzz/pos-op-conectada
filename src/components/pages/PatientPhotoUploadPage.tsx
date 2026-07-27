@@ -219,7 +219,7 @@ export default function PatientPhotoUploadPage() {
                 <Activity className="w-5 h-5 sm:w-7 sm:h-7 text-primary-foreground" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="font-heading text-lg sm:text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
+                <h1 className="font-heading text-lg sm:text-2xl font-bold text-foreground">AcompanhaMed</h1>
                 <p className="font-paragraph text-xs sm:text-sm text-foreground/60">Envio de Foto</p>
               </div>
             </Link>

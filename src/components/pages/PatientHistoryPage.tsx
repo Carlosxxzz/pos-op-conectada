@@ -105,8 +105,8 @@ export default function PatientHistoryPage() {
                 <Activity className="w-7 h-7 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
-                <p className="font-paragraph text-sm text-foreground/60">Histórico de Recuperação</p>
+                <h1 className="font-heading text-2xl font-bold text-foreground">AcompanhaMed</h1>
+                <p className="font-paragraph text-sm text-foreground/60">Histórico de Acompanhamento</p>
               </div>
             </Link>
             <Link to="/patient-dashboard">
@@ -123,7 +123,7 @@ export default function PatientHistoryPage() {
       <div className="max-w-[120rem] mx-auto px-8 py-12">
         <div className="mb-8">
           <h2 className="font-heading text-4xl font-bold text-foreground mb-2">
-            Histórico de Recuperação
+            Histórico de Acompanhamento
           </h2>
           <p className="font-paragraph text-lg text-foreground/70">
             Acompanhe sua evolução ao longo do tempo

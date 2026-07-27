@@ -163,8 +163,8 @@ export default function PatientPhotosPage() {
                 <Activity className="w-7 h-7 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
-                <p className="font-paragraph text-sm text-foreground/60">Fotos da Cicatriz</p>
+                <h1 className="font-heading text-2xl font-bold text-foreground">AcompanhaMed</h1>
+                <p className="font-paragraph text-sm text-foreground/60">Fotos da Área Avaliada</p>
               </div>
             </Link>
             <Link to="/patient-dashboard">
@@ -182,10 +182,10 @@ export default function PatientPhotosPage() {
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h2 className="font-heading text-4xl font-bold text-foreground mb-2">
-              Enviar Foto da Cicatriz
+              Enviar Foto da Área Avaliada
             </h2>
             <p className="font-paragraph text-lg text-foreground/70">
-              Envie fotos regularmente para acompanhamento visual da sua recuperação
+              Envie fotos regularmente para acompanhamento visual da sua evolução
             </p>
           </div>
 
