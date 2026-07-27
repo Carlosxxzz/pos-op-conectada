@@ -274,11 +274,15 @@ export default function NursingDashboardPage() {
   }, [allPatients, filterType, searchQuery]);
 
   const priorityPatients = useMemo(() => {
-    return allPatients.filter(item => item.isPriority).sort((a, b) => {
-      const aPriority = a.latestChecklist?.riskLevel === 'critical' ? 0 : 1;
-      const bPriority = b.latestChecklist?.riskLevel === 'critical' ? 0 : 1;
-      return aPriority - bPriority;
-    });
+    // CRITICAL FIX: Only show patients AWAITING NURSING EVALUATION with priority indicators
+    // Once evaluated or referred, they should NOT appear in the priority list
+    return allPatients
+      .filter(item => item.status === 'AGUARDANDO_ENFERMAGEM' && item.isPriority)
+      .sort((a, b) => {
+        const aPriority = a.latestChecklist?.riskLevel === 'critical' ? 0 : 1;
+        const bPriority = b.latestChecklist?.riskLevel === 'critical' ? 0 : 1;
+        return aPriority - bPriority;
+      });
   }, [allPatients]);
 
   const colorMap = {
