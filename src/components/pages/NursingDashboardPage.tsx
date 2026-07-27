@@ -59,7 +59,7 @@ export default function NursingDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'encaminhados' | 'avaliados-medico' | 'historico'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'aguardando' | 'encaminhados' | 'avaliados-enfermagem' | 'avaliados-medico' | 'historico'>('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     awaitingEvaluation: 0,
     referredToDoctor: 0,
@@ -285,6 +285,14 @@ export default function NursingDashboardPage() {
       });
   }, [allPatients]);
 
+  const awaitingPatients = useMemo(() => {
+    return allPatients.filter(item => item.status === 'AGUARDANDO_ENFERMAGEM');
+  }, [allPatients]);
+
+  const evaluatedByNursePatients = useMemo(() => {
+    return allPatients.filter(item => item.status === 'AVALIADO_ENFERMAGEM');
+  }, [allPatients]);
+
   const colorMap = {
     primary: { bg: 'bg-primary/10', text: 'text-primary', icon: 'text-primary', bgIcon: 'bg-primary' },
     attention: { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-attention-foreground', bgIcon: 'bg-attention' },
@@ -402,7 +410,9 @@ export default function NursingDashboardPage() {
               {[
                 { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
                 { id: 'prioritarios', label: 'Prioritários', icon: AlertCircle },
+                { id: 'aguardando', label: 'Aguardando Avaliação', icon: Clock },
                 { id: 'encaminhados', label: 'Encaminhados ao Médico', icon: Stethoscope },
+                { id: 'avaliados-enfermagem', label: 'Avaliados pela Enfermagem', icon: UserCheck },
                 { id: 'avaliados-medico', label: 'Avaliados pelo Médico', icon: CheckCircle },
                 { id: 'historico', label: 'Histórico', icon: FileText },
               ].map(tab => {
@@ -632,6 +642,61 @@ export default function NursingDashboardPage() {
           </div>
         )}
 
+        {/* Aguardando Avaliação Tab */}
+        {activeTab === 'aguardando' && (
+          <div>
+            <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Aguardando Avaliação</h2>
+            {awaitingPatients.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
+                <CheckCircle className="w-16 h-16 text-stable mx-auto mb-4" />
+                <h3 className="font-heading text-2xl font-bold text-foreground mb-2">Nenhum paciente aguardando</h3>
+                <p className="font-paragraph text-lg text-foreground/70">Todos os pacientes foram avaliados</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-secondary/20 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-background">
+                      <tr>
+                        <th className="px-6 py-4 text-left font-paragraph text-sm font-semibold text-foreground">Paciente</th>
+                        <th className="px-6 py-4 text-left font-paragraph text-sm font-semibold text-foreground">CPF / SUS</th>
+                        <th className="px-6 py-4 text-left font-paragraph text-sm font-semibold text-foreground">Cirurgia</th>
+                        <th className="px-6 py-4 text-left font-paragraph text-sm font-semibold text-foreground">Dor / Temp</th>
+                        <th className="px-6 py-4 text-left font-paragraph text-sm font-semibold text-foreground">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {awaitingPatients.map((item) => (
+                        <tr key={`${item.patient._id}-awaiting`} className="border-t border-secondary/20 hover:bg-background/50 transition-colors">
+                          <td className="px-6 py-4 font-paragraph text-sm font-semibold text-foreground">
+                            {item.isPriority && <span className="text-critical mr-2">⚠️</span>}
+                            {item.patient.fullName}
+                          </td>
+                          <td className="px-6 py-4 font-paragraph text-sm text-foreground/70">
+                            {item.patient.cpf || item.patient.susNumber || '-'}
+                          </td>
+                          <td className="px-6 py-4 font-paragraph text-sm text-foreground">{item.patient.surgeryType}</td>
+                          <td className="px-6 py-4 font-paragraph text-sm text-foreground">
+                            {item.latestChecklist?.painLevel}/10 | {item.latestChecklist?.bodyTemperature}°C
+                          </td>
+                          <td className="px-6 py-4">
+                            <Link
+                              to={`/nursing-evaluation/${item.patient._id}`}
+                              className="text-primary font-paragraph text-sm font-semibold hover:underline"
+                            >
+                              Avaliar →
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Encaminhados Tab */}
         {activeTab === 'encaminhados' && (() => {
           const hospitalReferrals = allPatients
@@ -706,7 +771,54 @@ export default function NursingDashboardPage() {
           );
         })()}
 
-        {/* Avaliados Médico Tab */}
+        {/* Avaliados pela Enfermagem Tab */}
+        {activeTab === 'avaliados-enfermagem' && (
+          <div>
+            <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Avaliados pela Enfermagem</h2>
+            {evaluatedByNursePatients.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
+                <CheckCircle className="w-16 h-16 text-stable mx-auto mb-4" />
+                <h3 className="font-heading text-2xl font-bold text-foreground mb-2">Nenhum paciente avaliado</h3>
+                <p className="font-paragraph text-lg text-foreground/70">Nenhum paciente foi avaliado pela enfermagem ainda</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {evaluatedByNursePatients.map((item, index) => (
+                  <motion.div
+                    key={`${item.patient._id}-nurse-eval`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white rounded-2xl p-6 border border-secondary/20 hover:shadow-lg transition-all"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
+                      <div>
+                        <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">Paciente</p>
+                        <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient.fullName}</p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">CPF / SUS</p>
+                        <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient.cpf || item.patient.susNumber || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">Enfermeiro</p>
+                        <p className="font-paragraph text-sm font-semibold text-foreground">{item.nurseName || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">Status</p>
+                        <span className="bg-stable/10 text-stable text-xs font-semibold px-3 py-1 rounded-full inline-block">
+                          ✓ Avaliado
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Avaliados pelo Médico Tab */}
         {activeTab === 'avaliados-medico' && (() => {
           const evaluatedByDoctor = allPatients.filter(p => p.status === 'AVALIADO_MEDICO');
 
