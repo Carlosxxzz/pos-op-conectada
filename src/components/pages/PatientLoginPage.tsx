@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Activity, Mail, Lock, User, Phone, MapPin, Calendar, Stethoscope, Building2, UserPlus, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BaseCrudService } from '@/integrations';
-import type { Pacientes } from '@/entities';
+import type { Pacientes, Hospitais } from '@/entities';
 import { logger } from '@/lib/logger';
 import {
   formatCPF,
@@ -32,6 +32,8 @@ export default function PatientLoginPage() {
   const [error, setError] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [hospitals, setHospitals] = useState<Hospitais[]>([]);
+  const [hospitalsLoading, setHospitalsLoading] = useState(false);
 
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
@@ -69,6 +71,24 @@ export default function PatientLoginPage() {
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordMatchError, setPasswordMatchError] = useState('');
+
+  // Load hospitals on component mount
+  useEffect(() => {
+    const loadHospitals = async () => {
+      try {
+        setHospitalsLoading(true);
+        const { items } = await BaseCrudService.getAll<Hospitais>('hospitais');
+        setHospitals(items);
+      } catch (error) {
+        logger.error('PatientLogin', 'loadHospitals', 'Error loading hospitals', error);
+        setHospitals([]);
+      } finally {
+        setHospitalsLoading(false);
+      }
+    };
+
+    loadHospitals();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,6 +157,12 @@ export default function PatientLoginPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate hospital selection
+    if (!formData.hospital) {
+      setError('Por favor, selecione um hospital.');
+      return;
+    }
 
     // Validate critical fields
     const errors = validateRegistrationFields({
@@ -499,14 +525,29 @@ export default function PatientLoginPage() {
                   <div className="space-y-3">
                     <Label className="font-paragraph text-base font-bold text-foreground">Hospital</Label>
                     <div className="relative">
-                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-foreground/40" />
-                      <Input
-                        value={formData.hospital}
-                        onChange={(e) => setFormData({ ...formData, hospital: e.target.value })}
-                        placeholder="Nome do hospital"
-                        className="pl-14 font-paragraph text-lg h-14 rounded-2xl border-2"
-                        required
-                      />
+                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-foreground/40 pointer-events-none z-10" />
+                      {hospitals.length === 0 && !hospitalsLoading ? (
+                        <div className="pl-14 font-paragraph text-lg h-14 rounded-2xl border-2 border-destructive/30 bg-destructive/5 flex items-center text-destructive">
+                          Nenhum hospital disponível no momento.
+                        </div>
+                      ) : (
+                        <select
+                          value={formData.hospital}
+                          onChange={(e) => setFormData({ ...formData, hospital: e.target.value })}
+                          className="pl-14 font-paragraph text-lg h-14 rounded-2xl border-2 w-full appearance-none bg-white cursor-pointer"
+                          required
+                          disabled={hospitalsLoading}
+                        >
+                          <option value="">
+                            {hospitalsLoading ? 'Carregando hospitais...' : 'Selecione um hospital'}
+                          </option>
+                          {hospitals.map(hospital => (
+                            <option key={hospital._id} value={hospital.name || ''}>
+                              {hospital.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   </div>
 
