@@ -18,7 +18,6 @@ import {
   User,
   Stethoscope,
   Heart,
-  Bell,
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,8 +29,6 @@ import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import SettingsTab from '@/components/SettingsTab';
 
 interface SharedProfilePageProps {
   dashboardLink: string;
@@ -59,19 +56,10 @@ export default function SharedProfilePage({
   });
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: true,
-    medicationReminders: true,
-    checklistReminders: true,
-    appointmentReminders: true,
-  });
   const [editableFields, setEditableFields] = useState({
-    phone: false,
     email: false,
   });
   const [editValues, setEditValues] = useState({
-    phone: '',
     email: '',
   });
 
@@ -94,7 +82,6 @@ export default function SharedProfilePage({
         );
         setPatient(patientData);
         setEditValues({
-          phone: patientData?.phoneNumber || '',
           email: patientData?.email || '',
         });
       } else {
@@ -110,7 +97,6 @@ export default function SharedProfilePage({
         );
         setProfessional(professionalData);
         setEditValues({
-          phone: '',
           email: professionalData?.email || '',
         });
       }
@@ -287,23 +273,21 @@ export default function SharedProfilePage({
     return age.toString();
   };
 
-  const handleEditField = (field: 'phone' | 'email') => {
+  const handleEditField = (field: 'email') => {
     setEditableFields({
       ...editableFields,
       [field]: !editableFields[field],
     });
   };
 
-  const handleSaveField = async (field: 'phone' | 'email') => {
+  const handleSaveField = async (field: 'email') => {
     try {
       if (userType === 'patient') {
         const patientId = localStorage.getItem('patientId');
         if (!patientId) return;
 
         const updateData: any = { _id: patientId };
-        if (field === 'phone') {
-          updateData.phoneNumber = editValues.phone;
-        } else if (field === 'email') {
+        if (field === 'email') {
           updateData.email = editValues.email;
         }
 
@@ -311,7 +295,7 @@ export default function SharedProfilePage({
 
         setPatient({
           ...patient!,
-          [field === 'phone' ? 'phoneNumber' : 'email']: editValues[field],
+          [field]: editValues[field],
         });
       } else {
         const professionalId = localStorage.getItem('professionalId');
@@ -474,15 +458,12 @@ export default function SharedProfilePage({
           {/* Profile Details with Tabs */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="info" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-8 bg-white border border-secondary/20 rounded-2xl p-1">
+              <TabsList className="grid w-full grid-cols-2 mb-8 bg-white border border-secondary/20 rounded-2xl p-1">
                 <TabsTrigger value="info" className="font-paragraph">
-                  Informações
+                  Meu Perfil
                 </TabsTrigger>
                 <TabsTrigger value="security" className="font-paragraph">
                   Segurança
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="font-paragraph">
-                  Configurações
                 </TabsTrigger>
               </TabsList>
 
@@ -545,41 +526,9 @@ export default function SharedProfilePage({
                           <Phone className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                           <div className="flex-1">
                             <p className="font-paragraph text-sm text-foreground/60 mb-1">Telefone</p>
-                            {editableFields.phone ? (
-                              <div className="flex gap-2">
-                                <Input
-                                  value={editValues.phone}
-                                  onChange={(e) => setEditValues({ ...editValues, phone: e.target.value })}
-                                  className="font-paragraph flex-1"
-                                />
-                                <Button
-                                  onClick={() => handleSaveField('phone')}
-                                  className="bg-primary text-primary-foreground font-paragraph"
-                                >
-                                  Salvar
-                                </Button>
-                                <Button
-                                  onClick={() => handleEditField('phone')}
-                                  variant="outline"
-                                  className="font-paragraph"
-                                >
-                                  Cancelar
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-between">
-                                <p className="font-paragraph text-base font-semibold text-foreground">
-                                  {patient?.phoneNumber || '-'}
-                                </p>
-                                <Button
-                                  onClick={() => handleEditField('phone')}
-                                  variant="outline"
-                                  className="font-paragraph text-xs"
-                                >
-                                  Editar
-                                </Button>
-                              </div>
-                            )}
+                            <p className="font-paragraph text-base font-semibold text-foreground">
+                              {patient?.phoneNumber || '-'}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-start gap-4">
@@ -731,11 +680,43 @@ export default function SharedProfilePage({
                       <div className="space-y-4">
                         <div className="flex items-start gap-4">
                           <Mail className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
-                          <div>
+                          <div className="flex-1">
                             <p className="font-paragraph text-sm text-foreground/60 mb-1">E-mail</p>
-                            <p className="font-paragraph text-base font-semibold text-foreground">
-                              {professional?.email}
-                            </p>
+                            {editableFields.email ? (
+                              <div className="flex gap-2">
+                                <Input
+                                  value={editValues.email}
+                                  onChange={(e) => setEditValues({ ...editValues, email: e.target.value })}
+                                  className="font-paragraph flex-1"
+                                />
+                                <Button
+                                  onClick={() => handleSaveField('email')}
+                                  className="bg-primary text-primary-foreground font-paragraph"
+                                >
+                                  Salvar
+                                </Button>
+                                <Button
+                                  onClick={() => handleEditField('email')}
+                                  variant="outline"
+                                  className="font-paragraph"
+                                >
+                                  Cancelar
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between">
+                                <p className="font-paragraph text-base font-semibold text-foreground">
+                                  {professional?.email}
+                                </p>
+                                <Button
+                                  onClick={() => handleEditField('email')}
+                                  variant="outline"
+                                  className="font-paragraph text-xs"
+                                >
+                                  Editar
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -946,14 +927,6 @@ export default function SharedProfilePage({
                     </div>
                   )}
                 </motion.div>
-              </TabsContent>
-
-              {/* Settings Tab - All Users */}
-              <TabsContent value="settings" className="space-y-8">
-                <SettingsTab
-                  userType={userType}
-                  userId={userType === 'patient' ? localStorage.getItem('patientId') || '' : localStorage.getItem('professionalId') || ''}
-                />
               </TabsContent>
             </Tabs>
           </div>
