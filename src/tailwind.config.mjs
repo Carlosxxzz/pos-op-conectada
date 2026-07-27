@@ -19,8 +19,8 @@ export default {
                 '9xl': ['8rem', { lineHeight: '1.05', letterSpacing: '0.005em', fontWeight: '900' }],
             },
             fontFamily: {
-                heading: "syne",
-                paragraph: "nunito sans"
+                heading: "'Syne'",
+                paragraph: "'Nunito Sans'"
             },
             colors: {
                 destructive: '#FF4136',
