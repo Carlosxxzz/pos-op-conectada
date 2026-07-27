@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, LogOut, Calendar, History, AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
+import { Activity, LogOut, Calendar, History, AlertCircle, CheckCircle, Clock, Loader, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios } from '@/entities';
@@ -8,6 +8,8 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { logger } from '@/lib/logger';
 import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 import PatientProfileHeader from '@/components/PatientProfileHeader';
+import { hasChecklistToday, isFollowUpEnded } from '@/lib/checklistValidator';
+import { useDailyChecklistNotification } from '@/hooks/useDailyChecklistNotification';
 
 export default function PatientDashboardPage() {
   const navigate = useNavigate();
@@ -16,9 +18,15 @@ export default function PatientDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [awaitingMedicalEvaluation, setAwaitingMedicalEvaluation] = useState(false);
+  const [checklistSubmittedToday, setChecklistSubmittedToday] = useState(false);
+  const [followUpEnded, setFollowUpEnded] = useState(false);
   
   // Maintain session persistence
   useSessionPersistence();
+
+  // Set up daily checklist notification at 05:00 AM
+  const patientId = localStorage.getItem('patientId');
+  useDailyChecklistNotification(patientId);
 
   useEffect(() => {
     loadData();
@@ -49,6 +57,16 @@ export default function PatientDashboardPage() {
       const { items } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
       setChecklists(items);
       logger.info('PatientDashboard', 'loadData', 'Checklists loaded', { count: items.length });
+
+      // Check if checklist was submitted today
+      const hasToday = await hasChecklistToday(patientId);
+      setChecklistSubmittedToday(hasToday);
+      logger.info('PatientDashboard', 'loadData', 'Checklist today status', { hasToday });
+
+      // Check if follow-up has ended
+      const followUpFinished = await isFollowUpEnded(patientId);
+      setFollowUpEnded(followUpFinished);
+      logger.info('PatientDashboard', 'loadData', 'Follow-up status', { followUpFinished });
 
       // Check referral status to determine if awaiting medical evaluation
       const { items: referrals } = await BaseCrudService.getAll<any>('encaminhamentosmedicos');
@@ -139,24 +157,62 @@ export default function PatientDashboardPage() {
 
         {/* Quick Actions - Large Buttons */}
         <div className="space-y-4 mb-8">
-          <Link
-            to="/patient-checklist"
-            className="block bg-primary rounded-3xl p-6 hover:opacity-90 transition-opacity border-2 border-primary"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-                <Calendar className="w-8 h-8 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-heading text-2xl font-bold text-white mb-1">
-                  Checklist Diário
-                </h3>
-                <p className="font-paragraph text-base text-white/80">
-                  Responda ao questionário enviado pela equipe de saúde
-                </p>
+          {/* Checklist Button - Show different states based on submission status */}
+          {followUpEnded ? (
+            // Follow-up ended state
+            <div className="block bg-foreground/10 rounded-3xl p-6 border-2 border-foreground/20 opacity-60">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-foreground/10 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Lock className="w-8 h-8 text-foreground/40" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-heading text-2xl font-bold text-foreground/60 mb-1">
+                    Acompanhamento Finalizado
+                  </h3>
+                  <p className="font-paragraph text-base text-foreground/50">
+                    Seu acompanhamento foi concluído
+                  </p>
+                </div>
               </div>
             </div>
-          </Link>
+          ) : checklistSubmittedToday ? (
+            // Checklist already submitted today
+            <div className="block bg-stable/10 rounded-3xl p-6 border-2 border-stable/30">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-stable/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-8 h-8 text-stable" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-heading text-2xl font-bold text-foreground mb-1">
+                    Checklist Enviado Hoje
+                  </h3>
+                  <p className="font-paragraph text-base text-foreground/70">
+                    Novo checklist disponível amanhã às 05:00
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            // Checklist available
+            <Link
+              to="/patient-checklist"
+              className="block bg-primary rounded-3xl p-6 hover:opacity-90 transition-opacity border-2 border-primary"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-8 h-8 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-heading text-2xl font-bold text-white mb-1">
+                    Checklist Diário
+                  </h3>
+                  <p className="font-paragraph text-base text-white/80">
+                    Responda ao questionário enviado pela equipe de saúde
+                  </p>
+                </div>
+              </div>
+            </Link>
+          )}
 
           <Link
             to="/patient-evaluations"

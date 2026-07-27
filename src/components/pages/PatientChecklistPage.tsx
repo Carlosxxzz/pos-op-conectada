@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, Save, Smile, Meh, Frown, ArrowRight, AlertCircle } from 'lucide-react';
+import { Activity, ArrowLeft, Save, Smile, Meh, Frown, ArrowRight, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import { logger } from '@/lib/logger';
 import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 import MedicationSection from '@/components/MedicationSection';
 import TemperatureInput from '@/components/TemperatureInput';
+import { validateChecklistSubmission, getTimeUntilNextRelease } from '@/lib/checklistValidator';
 
 interface MedicationEntry {
   id: string;
@@ -30,6 +31,8 @@ export default function PatientChecklistPage() {
   const [checklistId, setChecklistId] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
   const [isTemperatureValid, setIsTemperatureValid] = useState(false);
+  const [checklistBlocked, setChecklistBlocked] = useState(false);
+  const [blockReason, setBlockReason] = useState<string>('');
   
   // Maintain session persistence
   useSessionPersistence();
@@ -89,6 +92,14 @@ export default function PatientChecklistPage() {
       
       setPatient(patientData);
       logger.info('PatientChecklist', 'loadPatient', 'Patient data loaded successfully');
+
+      // Validate if checklist can be submitted
+      const validation = await validateChecklistSubmission(patientId);
+      if (!validation.canSubmit) {
+        setChecklistBlocked(true);
+        setBlockReason(validation.reason || '');
+        logger.info('PatientChecklist', 'loadPatient', 'Checklist blocked', { reason: validation.reason });
+      }
     } catch (error) {
       logger.error('PatientChecklist', 'loadPatient', 'Error loading patient', error);
       setError('Erro ao carregar dados do paciente. Por favor, tente novamente.');
@@ -134,6 +145,17 @@ export default function PatientChecklistPage() {
       if (!patientId) {
         logger.warn('PatientChecklist', 'handleSubmit', 'No patientId found during submit');
         navigate('/patient-login');
+        return;
+      }
+
+      // Re-validate before submission (server-side check)
+      const validation = await validateChecklistSubmission(patientId);
+      if (!validation.canSubmit) {
+        setError(validation.reason || 'Não é possível enviar o checklist no momento.');
+        setChecklistBlocked(true);
+        setBlockReason(validation.reason || '');
+        setIsSaving(false);
+        logger.warn('PatientChecklist', 'handleSubmit', 'Submission blocked by validation', { reason: validation.reason });
         return;
       }
 
@@ -353,171 +375,219 @@ export default function PatientChecklistPage() {
           </div>
         </div>
       </header>
+
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="mb-8">
-          <h2 className="font-heading text-3xl font-bold text-foreground mb-2">
-            Checklist Diário
-          </h2>
-          <p className="font-paragraph text-lg text-foreground/70">
-            Responda ao questionário enviado pela equipe de saúde
-          </p>
-        </div>
+        {/* Show blocked state if checklist is blocked */}
+        {checklistBlocked ? (
+          <div className="space-y-6">
+            {/* Blocked Message Card */}
+            <div className="bg-white rounded-3xl p-8 border-2 border-secondary/30">
+              <div className="flex flex-col items-center text-center space-y-6">
+                {/* Checkmark Icon */}
+                <div className="w-24 h-24 bg-stable/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-12 h-12 text-stable" />
+                </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 pb-8">
-          {/* Pain Level */}
-          <div className="bg-white rounded-3xl p-6 border-2 border-secondary/30">
-            <Label className="font-heading text-2xl font-bold text-foreground mb-6 block">
-              Qual seu nível de dor?
-            </Label>
-            <div className="space-y-6">
-              <input
-                type="range"
-                min="0"
-                max="10"
-                value={formData.painLevel}
-                onChange={(e) => setFormData({ ...formData, painLevel: Number(e.target.value) })}
-                className="w-full h-4 bg-secondary rounded-lg appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, #32CD32 0%, #FFD700 50%, #FF0000 100%)`
-                }}
-              />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Smile className="w-8 h-8 text-stable" />
-                  <span className="font-paragraph text-base text-foreground/70">Sem dor</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ease-out"
-                    style={{
-                      backgroundColor: getPainLevelColor(formData.painLevel).bg,
-                    }}
-                  >
-                    <span 
-                      className="font-heading text-4xl font-bold transition-colors duration-300 ease-out"
-                      style={{
-                        color: getPainLevelColor(formData.painLevel).text,
-                      }}
-                    >
-                      {formData.painLevel}
-                    </span>
+                {/* Title */}
+                <h2 className="font-heading text-3xl font-bold text-foreground leading-tight">
+                  Checklist Diário Concluído
+                </h2>
+
+                {/* Message */}
+                <p className="font-paragraph text-lg text-foreground/70 leading-relaxed">
+                  {blockReason}
+                </p>
+
+                {/* Next Release Time */}
+                <div className="w-full bg-primary/10 rounded-2xl p-4 border-2 border-primary/20">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Clock className="w-5 h-5 text-primary" />
+                    <p className="font-paragraph text-base font-semibold text-primary">
+                      Próxima liberação em
+                    </p>
                   </div>
+                  <p className="font-heading text-2xl font-bold text-primary">
+                    Amanhã às 05:00
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-paragraph text-base text-foreground/70">Dor intensa</span>
-                  <Frown className="w-8 h-8 text-critical" />
-                </div>
+
+                {/* Back Button */}
+                <Link to="/patient-dashboard" className="w-full pt-4">
+                  <Button className="w-full bg-primary text-white hover:opacity-90 font-paragraph font-bold py-4 rounded-2xl text-lg h-16">
+                    Voltar ao Dashboard
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
+        ) : (
+          <>
+            <div className="mb-8">
+              <h2 className="font-heading text-3xl font-bold text-foreground mb-2">
+                Checklist Diário
+              </h2>
+              <p className="font-paragraph text-lg text-foreground/70">
+                Responda ao questionário enviado pela equipe de saúde
+              </p>
+            </div>
 
-          {/* Temperature */}
-          <div className="bg-white rounded-3xl p-6 border-2 border-secondary/30">
-            <div className="space-y-6">
-              <div>
-                <Label className="font-paragraph text-2xl font-bold text-foreground mb-4 block">
-                  Está com febre?
+            <form onSubmit={handleSubmit} className="space-y-6 pb-8">
+              {/* Pain Level */}
+              <div className="bg-white rounded-3xl p-6 border-2 border-secondary/30">
+                <Label className="font-heading text-2xl font-bold text-foreground mb-6 block">
+                  Qual seu nível de dor?
                 </Label>
-                <RadioGroup
-                  value={formData.hasFever ? 'yes' : 'no'}
-                  onValueChange={(value) => setFormData({ ...formData, hasFever: value === 'yes' })}
-                  className="space-y-3"
-                >
-                  <div className="flex items-center space-x-3 p-3 bg-background rounded-2xl border-2 border-secondary/20">
-                    <RadioGroupItem value="yes" id="fever-yes" className="w-6 h-6" />
-                    <Label htmlFor="fever-yes" className="font-paragraph text-lg cursor-pointer font-semibold">Sim</Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-background rounded-2xl border-2 border-secondary/20">
-                    <RadioGroupItem value="no" id="fever-no" className="w-6 h-6" />
-                    <Label htmlFor="fever-no" className="font-paragraph text-lg cursor-pointer font-semibold">Não</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div>
-
-                <TemperatureInput
-                  value={formData.bodyTemperature}
-                  onChange={(temp) => setFormData({ ...formData, bodyTemperature: temp })}
-                  onValidationChange={setIsTemperatureValid}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Symptoms Checklist */}
-          <div className="bg-white rounded-3xl p-6 border-2 border-secondary/30">
-            <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
-              Sintomas
-            </h3>
-            <div className="space-y-4">
-              {[
-                { key: 'scarRedness', label: 'Vermelhidão na cicatriz?' },
-                { key: 'hasSecretion', label: 'Secreção?' },
-                { key: 'hasBadOdor', label: 'Mau cheiro?' },
-                { key: 'shortnessOfBreath', label: 'Falta de ar?' },
-                { key: 'dizziness', label: 'Tontura?' },
-                { key: 'increasingPain', label: 'Dor crescente?' },
-              ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between p-4 bg-background rounded-2xl border-2 border-secondary/20">
-                  <Label className="font-paragraph text-lg text-foreground font-semibold">
-                    {item.label}
-                  </Label>
-                  <RadioGroup
-                    value={formData[item.key as keyof typeof formData] ? 'yes' : 'no'}
-                    onValueChange={(value) => setFormData({ ...formData, [item.key]: value === 'yes' })}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id={`${item.key}-yes`} className="w-6 h-6" />
-                      <Label htmlFor={`${item.key}-yes`} className="font-paragraph text-lg cursor-pointer">Sim</Label>
+                <div className="space-y-6">
+                  <input
+                    type="range"
+                    min="0"
+                    max="10"
+                    value={formData.painLevel}
+                    onChange={(e) => setFormData({ ...formData, painLevel: Number(e.target.value) })}
+                    className="w-full h-4 bg-secondary rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #32CD32 0%, #FFD700 50%, #FF0000 100%)`
+                    }}
+                  />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Smile className="w-8 h-8 text-stable" />
+                      <span className="font-paragraph text-base text-foreground/70">Sem dor</span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id={`${item.key}-no`} className="w-6 h-6" />
-                      <Label htmlFor={`${item.key}-no`} className="font-paragraph text-lg cursor-pointer">Não</Label>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-20 h-20 rounded-2xl flex items-center justify-center transition-all duration-300 ease-out"
+                        style={{
+                          backgroundColor: getPainLevelColor(formData.painLevel).bg,
+                        }}
+                      >
+                        <span 
+                          className="font-heading text-4xl font-bold transition-colors duration-300 ease-out"
+                          style={{
+                            color: getPainLevelColor(formData.painLevel).text,
+                          }}
+                        >
+                          {formData.painLevel}
+                        </span>
+                      </div>
                     </div>
-                  </RadioGroup>
+                    <div className="flex items-center gap-2">
+                      <span className="font-paragraph text-base text-foreground/70">Dor intensa</span>
+                      <Frown className="w-8 h-8 text-critical" />
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Medication and Diet */}
-          <MedicationSection
-            takingMedicationCorrectly={formData.takingMedicationCorrectly}
-            onMedicationChange={(value) => setFormData({ ...formData, takingMedicationCorrectly: value })}
-            onMedicationsChange={setMedications}
-            onReasonChange={(reason) => setFormData({ ...formData, reasonNotTakingMedication: reason })}
-            medications={medications}
-            reasonNotTaking={formData.reasonNotTakingMedication}
-            eatingNormally={formData.eatingNormally}
-            onEatingNormallyChange={(value) => setFormData({ ...formData, eatingNormally: value })}
-          />
+              {/* Temperature */}
+              <div className="bg-white rounded-3xl p-6 border-2 border-secondary/30">
+                <div className="space-y-6">
+                  <div>
+                    <Label className="font-paragraph text-2xl font-bold text-foreground mb-4 block">
+                      Está com febre?
+                    </Label>
+                    <RadioGroup
+                      value={formData.hasFever ? 'yes' : 'no'}
+                      onValueChange={(value) => setFormData({ ...formData, hasFever: value === 'yes' })}
+                      className="space-y-3"
+                    >
+                      <div className="flex items-center space-x-3 p-3 bg-background rounded-2xl border-2 border-secondary/20">
+                        <RadioGroupItem value="yes" id="fever-yes" className="w-6 h-6" />
+                        <Label htmlFor="fever-yes" className="font-paragraph text-lg cursor-pointer font-semibold">Sim</Label>
+                      </div>
+                      <div className="flex items-center space-x-3 p-3 bg-background rounded-2xl border-2 border-secondary/20">
+                        <RadioGroupItem value="no" id="fever-no" className="w-6 h-6" />
+                        <Label htmlFor="fever-no" className="font-paragraph text-lg cursor-pointer font-semibold">Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                  <div>
 
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            disabled={isSaving}
-            className="w-full bg-primary text-white hover:opacity-90 font-paragraph font-bold py-4 rounded-2xl text-lg h-16 flex items-center justify-center gap-3 mb-8"
-          >
-            {isSaving ? (
-              'Enviando...'
-            ) : (
-              <>
-                <Save className="w-6 h-6" />
-                Enviar Checklist
-              </>
-            )}
-          </Button>
+                    <TemperatureInput
+                      value={formData.bodyTemperature}
+                      onChange={(temp) => setFormData({ ...formData, bodyTemperature: temp })}
+                      onValidationChange={setIsTemperatureValid}
+                    />
+                  </div>
+                </div>
+              </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mt-4 p-4 bg-destructive/10 border-2 border-destructive/20 rounded-2xl flex items-start gap-3">
-              <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
-              <p className="font-paragraph text-base text-destructive font-semibold">{error}</p>
-            </div>
-          )}
-        </form>
+              {/* Symptoms Checklist */}
+              <div className="bg-white rounded-3xl p-6 border-2 border-secondary/30">
+                <h3 className="font-heading text-2xl font-bold text-foreground mb-6">
+                  Sintomas
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { key: 'scarRedness', label: 'Vermelhidão na cicatriz?' },
+                    { key: 'hasSecretion', label: 'Secreção?' },
+                    { key: 'hasBadOdor', label: 'Mau cheiro?' },
+                    { key: 'shortnessOfBreath', label: 'Falta de ar?' },
+                    { key: 'dizziness', label: 'Tontura?' },
+                    { key: 'increasingPain', label: 'Dor crescente?' },
+                  ].map((item) => (
+                    <div key={item.key} className="flex items-center justify-between p-4 bg-background rounded-2xl border-2 border-secondary/20">
+                      <Label className="font-paragraph text-lg text-foreground font-semibold">
+                        {item.label}
+                      </Label>
+                      <RadioGroup
+                        value={formData[item.key as keyof typeof formData] ? 'yes' : 'no'}
+                        onValueChange={(value) => setFormData({ ...formData, [item.key]: value === 'yes' })}
+                        className="flex gap-4"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="yes" id={`${item.key}-yes`} className="w-6 h-6" />
+                          <Label htmlFor={`${item.key}-yes`} className="font-paragraph text-lg cursor-pointer">Sim</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="no" id={`${item.key}-no`} className="w-6 h-6" />
+                          <Label htmlFor={`${item.key}-no`} className="font-paragraph text-lg cursor-pointer">Não</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Medication and Diet */}
+              <MedicationSection
+                takingMedicationCorrectly={formData.takingMedicationCorrectly}
+                onMedicationChange={(value) => setFormData({ ...formData, takingMedicationCorrectly: value })}
+                onMedicationsChange={setMedications}
+                onReasonChange={(reason) => setFormData({ ...formData, reasonNotTakingMedication: reason })}
+                medications={medications}
+                reasonNotTaking={formData.reasonNotTakingMedication}
+                eatingNormally={formData.eatingNormally}
+                onEatingNormallyChange={(value) => setFormData({ ...formData, eatingNormally: value })}
+              />
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={isSaving}
+                className="w-full bg-primary text-white hover:opacity-90 font-paragraph font-bold py-4 rounded-2xl text-lg h-16 flex items-center justify-center gap-3 mb-8"
+              >
+                {isSaving ? (
+                  'Enviando...'
+                ) : (
+                  <>
+                    <Save className="w-6 h-6" />
+                    Enviar Checklist
+                  </>
+                )}
+              </Button>
+
+              {/* Error Message */}
+              {error && (
+                <div className="mt-4 p-4 bg-destructive/10 border-2 border-destructive/20 rounded-2xl flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
+                  <p className="font-paragraph text-base text-destructive font-semibold">{error}</p>
+                </div>
+              )}
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
