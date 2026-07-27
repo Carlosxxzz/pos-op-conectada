@@ -424,12 +424,10 @@ export default function NursingDashboardPage() {
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
               {[
                 { label: 'Aguardando Avaliação', value: stats.awaitingEvaluation, icon: Clock, colorKey: 'primary', filterId: 'AGUARDANDO_ENFERMAGEM' as FilterType },
                 { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, colorKey: 'attention', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
-                { label: 'Avaliados Enfermagem', value: stats.evaluatedByNurse, icon: ClipboardCheck, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
-                { label: 'Avaliados Médico', value: stats.evaluatedByDoctor, icon: UserCheck, colorKey: 'stable', filterId: 'AVALIADO_MEDICO' as FilterType },
               ].map((stat, index) => {
                 const Icon = stat.icon;
                 const colors = colorMap[stat.colorKey as keyof typeof colorMap];
@@ -455,58 +453,7 @@ export default function NursingDashboardPage() {
               })}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                onClick={() => handleCardClick('URGENTE')}
-                whileHover={{ y: -4 }}
-                className="bg-critical/10 rounded-2xl p-6 border border-critical/20 hover:shadow-lg transition-all cursor-pointer text-left"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-critical rounded-lg flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-critical-foreground" />
-                  </div>
-                  <span className="font-heading text-3xl font-bold text-critical">{stats.critical}</span>
-                </div>
-                <p className="font-paragraph text-sm text-foreground/70">Pacientes Críticos</p>
-              </motion.button>
 
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                onClick={() => handleCardClick('ULTIMOS_7_DIAS')}
-                whileHover={{ y: -4 }}
-                className="bg-primary/10 rounded-2xl p-6 border border-primary/20 hover:shadow-lg transition-all cursor-pointer text-left"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                    <ClipboardList className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <span className="font-heading text-3xl font-bold text-primary">{stats.totalChecklistsToday}</span>
-                </div>
-                <p className="font-paragraph text-sm text-foreground/70">Checklists Hoje</p>
-              </motion.button>
-
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                onClick={() => handleCardClick('TODOS')}
-                whileHover={{ y: -4 }}
-                className="bg-stable/10 rounded-2xl p-6 border border-stable/20 hover:shadow-lg transition-all cursor-pointer text-left"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-stable rounded-lg flex items-center justify-center">
-                    <Activity className="w-6 h-6 text-stable-foreground" />
-                  </div>
-                  <span className="font-heading text-3xl font-bold text-stable">{stats.inFollowUp}</span>
-                </div>
-                <p className="font-paragraph text-sm text-foreground/70">Em Acompanhamento</p>
-              </motion.button>
-            </div>
 
             <div className="mb-8">
               <div className="flex flex-col md:flex-row gap-4 mb-6">
