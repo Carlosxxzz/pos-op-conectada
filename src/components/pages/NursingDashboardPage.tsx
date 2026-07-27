@@ -392,12 +392,12 @@ export default function NursingDashboardPage() {
             </div>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-8 px-8">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
               { id: 'prioritarios', label: 'Prioritários', icon: AlertCircle },
-              { id: 'encaminhados', label: 'Encaminhados', icon: Stethoscope },
-              { id: 'avaliados-medico', label: 'Avaliados Médico', icon: CheckCircle },
+              { id: 'encaminhados', label: 'Encaminhados ao Médico', icon: Stethoscope },
+              { id: 'avaliados-medico', label: 'Avaliados pelo Médico', icon: CheckCircle },
               { id: 'historico', label: 'Histórico', icon: FileText },
             ].map(tab => {
               const Icon = tab.icon;
@@ -405,13 +405,13 @@ export default function NursingDashboardPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-paragraph text-sm font-semibold transition-all whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-5 py-3 rounded-lg font-paragraph text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-white border border-secondary/20 text-foreground hover:border-primary/50'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 flex-shrink-0" />
                   {tab.label}
                 </button>
               );
@@ -792,67 +792,6 @@ export default function NursingDashboardPage() {
                   <p className="font-paragraph text-sm text-foreground/70">Pacientes já avaliados (somente leitura)</p>
                 </motion.button>
               </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Perfil Tab */}
-        {activeTab === 'perfil' && professional && (
-          <div>
-            <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Meu Perfil Profissional</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl p-8 border border-secondary/20 md:col-span-1"
-              >
-                <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <User className="w-12 h-12 text-primary" />
-                </div>
-                <h3 className="font-heading text-2xl font-bold text-foreground text-center mb-2">{professional.fullName}</h3>
-                <p className="font-paragraph text-sm text-foreground/70 text-center mb-6">{professional.profile}</p>
-                <div className="space-y-4 border-t border-secondary/20 pt-6">
-                  <div>
-                    <p className="font-paragraph text-xs text-foreground/60 mb-1">Hospital</p>
-                    <p className="font-paragraph text-sm font-semibold text-foreground">{professional.hospital}</p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-xs text-foreground/60 mb-1">Email</p>
-                    <p className="font-paragraph text-sm font-semibold text-foreground">{professional.email}</p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-xs text-foreground/60 mb-1">Especialidade</p>
-                    <p className="font-paragraph text-sm font-semibold text-foreground">{professional.specialty || '-'}</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white rounded-2xl p-8 border border-secondary/20 md:col-span-2"
-              >
-                <h4 className="font-heading text-xl font-bold text-foreground mb-6">Estatísticas de Desempenho</h4>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/70 mb-2">Pacientes Acompanhados</p>
-                    <p className="font-heading text-3xl font-bold text-primary">{allPatients.length}</p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/70 mb-2">Avaliações Realizadas</p>
-                    <p className="font-heading text-3xl font-bold text-stable">{stats.evaluatedByNurse}</p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/70 mb-2">Encaminhamentos Feitos</p>
-                    <p className="font-heading text-3xl font-bold text-attention-foreground">{stats.referredToDoctor}</p>
-                  </div>
-                  <div>
-                    <p className="font-paragraph text-sm text-foreground/70 mb-2">Pacientes Críticos</p>
-                    <p className="font-heading text-3xl font-bold text-critical">{stats.critical}</p>
-                  </div>
-                </div>
-              </motion.div>
             </div>
           </div>
         )}
