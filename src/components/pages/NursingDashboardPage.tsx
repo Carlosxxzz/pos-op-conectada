@@ -881,16 +881,29 @@ export default function NursingDashboardPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl p-8 border border-secondary/20 hover:shadow-lg transition-all text-left w-full"
+                  className="bg-white rounded-2xl overflow-hidden border border-secondary/20 hover:shadow-lg transition-all text-left w-full h-full flex flex-col"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-                      <FileText className="w-6 h-6 text-primary-foreground" />
-                    </div>
-                    <ArrowRight className="w-6 h-6 text-primary" />
+                  <div className="w-full h-32 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
+                    <Image 
+                      src="https://static.wixstatic.com/media/2621fb_2c1e7369618c4464b97faf4fab8c8180~mv2.png?originWidth=384&originHeight=128" 
+                      alt="Histórico de Avaliações" 
+                      className="w-full h-full object-cover"
+                      width={400}
+                      height={128}
+                    />
                   </div>
-                  <h3 className="font-heading text-lg font-bold text-foreground mb-2">Histórico de Avaliações</h3>
-                  <p className="font-paragraph text-sm text-foreground/70">Visualize todas as avaliações realizadas</p>
+                  <div className="p-8 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                          <FileText className="w-6 h-6 text-primary-foreground" />
+                        </div>
+                        <ArrowRight className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="font-heading text-lg font-bold text-foreground mb-2">Histórico de Avaliações</h3>
+                      <p className="font-paragraph text-sm text-foreground/70">Visualize todas as avaliações realizadas</p>
+                    </div>
+                  </div>
                 </motion.button>
               </Link>
 
@@ -900,16 +913,29 @@ export default function NursingDashboardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl p-8 border border-secondary/20 hover:shadow-lg transition-all text-left w-full"
+                  className="bg-white rounded-2xl overflow-hidden border border-secondary/20 hover:shadow-lg transition-all text-left w-full h-full flex flex-col"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-stable rounded-lg flex items-center justify-center">
-                      <CheckCircle className="w-6 h-6 text-stable-foreground" />
-                    </div>
-                    <ArrowRight className="w-6 h-6 text-stable" />
+                  <div className="w-full h-32 bg-gradient-to-br from-stable/20 to-stable/5 flex items-center justify-center overflow-hidden">
+                    <Image 
+                      src="https://static.wixstatic.com/media/2621fb_f66adb1c2aed47f9a1af2338f9e7c517~mv2.png?originWidth=384&originHeight=128" 
+                      alt="Avaliados pelo Médico" 
+                      className="w-full h-full object-cover"
+                      width={400}
+                      height={128}
+                    />
                   </div>
-                  <h3 className="font-heading text-lg font-bold text-foreground mb-2">Avaliados pelo Médico</h3>
-                  <p className="font-paragraph text-sm text-foreground/70">Pacientes já avaliados (somente leitura)</p>
+                  <div className="p-8 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-stable rounded-lg flex items-center justify-center">
+                          <CheckCircle className="w-6 h-6 text-stable-foreground" />
+                        </div>
+                        <ArrowRight className="w-6 h-6 text-stable" />
+                      </div>
+                      <h3 className="font-heading text-lg font-bold text-foreground mb-2">Avaliados pelo Médico</h3>
+                      <p className="font-paragraph text-sm text-foreground/70">Pacientes já avaliados (somente leitura)</p>
+                    </div>
+                  </div>
                 </motion.button>
               </Link>
             </div>
