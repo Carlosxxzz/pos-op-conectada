@@ -941,37 +941,7 @@ export default function NursingDashboardPage() {
                 </motion.button>
               </Link>
 
-              <Link to="/nursing-patients-evaluated-by-doctor">
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl overflow-hidden border border-secondary/20 hover:shadow-lg transition-all text-left w-full h-full flex flex-col"
-                >
-                  <div className="w-full h-32 bg-gradient-to-br from-stable/20 to-stable/5 flex items-center justify-center overflow-hidden">
-                    <Image 
-                      src="https://static.wixstatic.com/media/2621fb_f66adb1c2aed47f9a1af2338f9e7c517~mv2.png?originWidth=384&originHeight=128" 
-                      alt="Avaliados pelo Médico" 
-                      className="w-full h-full object-cover"
-                      width={400}
-                      height={128}
-                    />
-                  </div>
-                  <div className="p-8 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-stable rounded-lg flex items-center justify-center">
-                          <CheckCircle className="w-6 h-6 text-stable-foreground" />
-                        </div>
-                        <ArrowRight className="w-6 h-6 text-stable" />
-                      </div>
-                      <h3 className="font-heading text-lg font-bold text-foreground mb-2">Avaliados pelo Médico</h3>
-                      <p className="font-paragraph text-sm text-foreground/70">Pacientes já avaliados (somente leitura)</p>
-                    </div>
-                  </div>
-                </motion.button>
-              </Link>
+
             </div>
           </div>
         )}
