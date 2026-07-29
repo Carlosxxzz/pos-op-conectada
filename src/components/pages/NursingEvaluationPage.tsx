@@ -88,9 +88,16 @@ export default function NursingEvaluationPage() {
       const { items } = await BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios');
       // CRITICAL FIX: Filter checklists by patient ID and get only PENDING ones (AGUARDANDO_ENFERMAGEM status)
       // Do NOT include checklists that have been evaluated or referred
-      const patientChecklists = items.filter(c => 
-        c.patientId === id && c.statusEnfermagem === 'AGUARDANDO_ENFERMAGEM' && !c.avaliadoEnfermagem
-      );
+      // Check both statusEnfermagem and avaliadoEnfermagem fields to ensure they are truly pending
+      const patientChecklists = items.filter(c => {
+        // Checklist must belong to this patient
+        if (c.patientId !== id) return false;
+        // Checklist must NOT be marked as evaluated
+        if (c.avaliadoEnfermagem === true) return false;
+        // Checklist must have AGUARDANDO_ENFERMAGEM status (not AVALIADO_ENFERMAGEM or ENCAMINHADO_MEDICO)
+        if (c.statusEnfermagem !== 'AGUARDANDO_ENFERMAGEM') return false;
+        return true;
+      });
       
       const sortedChecklists = patientChecklists.sort((a, b) => 
         new Date(b.checklistDate || 0).getTime() - new Date(a.checklistDate || 0).getTime()

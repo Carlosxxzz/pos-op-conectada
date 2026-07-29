@@ -210,11 +210,12 @@ export default function PatientChecklistPage() {
         increasingPain: formData.increasingPain,
         takingMedicationCorrectly: formData.takingMedicationCorrectly,
         eatingNormally: formData.eatingNormally,
-        // Only save reason if not taking medication correctly
         reasonNotTakingMedication: formData.takingMedicationCorrectly ? '' : formData.reasonNotTakingMedication,
         riskLevel,
         scarPhoto: '',
         status: 'Aguardando Avaliação de Enfermagem',
+        statusEnfermagem: 'AGUARDANDO_ENFERMAGEM',
+        avaliadoEnfermagem: false,
         encaminhadoMedico: false,
         hospital: patient?.hospital || '',
       };
