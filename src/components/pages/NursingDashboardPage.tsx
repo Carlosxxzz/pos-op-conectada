@@ -487,7 +487,30 @@ export default function NursingDashboardPage() {
                 </div>
               </div>
 
-
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'TODOS', label: 'Todos' },
+                  { value: 'AGUARDANDO_ENFERMAGEM', label: 'Aguardando Avaliação' },
+                  { value: 'AVALIADO_ENFERMAGEM', label: 'Avaliado Enfermagem' },
+                  { value: 'ENCAMINHADO_MEDICO', label: 'Encaminhado Médico' },
+                  { value: 'AVALIADO_MEDICO', label: 'Avaliado Médico' },
+                  { value: 'URGENTE', label: 'Urgente' },
+                  { value: 'ULTIMOS_7_DIAS', label: 'Últimos 7 dias' },
+                  { value: 'ULTIMOS_30_DIAS', label: 'Últimos 30 dias' },
+                ].map(filter => (
+                  <button
+                    key={filter.value}
+                    onClick={() => setFilterType(filter.value as FilterType)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-paragraph text-sm font-semibold transition-all ${
+                      filterType === filter.value
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-white border border-secondary/20 text-foreground hover:border-primary/50'
+                    }`}
+                  >
+                    <Filter className="w-4 h-4" />
+                    {filter.label}
+                  </button>
+                ))}
               </div>
             </div>
 
