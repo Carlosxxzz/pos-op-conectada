@@ -37,7 +37,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 type EvaluationStatus = 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'CONCLUIDO';
-type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'URGENTE' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS' | 'REFERIDO_MEDICO' | 'AVALIADO_MEDICO_COMPLETO';
+type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'PRIORITARIOS' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS' | 'REFERIDO_MEDICO' | 'AVALIADO_MEDICO_COMPLETO';
 
 interface PatientEvaluationData {
   patient: Pacientes;
@@ -263,7 +263,7 @@ export default function NursingDashboardPage() {
 
     if (filterType === 'TODOS') {
       return result;
-    } else if (filterType === 'URGENTE') {
+    } else if (filterType === 'PRIORITARIOS') {
       return result.filter(item => item.isPriority);
     } else if (filterType === 'ULTIMOS_7_DIAS') {
       const sevenDaysAgo = new Date();
@@ -459,7 +459,7 @@ export default function NursingDashboardPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {[
-                { label: 'Prioritários', value: allPatients.filter(p => p.isPriority && p.status === 'AGUARDANDO_ENFERMAGEM').length, icon: AlertTriangle, colorKey: 'attention', filterId: 'URGENTE' as FilterType },
+                { label: 'Prioritários', value: allPatients.filter(p => p.isPriority && p.status === 'AGUARDANDO_ENFERMAGEM').length, icon: AlertTriangle, colorKey: 'attention', filterId: 'PRIORITARIOS' as FilterType },
                 { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, colorKey: 'attention', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
                 { label: 'Avaliados pela Enfermagem', value: stats.evaluatedByNurse, icon: ClipboardCheck, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
                 { label: 'Avaliados pelo Médico', value: stats.evaluatedByDoctor, icon: ClipboardCheck, colorKey: 'primary', filterId: 'AVALIADO_MEDICO_COMPLETO' as FilterType },
@@ -509,7 +509,7 @@ export default function NursingDashboardPage() {
                   { value: 'AVALIADO_ENFERMAGEM', label: 'Avaliado Enfermagem' },
                   { value: 'ENCAMINHADO_MEDICO', label: 'Encaminhado Médico' },
                   { value: 'AVALIADO_MEDICO', label: 'Avaliado Médico' },
-                  { value: 'URGENTE', label: 'Urgente' },
+                  { value: 'PRIORITARIOS', label: 'Prioritários' },
                   { value: 'ULTIMOS_7_DIAS', label: 'Últimos 7 dias' },
                   { value: 'ULTIMOS_30_DIAS', label: 'Últimos 30 dias' },
                 ].map(filter => (
