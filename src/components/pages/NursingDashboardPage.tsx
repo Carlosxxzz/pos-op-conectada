@@ -852,6 +852,7 @@ export default function NursingDashboardPage() {
           </div>
         )}
 
+
         {/* Avaliados pelo Médico Tab */}
         {activeTab === 'avaliados-medico' && (() => {
           const evaluatedByDoctor = allPatients.filter(p => p.status === 'AVALIADO_MEDICO');
