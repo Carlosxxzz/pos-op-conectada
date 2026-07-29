@@ -789,7 +789,68 @@ export default function NursingDashboardPage() {
         })()}
 
         {/* Avaliados pela Enfermagem Tab */}
-
+        {activeTab === 'avaliados-enfermagem' && (
+          <div>
+            <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Avaliados pela Enfermagem</h2>
+            {evaluatedByNursePatients.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
+                <Image
+                  src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256"
+                  alt="Avaliados pela Enfermagem"
+                  className="w-32 h-32 mx-auto mb-4 object-cover rounded-lg"
+                  width={128}
+                  height={128}
+                />
+                <h3 className="font-heading text-2xl font-bold text-foreground mb-2">Nenhum paciente avaliado</h3>
+                <p className="font-paragraph text-lg text-foreground/70">Nenhum paciente foi avaliado pela enfermagem ainda</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {evaluatedByNursePatients.map((item, index) => (
+                  <motion.div
+                    key={`${item.patient._id}-nurse-eval`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white rounded-2xl p-6 border border-secondary/20 hover:shadow-lg transition-all"
+                  >
+                    <div className="flex gap-6 mb-4">
+                      <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stable/10">
+                        <Image
+                          src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256"
+                          alt="Avaliação de Enfermagem"
+                          className="w-full h-full object-cover"
+                          width={96}
+                          height={96}
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-1">
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">Paciente</p>
+                          <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient.fullName}</p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">CPF / SUS</p>
+                          <p className="font-paragraph text-sm font-semibold text-foreground">{item.patient.cpf || item.patient.susNumber || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">Enfermeiro</p>
+                          <p className="font-paragraph text-sm font-semibold text-foreground">{item.nurseName || '-'}</p>
+                        </div>
+                        <div>
+                          <p className="font-paragraph text-xs text-foreground/60 mb-1 uppercase tracking-wide">Status</p>
+                          <span className="bg-stable/10 text-stable text-xs font-semibold px-3 py-1 rounded-full inline-block">
+                            ✓ Avaliado
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Avaliados pelo Médico Tab */}
         {activeTab === 'avaliados-medico' && (() => {
