@@ -309,10 +309,10 @@ export default function NursingDashboardPage() {
   }, [allPatients]);
 
   const colorMap = {
-    primary: { bg: 'bg-primary/10', text: 'text-primary', icon: 'text-primary', bgIcon: 'bg-primary' },
-    attention: { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-attention-foreground', bgIcon: 'bg-attention' },
-    'attention-foreground': { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-attention-foreground', bgIcon: 'bg-attention' },
-    stable: { bg: 'bg-stable/10', text: 'text-stable', icon: 'text-stable', bgIcon: 'bg-stable' },
+    primary: { bg: 'bg-primary/10', text: 'text-primary', icon: 'text-primary-foreground', bgIcon: 'bg-primary' },
+    attention: { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-foreground', bgIcon: 'bg-attention' },
+    'attention-foreground': { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-foreground', bgIcon: 'bg-attention' },
+    stable: { bg: 'bg-stable/10', text: 'text-stable', icon: 'text-stable-foreground', bgIcon: 'bg-stable' },
   };
 
   const getStatusBadge = (status: EvaluationStatus) => {
