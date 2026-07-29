@@ -21,6 +21,7 @@ import {
   ArrowRight,
   BarChart3,
   CheckCircle,
+  ClipboardCheck,
   Clock,
   Eye,
   FileText,
@@ -29,6 +30,7 @@ import {
   Search,
   Stethoscope,
   User,
+  UserCheck,
   Users
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -72,7 +74,7 @@ export default function NursingDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'aguardando' | 'encaminhados' | 'avaliados-enfermagem' | 'avaliados-medico' | 'historico'>('dashboard'); //
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'aguardando' | 'encaminhados' | 'avaliados-enfermagem'| 'avaliados-medico' | 'historico'>('dashboard'); //
   const [stats, setStats] = useState<DashboardStats>({
     awaitingEvaluation: 0,
     referredToDoctor: 0,
@@ -425,7 +427,7 @@ export default function NursingDashboardPage() {
                 { id: 'prioritarios', label: 'Prioritários', icon: AlertCircle },
                 { id: 'aguardando', label: 'Aguardando Avaliação', icon: Clock },
                 { id: 'encaminhados', label: 'Encaminhados ao Médico', icon: Stethoscope },
-                // { id: 'avaliados-enfermagem', label: 'Avaliados pela Enfermagem', icon: UserCheck },
+                { id: 'avaliados-enfermagem', label: 'Avaliados pela Enfermagem', icon: UserCheck },
                 // { id: 'avaliados-medico', label: 'Avaliados pelo Médico', icon: ClipboardCheck },
                 { id: 'historico', label: 'Histórico', icon: FileText },
               ].map(tab => {
@@ -459,8 +461,8 @@ export default function NursingDashboardPage() {
               {[
                 { label: 'Prioritários', value: allPatients.filter(p => p.isPriority && p.status === 'AGUARDANDO_ENFERMAGEM').length, icon: AlertTriangle, colorKey: 'attention', filterId: 'URGENTE' as FilterType },
                 { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, colorKey: 'attention', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
-                // { label: 'Avaliados pela Enfermagem', value: stats.evaluatedByNurse, icon: ClipboardCheck, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
-                // { label: 'Avaliados pelo Médico', value: stats.evaluatedByDoctor, icon: ClipboardCheck, colorKey: 'primary', filterId: 'AVALIADO_MEDICO_COMPLETO' as FilterType },
+                { label: 'Avaliados pela Enfermagem', value: stats.evaluatedByNurse, icon: ClipboardCheck, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
+                { label: 'Avaliados pelo Médico', value: stats.evaluatedByDoctor, icon: ClipboardCheck, colorKey: 'primary', filterId: 'AVALIADO_MEDICO_COMPLETO' as FilterType },
               ].map((stat, index) => {
                 const Icon = stat.icon;
                 const colors = colorMap[stat.colorKey as keyof typeof colorMap];
@@ -787,7 +789,7 @@ export default function NursingDashboardPage() {
         })()}
 
         {/* Avaliados pela Enfermagem Tab */}
-        {/* {activeTab === 'avaliados-enfermagem' && (
+        {activeTab === 'avaliados-enfermagem' && (
           <div>
             <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Avaliados pela Enfermagem</h2>
             {evaluatedByNursePatients.length === 0 ? (
@@ -848,10 +850,10 @@ export default function NursingDashboardPage() {
               </div>
             )}
           </div>
-        )} */}
+        )}
 
         {/* Avaliados pelo Médico Tab */}
-        {/* {activeTab === 'avaliados-medico' && (() => {
+        {activeTab === 'avaliados-medico' && (() => {
           const evaluatedByDoctor = allPatients.filter(p => p.status === 'AVALIADO_MEDICO');
 
           return (
@@ -916,7 +918,7 @@ export default function NursingDashboardPage() {
               )}
             </div>
           );
-        })()} */}
+        })()}
 
         {/* Histórico Tab */}
         {activeTab === 'historico' && (
