@@ -162,7 +162,6 @@ export default function AdminProfessionalsPage() {
         profileLink="/admin-profile"
         onLogout={handleLogout}
       />
-
       {/* Main Content - Full Width */}
       <div className="px-8 py-12 max-w-[100rem] mx-auto">
         {/* Header */}
@@ -196,14 +195,12 @@ export default function AdminProfessionalsPage() {
                 className="pl-10"
               />
             </div>
-
             <Select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               <option value="todos">Todos os Tipos</option>
               <option value="Médico">Médicos</option>
               <option value="Enfermeiro">Enfermeiros</option>
               <option value="Administrador">Administradores</option>
             </Select>
-
             <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
               <option value="todos">Todos os Status</option>
               <option value="Ativo">Ativos</option>
@@ -212,13 +209,6 @@ export default function AdminProfessionalsPage() {
               <option value="Licença">Licença</option>
             </Select>
 
-            <Button
-              onClick={loadData}
-              variant="outline"
-              className="border-secondary/20"
-            >
-              Atualizar
-            </Button>
           </div>
         </div>
 
