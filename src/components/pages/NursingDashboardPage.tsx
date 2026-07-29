@@ -1,25 +1,40 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  Activity, Users, AlertCircle, CheckCircle, Clock, ArrowRight, Filter, Eye,
-  Bell, Search, TrendingUp, Calendar, BarChart3, FileText, Zap, Clipboard, Heart, Stethoscope, TrendingDown,
-  ClipboardCheck, UserCheck, AlertTriangle, ClipboardList, LogOut, User
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { BaseCrudService } from '@/integrations';
-import type {
-  ChecklistsDirios, Pacientes, Profissionais, AvaliaesdeEnfermagem,
-  EncaminhamentosMdicos, AvaliaesMdicas
-} from '@/entities';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { motion } from 'framer-motion';
-import { logger } from '@/lib/logger';
-import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 import NotificationPanel from '@/components/NotificationPanel';
-import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
+import { Button } from '@/components/ui/button';
 import { Image } from '@/components/ui/image';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import type {
+  AvaliaesdeEnfermagem,
+  AvaliaesMdicas,
+  ChecklistsDirios,
+  EncaminhamentosMdicos,
+  Pacientes, Profissionais
+} from '@/entities';
 import { useNotifications } from '@/hooks/useNotifications';
-import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import { BaseCrudService } from '@/integrations';
+import { logger } from '@/lib/logger';
+import { motion } from 'framer-motion';
+import {
+  Activity,
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  CheckCircle,
+  ClipboardCheck,
+  Clock,
+  Eye,
+  FileText,
+  Filter,
+  LogOut,
+  Search,
+  Stethoscope,
+  User,
+  UserCheck,
+  Users
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 type EvaluationStatus = 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'CONCLUIDO';
 type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'URGENTE' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS' | 'REFERIDO_MEDICO' | 'AVALIADO_MEDICO_COMPLETO';
