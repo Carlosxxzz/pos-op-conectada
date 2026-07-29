@@ -30,7 +30,6 @@ import {
   Search,
   Stethoscope,
   User,
-  UserCheck,
   Users
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -427,8 +426,8 @@ export default function NursingDashboardPage() {
                 { id: 'prioritarios', label: 'Prioritários', icon: AlertCircle },
                 { id: 'aguardando', label: 'Aguardando Avaliação', icon: Clock },
                 { id: 'encaminhados', label: 'Encaminhados ao Médico', icon: Stethoscope },
-                { id: 'avaliados-enfermagem', label: 'Avaliados pela Enfermagem', icon: UserCheck },
-                { id: 'avaliados-medico', label: 'Avaliados pelo Médico', icon: ClipboardCheck },
+                { id: 'avaliados-enfermagem', label: 'Avaliados pela Enfermagem', icon: AlertCircle },
+                { id: 'avaliados-medico', label: 'Avaliados pelo Médico', icon: AlertCircle },
                 { id: 'historico', label: 'Histórico', icon: FileText },
               ].map(tab => {
                 const Icon = tab.icon;
