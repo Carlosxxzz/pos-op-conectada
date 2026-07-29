@@ -1,21 +1,31 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  Activity, ArrowLeft, AlertCircle, CheckCircle, Clock, Search, Filter, Eye,
-  User, Building2, Calendar, FileText, LogOut, Stethoscope
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BaseCrudService } from '@/integrations';
-import type {
-  ChecklistsDirios, Pacientes, Profissionais, AvaliaesdeEnfermagem,
-  EncaminhamentosMdicos, AvaliaesMdicas
-} from '@/entities';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { motion } from 'framer-motion';
-import { logger } from '@/lib/logger';
-import { useSessionPersistence } from '@/hooks/useSessionPersistence';
-import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
 import { Image } from '@/components/ui/image';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import type {
+  AvaliaesdeEnfermagem,
+  AvaliaesMdicas,
+  ChecklistsDirios,
+  EncaminhamentosMdicos,
+  Pacientes, Profissionais
+} from '@/entities';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import { BaseCrudService } from '@/integrations';
+import { logger } from '@/lib/logger';
+import { motion } from 'framer-motion';
+import {
+  Activity,
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle,
+  Eye,
+  FileText,
+  Filter,
+  LogOut,
+  Search,
+  User
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface EvaluationHistoryItem {
   patient: Pacientes;
@@ -59,7 +69,7 @@ export default function NursingEvaluationHistoryPage() {
 
       setProfessional(professionalData);
 
-      // Load all data
+      // Load all data in parallel
       const [patientsRes, checklistsRes, nursingEvalsRes, referralsRes, medicalEvalsRes] = await Promise.all([
         BaseCrudService.getAll<Pacientes>('pacientes'),
         BaseCrudService.getAll<ChecklistsDirios>('checklistsdiarios'),
@@ -73,27 +83,37 @@ export default function NursingEvaluationHistoryPage() {
       const allReferrals = referralsRes.items;
       const allMedicalEvals = medicalEvalsRes.items;
 
-      // Build history items - only include evaluations done by this nurse
       const history: EvaluationHistoryItem[] = [];
 
       allNursingEvals.forEach(nursingEval => {
-        // Only include evaluations from this nurse
-        if (nursingEval.nurseName !== professionalData.fullName && nursingEval.nurseName !== professionalData.email) {
+        // Validação flexível do nome/email da enfermagem
+        const isCurrentNurse =
+          nursingEval.nurseName?.toLowerCase() === professionalData.fullName?.toLowerCase() ||
+          nursingEval.nurseName?.toLowerCase() === professionalData.email?.toLowerCase();
+
+        if (!isCurrentNurse) {
           return;
         }
 
         const checklist = allChecklists.find(c => c._id === nursingEval.checklistId);
         const patient = patientsRes.items.find(p => p._id === nursingEval.patientId);
 
-        if (!checklist || !patient || patient.hospital !== professionalData.hospital) {
+        if (!checklist || !patient) {
           return;
         }
 
-        // Find referral and medical evaluation if exists
-        const referral = allReferrals.find(r => r.checklistId === nursingEval.checklistId);
-        const medicalEval = referral ? allMedicalEvals.find(e => e.nursingEvaluationId === referral._id) : null;
+        // Busca robusta de encaminhamento e avaliação médica
+        const referral = allReferrals.find(r => r.checklistId === nursingEval.checklistId || r.patientId === patient._id);
 
+        const medicalEval = allMedicalEvals.find(e =>
+          (referral && e.nursingEvaluationId === referral._id) ||
+          (e.checklistId === nursingEval.checklistId) ||
+          (referral && e.encaminhamentoId === referral._id)
+        ) || null;
+
+        // Definindo o status com padronização exata para os filtros
         let status: 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' = 'AVALIADO_ENFERMAGEM';
+
         if (medicalEval) {
           status = 'AVALIADO_MEDICO';
         } else if (referral) {
@@ -110,11 +130,12 @@ export default function NursingEvaluationHistoryPage() {
         });
       });
 
-      // Sort by date descending
-      history.sort((a, b) => 
-        new Date(b.nursingEval.checklistDate || 0).getTime() - 
-        new Date(a.nursingEval.checklistDate || 0).getTime()
-      );
+      // Ordenação segura por data decrescente
+      history.sort((a, b) => {
+        const dateA = new Date(a.nursingEval.checklistDate || 0).getTime();
+        const dateB = new Date(b.nursingEval.checklistDate || 0).getTime();
+        return dateB - dateA;
+      });
 
       setHistoryItems(history);
     } catch (error) {
@@ -198,7 +219,6 @@ export default function NursingEvaluationHistoryPage() {
             </div>
           </div>
         </header>
-
         <div className="max-w-[120rem] mx-auto px-8 py-12">
           <div className="bg-white rounded-2xl p-8 border border-secondary/20 max-w-md mx-auto">
             <div className="flex items-center gap-3 mb-4">
@@ -390,14 +410,6 @@ export default function NursingEvaluationHistoryPage() {
                       <div>
                         <p className="font-paragraph text-xs text-foreground/60 mb-1">Médico Responsável</p>
                         <p className="font-paragraph text-sm text-foreground">{item.referral.doctorName || '-'}</p>
-                      </div>
-                    )}
-                    {item.medicalEval && (
-                      <div>
-                        <p className="font-paragraph text-xs text-foreground/60 mb-1">Data Avaliação Médica</p>
-                        <p className="font-paragraph text-sm text-foreground">
-                          {new Date(item.medicalEval.evaluationDate || '').toLocaleDateString('pt-BR')}
-                        </p>
                       </div>
                     )}
                   </div>
