@@ -160,7 +160,7 @@ export default function NursingPatientsEvaluatedByDoctorPage() {
                   <Activity className="w-7 h-7 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
+                  <h1 className="font-heading text-2xl font-bold text-foreground">AcompanhaMed</h1>
                   <p className="font-paragraph text-sm text-foreground/60">Pacientes Avaliados pelo Médico</p>
                 </div>
               </Link>
@@ -207,7 +207,7 @@ export default function NursingPatientsEvaluatedByDoctorPage() {
                 <Activity className="w-7 h-7 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
+                <h1 className="font-heading text-2xl font-bold text-foreground">AcompanhaMed</h1>
                 <p className="font-paragraph text-sm text-foreground/60">Pacientes Avaliados pelo Médico</p>
               </div>
             </Link>

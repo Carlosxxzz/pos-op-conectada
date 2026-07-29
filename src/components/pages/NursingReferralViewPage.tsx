@@ -145,7 +145,7 @@ export default function NursingReferralViewPage() {
                   <Activity className="w-7 h-7 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
+                  <h1 className="font-heading text-2xl font-bold text-foreground">AcompanhaMed</h1>
                   <p className="font-paragraph text-sm text-foreground/60">Visualização de Encaminhamento</p>
                 </div>
               </Link>
@@ -208,7 +208,7 @@ export default function NursingReferralViewPage() {
                 <Activity className="w-7 h-7 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-heading text-2xl font-bold text-foreground">Pós-Op Conectado</h1>
+                <h1 className="font-heading text-2xl font-bold text-foreground">AcompanhaMed</h1>
                 <p className="font-paragraph text-sm text-foreground/60">Visualização de Encaminhamento (Somente Leitura)</p>
               </div>
             </Link>
