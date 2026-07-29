@@ -313,7 +313,7 @@ export default function NursingDashboardPage() {
     attention: { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-foreground', bgIcon: 'bg-attention' },
     'attention-foreground': { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-foreground', bgIcon: 'bg-attention' },
     stable: { bg: 'bg-stable/10', text: 'text-stable', icon: 'text-stable-foreground', bgIcon: 'bg-stable' },
-    error: { bg: 'bg-stable/10', text: 'text-stable', icon: 'text-red-950', bgIcon: 'bg-error' },
+    error: { bg: 'bg-stable/10', text: 'text-stable', icon: 'text-red-950', bgIcon: 'bg-stable' },
   };
 
   const getStatusBadge = (status: EvaluationStatus) => {
