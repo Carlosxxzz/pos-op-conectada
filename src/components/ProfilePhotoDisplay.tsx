@@ -6,10 +6,11 @@ import { Image } from '@/components/ui/image';
 interface ProfilePhotoDisplayProps {
   photo?: string;
   name?: string;
-  onPhotoUpdate: (photo: string) => void;
-  onPhotoRemove?: () => void;
+  onPhotoUpdate: (photo: Blob) => Promise<void>;
+  onPhotoRemove?: () => Promise<void>;
   size?: 'sm' | 'md' | 'lg';
   showEditIcon?: boolean;
+  isLoading?: boolean;
 }
 
 export default function ProfilePhotoDisplay({
@@ -19,6 +20,7 @@ export default function ProfilePhotoDisplay({
   onPhotoRemove,
   size = 'md',
   showEditIcon = true,
+  isLoading = false,
 }: ProfilePhotoDisplayProps) {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
@@ -58,8 +60,9 @@ export default function ProfilePhotoDisplay({
         {showEditIcon && (
           <button
             onClick={() => setIsUploadOpen(true)}
-            className="absolute bottom-0 right-0 bg-primary hover:bg-primary/90 rounded-full p-2 shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 transform group-hover:scale-110"
+            className="absolute bottom-0 right-0 bg-primary hover:bg-primary/90 rounded-full p-2 shadow-lg transition-all duration-300 opacity-0 group-hover:opacity-100 transform group-hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Alterar foto de perfil"
+            disabled={isLoading}
           >
             <Edit2 className={`${editIconSizes[size]} text-white`} />
           </button>
@@ -79,6 +82,7 @@ export default function ProfilePhotoDisplay({
         onSave={onPhotoUpdate}
         currentPhoto={photo}
         onRemove={onPhotoRemove}
+        isLoading={isLoading}
       />
     </>
   );

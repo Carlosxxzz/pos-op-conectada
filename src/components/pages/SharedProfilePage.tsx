@@ -19,6 +19,7 @@ import {
   Stethoscope,
   Heart,
   AlertCircle,
+  CheckCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
@@ -79,6 +80,9 @@ export default function SharedProfilePage({
     errors: [],
   });
   const [passwordMatchError, setPasswordMatchError] = useState('');
+  const [photoUpdateMessage, setPhotoUpdateMessage] = useState('');
+  const [photoUpdateError, setPhotoUpdateError] = useState('');
+  const [isPhotoLoading, setIsPhotoLoading] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -135,56 +139,101 @@ export default function SharedProfilePage({
     }
   };
 
-  const handlePhotoUpdate = async (croppedImage: string) => {
+  const handlePhotoUpdate = async (photoBlob: Blob) => {
     try {
-      if (userType === 'patient') {
-        const patientId = localStorage.getItem('patientId');
-        if (!patientId || !patient) return;
+      setIsPhotoLoading(true);
+      setPhotoUpdateError('');
+      setPhotoUpdateMessage('');
 
-        await BaseCrudService.update<Pacientes>('pacientes', {
-          _id: patientId,
-          // ... keep existing code (patient fields)
-        });
+      // Convert Blob to base64 data URL
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64String = e.target?.result as string;
 
-        setPatient({
-          ...patient,
-        });
-      } else {
-        const professionalId = localStorage.getItem('professionalId');
-        if (!professionalId || !professional) return;
+        try {
+          if (userType === 'patient') {
+            const patientId = localStorage.getItem('patientId');
+            if (!patientId || !patient) {
+              setPhotoUpdateError('Erro: ID do paciente não encontrado');
+              return;
+            }
 
-        await BaseCrudService.update<Profissionais>('profissionais', {
-          _id: professionalId,
-          profilePhoto: croppedImage,
-        });
+            await BaseCrudService.update<Pacientes>('pacientes', {
+              _id: patientId,
+              profilePhoto: base64String,
+            });
 
-        setProfessional({
-          ...professional,
-          profilePhoto: croppedImage,
-        });
-      }
+            setPatient({
+              ...patient,
+              profilePhoto: base64String,
+            });
+          } else {
+            const professionalId = localStorage.getItem('professionalId');
+            if (!professionalId || !professional) {
+              setPhotoUpdateError('Erro: ID do profissional não encontrado');
+              return;
+            }
+
+            await BaseCrudService.update<Profissionais>('profissionais', {
+              _id: professionalId,
+              profilePhoto: base64String,
+            });
+
+            setProfessional({
+              ...professional,
+              profilePhoto: base64String,
+            });
+          }
+
+          setPhotoUpdateMessage('Foto de perfil atualizada com sucesso!');
+          setTimeout(() => setPhotoUpdateMessage(''), 3000);
+        } catch (error) {
+          console.error('Error updating photo:', error);
+          setPhotoUpdateError('Erro ao salvar foto. Tente novamente.');
+        } finally {
+          setIsPhotoLoading(false);
+        }
+      };
+      reader.onerror = () => {
+        setPhotoUpdateError('Erro ao processar imagem');
+        setIsPhotoLoading(false);
+      };
+      reader.readAsDataURL(photoBlob);
     } catch (error) {
       console.error('Error updating photo:', error);
+      setPhotoUpdateError('Erro ao salvar foto. Tente novamente.');
+      setIsPhotoLoading(false);
     }
   };
 
   const handlePhotoRemove = async () => {
     try {
+      setIsPhotoLoading(true);
+      setPhotoUpdateError('');
+      setPhotoUpdateMessage('');
+
       if (userType === 'patient') {
         const patientId = localStorage.getItem('patientId');
-        if (!patientId || !patient) return;
+        if (!patientId || !patient) {
+          setPhotoUpdateError('Erro: ID do paciente não encontrado');
+          return;
+        }
 
         await BaseCrudService.update<Pacientes>('pacientes', {
           _id: patientId,
-          // ... keep existing code (patient fields)
+          profilePhoto: '',
         });
 
         setPatient({
           ...patient,
+          profilePhoto: '',
         });
       } else {
         const professionalId = localStorage.getItem('professionalId');
-        if (!professionalId || !professional) return;
+        if (!professionalId || !professional) {
+          setPhotoUpdateError('Erro: ID do profissional não encontrado');
+          return;
+        }
 
         await BaseCrudService.update<Profissionais>('profissionais', {
           _id: professionalId,
@@ -196,8 +245,14 @@ export default function SharedProfilePage({
           profilePhoto: '',
         });
       }
+
+      setPhotoUpdateMessage('Foto de perfil removida com sucesso!');
+      setTimeout(() => setPhotoUpdateMessage(''), 3000);
     } catch (error) {
       console.error('Error removing photo:', error);
+      setPhotoUpdateError('Erro ao remover foto. Tente novamente.');
+    } finally {
+      setIsPhotoLoading(false);
     }
   };
 
@@ -388,6 +443,30 @@ export default function SharedProfilePage({
 
       {/* Main Content */}
       <div className="max-w-[120rem] mx-auto px-8 py-12">
+        {/* Photo Update Messages */}
+        {photoUpdateMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-6 p-4 bg-stable/10 border border-stable/20 rounded-lg flex gap-3 items-start"
+          >
+            <CheckCircle className="w-5 h-5 text-stable flex-shrink-0 mt-0.5" />
+            <p className="font-paragraph text-sm text-stable">{photoUpdateMessage}</p>
+          </motion.div>
+        )}
+        {photoUpdateError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex gap-3 items-start"
+          >
+            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="font-paragraph text-sm text-destructive">{photoUpdateError}</p>
+          </motion.div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Card */}
           <motion.div
@@ -404,6 +483,7 @@ export default function SharedProfilePage({
                   onPhotoRemove={handlePhotoRemove}
                   size="lg"
                   showEditIcon={true}
+                  isLoading={isPhotoLoading}
                 />
                 <h2 className="font-heading text-2xl font-bold text-foreground mt-6">
                   {userType === 'patient' ? patient?.fullName : professional?.fullName}
