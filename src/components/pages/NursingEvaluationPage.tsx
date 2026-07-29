@@ -9,6 +9,7 @@ import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, Profissionais, MedicacoesChecklist, EncaminhamentosMdicos } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
+import ResponsiveImageDisplay from '@/components/ResponsiveImageDisplay';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createReferralNotification } from '@/lib/notificationHelper';
 import { handleChecklistSubmitted, handleCriticalAlert } from '@/lib/notificationIntegration';
@@ -604,11 +605,9 @@ export default function NursingEvaluationPage() {
                       <ImageIcon className="w-5 h-5 text-primary" />
                       <p className="font-paragraph text-sm font-semibold text-foreground">Foto da Cicatriz</p>
                     </div>
-                    <Image
+                    <ResponsiveImageDisplay
                       src={selectedChecklist.scarPhoto}
                       alt="Foto da cicatriz"
-                      width={400}
-                      className="rounded-xl border border-secondary/20 max-w-md"
                     />
                   </div>
                 )}

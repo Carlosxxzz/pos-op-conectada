@@ -12,6 +12,7 @@ import type {
 } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
+import ResponsiveImageDisplay from '@/components/ResponsiveImageDisplay';
 import { motion } from 'framer-motion';
 
 export default function NursingReferralViewPage() {
@@ -378,11 +379,9 @@ export default function NursingReferralViewPage() {
                   <ImageIcon className="w-5 h-5 text-primary" />
                   <h3 className="font-heading text-lg font-bold text-foreground">Foto da Cicatriz</h3>
                 </div>
-                <Image
+                <ResponsiveImageDisplay
                   src={checklist.scarPhoto}
                   alt="Foto da cicatriz"
-                  width={400}
-                  className="rounded-xl border border-secondary/20 max-w-md"
                 />
               </div>
             )}

@@ -7,6 +7,7 @@ import { BaseCrudService } from '@/integrations';
 import type { ChecklistsDirios } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
+import ResponsiveImageDisplay from '@/components/ResponsiveImageDisplay';
 
 export default function PatientPhotosPage() {
   const navigate = useNavigate();
@@ -215,13 +216,11 @@ export default function PatientPhotosPage() {
                   {previewUrl ? (
                     <div className="space-y-4">
                       {/* Image Preview Container - Centered and Responsive */}
-                      <div className="flex items-center justify-center bg-white rounded-lg p-4 min-h-64 max-h-96">
-                        <Image 
-                          src={previewUrl} 
-                          alt="Preview da foto" 
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      </div>
+                      <ResponsiveImageDisplay
+                        src={previewUrl}
+                        alt="Preview da foto"
+                        onClick={() => setFullscreenImage(previewUrl)}
+                      />
                       
                       {/* Action Buttons */}
                       <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -306,7 +305,7 @@ export default function PatientPhotosPage() {
                           <Image
                             src={checklist.scarPhoto}
                             alt="Foto da cicatriz"
-                            className="max-w-full max-h-full object-contain"
+                            className="w-full h-full object-contain"
                           />
                         </div>
                         <button

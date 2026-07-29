@@ -7,6 +7,7 @@ import type { ChecklistsDirios, MedicacoesChecklist } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Image } from '@/components/ui/image';
+import ResponsiveImageDisplay from '@/components/ResponsiveImageDisplay';
 
 export default function PatientHistoryPage() {
   const navigate = useNavigate();
@@ -293,12 +294,10 @@ export default function PatientHistoryPage() {
 
                     {/* Photo if available */}
                     {checklist.scarPhoto && (
-                      <div className="bg-white border-b border-secondary/20">
-                        <Image
+                      <div className="bg-white border-b border-secondary/20 p-4">
+                        <ResponsiveImageDisplay
                           src={checklist.scarPhoto}
                           alt="Foto da cicatriz"
-                          width={400}
-                          className="w-full h-64 object-cover"
                         />
                       </div>
                     )}

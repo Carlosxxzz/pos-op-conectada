@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { BaseCrudService } from '@/integrations';
 import type { ChecklistsDirios } from '@/entities';
 import { Image } from '@/components/ui/image';
+import ResponsiveImageDisplay from '@/components/ResponsiveImageDisplay';
 import { validateImage, compressImage, formatFileSize } from '@/lib/imageCompression';
 import { useChecklistFlow } from '@/hooks/useChecklistFlow';
 import { logger } from '@/lib/logger';
@@ -377,13 +378,11 @@ export default function PatientPhotoUploadPage() {
                     {previewUrl ? (
                       <div className="space-y-4 sm:space-y-6">
                         {/* Image Preview Container - Centered and Responsive */}
-                        <div className="flex items-center justify-center bg-white rounded-lg p-3 sm:p-4 min-h-64 sm:min-h-80 max-h-96">
-                          <Image 
-                            src={previewUrl} 
-                            alt="Preview da foto" 
-                            className="max-w-full max-h-full object-contain"
-                          />
-                        </div>
+                        <ResponsiveImageDisplay
+                          src={previewUrl}
+                          alt="Preview da foto"
+                          onClick={() => setIsFullscreenOpen(true)}
+                        />
                         
                         {/* Action Buttons - Centered and Stacked on Mobile */}
                         <div className="flex flex-col gap-3 sm:gap-4 justify-center">

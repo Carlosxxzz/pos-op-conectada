@@ -6,6 +6,7 @@ import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
+import ResponsiveImageDisplay from '@/components/ResponsiveImageDisplay';
 import { motion } from 'framer-motion';
 
 export default function MedicalEvaluationHistoryPage() {
@@ -439,11 +440,9 @@ export default function MedicalEvaluationHistoryPage() {
                 {checklist.scarPhoto && (
                   <div>
                     <p className="font-paragraph text-sm font-semibold text-foreground mb-3">Foto da Cicatriz</p>
-                    <Image
+                    <ResponsiveImageDisplay
                       src={checklist.scarPhoto}
                       alt="Foto da cicatriz"
-                      width={400}
-                      className="rounded-xl border border-secondary/20 max-w-md"
                     />
                   </div>
                 )}
