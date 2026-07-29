@@ -428,7 +428,7 @@ export default function NursingDashboardPage() {
                 { id: 'aguardando', label: 'Aguardando Avaliação', icon: Clock },
                 { id: 'encaminhados', label: 'Encaminhados ao Médico', icon: Stethoscope },
                 { id: 'avaliados-enfermagem', label: 'Avaliados pela Enfermagem', icon: UserCheck },
-                { id: 'avaliados-medico', label: 'Avaliados pelo Médico', icon: ClipboardCheck },
+                // { id: 'avaliados-medico', label: 'Avaliados pelo Médico', icon: ClipboardCheck },
                 { id: 'historico', label: 'Histórico', icon: FileText },
               ].map(tab => {
                 const Icon = tab.icon;
