@@ -789,7 +789,7 @@ export default function NursingDashboardPage() {
         })()}
 
         {/* Avaliados pela Enfermagem Tab */}
-        {/* {activeTab === 'avaliados-enfermagem' && (
+        {activeTab === 'avaliados-enfermagem' && (
           <div>
             <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Avaliados pela Enfermagem</h2>
             {evaluatedByNursePatients.length === 0 ? (
@@ -850,7 +850,7 @@ export default function NursingDashboardPage() {
               </div>
             )}
           </div>
-        )} */}
+        )}
 
         {/* Avaliados pelo Médico Tab */}
         {activeTab === 'avaliados-medico' && (() => {
