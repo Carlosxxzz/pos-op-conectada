@@ -461,7 +461,7 @@ export default function NursingDashboardPage() {
               {[
                 { label: 'Prioritários', value: allPatients.filter(p => p.isPriority && p.status === 'AGUARDANDO_ENFERMAGEM').length, icon: AlertTriangle, colorKey: 'attention', filterId: 'URGENTE' as FilterType },
                 { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, colorKey: 'attention', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
-                { label: 'Avaliados pela Enfermagem', value: stats.evaluatedByNurse, icon: ClipboardCheck, colorKey: 'primary', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
+                { label: 'Avaliados pela Enfermagem', value: stats.evaluatedByNurse, icon: ClipboardCheck, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
                 { label: 'Avaliados pelo Médico', value: stats.evaluatedByDoctor, icon: ClipboardCheck, colorKey: 'primary', filterId: 'AVALIADO_MEDICO_COMPLETO' as FilterType },
               ].map((stat, index) => {
                 const Icon = stat.icon;
