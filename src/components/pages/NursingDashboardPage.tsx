@@ -487,30 +487,7 @@ export default function NursingDashboardPage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { value: 'TODOS', label: 'Todos' },
-                  { value: 'AGUARDANDO_ENFERMAGEM', label: 'Aguardando Avaliação' },
-                  { value: 'AVALIADO_ENFERMAGEM', label: 'Avaliado Enfermagem' },
-                  { value: 'ENCAMINHADO_MEDICO', label: 'Encaminhado Médico' },
-                  { value: 'AVALIADO_MEDICO', label: 'Avaliado Médico' },
-                  { value: 'URGENTE', label: 'Urgente' },
-                  { value: 'ULTIMOS_7_DIAS', label: 'Últimos 7 dias' },
-                  { value: 'ULTIMOS_30_DIAS', label: 'Últimos 30 dias' },
-                ].map(filter => (
-                  <button
-                    key={filter.value}
-                    onClick={() => setFilterType(filter.value as FilterType)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-paragraph text-sm font-semibold transition-all ${
-                      filterType === filter.value
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-white border border-secondary/20 text-foreground hover:border-primary/50'
-                    }`}
-                  >
-                    <Filter className="w-4 h-4" />
-                    {filter.label}
-                  </button>
-                ))}
+
               </div>
             </div>
 
@@ -779,9 +756,9 @@ export default function NursingDashboardPage() {
             <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Avaliados pela Enfermagem</h2>
             {evaluatedByNursePatients.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
-                <Image 
-                  src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256" 
-                  alt="Avaliados pela Enfermagem" 
+                <Image
+                  src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256"
+                  alt="Avaliados pela Enfermagem"
                   className="w-32 h-32 mx-auto mb-4 object-cover rounded-lg"
                   width={128}
                   height={128}
@@ -801,9 +778,9 @@ export default function NursingDashboardPage() {
                   >
                     <div className="flex gap-6 mb-4">
                       <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stable/10">
-                        <Image 
-                          src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256" 
-                          alt="Avaliação de Enfermagem" 
+                        <Image
+                          src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256"
+                          alt="Avaliação de Enfermagem"
                           className="w-full h-full object-cover"
                           width={96}
                           height={96}
@@ -846,9 +823,9 @@ export default function NursingDashboardPage() {
               <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Pacientes Avaliados pelo Médico</h2>
               {evaluatedByDoctor.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
-                  <Image 
-                    src="https://static.wixstatic.com/media/2621fb_5c338de50c8d4798b7398046ecbbb92c~mv2.png?originWidth=384&originHeight=256" 
-                    alt="Avaliados pelo Médico" 
+                  <Image
+                    src="https://static.wixstatic.com/media/2621fb_5c338de50c8d4798b7398046ecbbb92c~mv2.png?originWidth=384&originHeight=256"
+                    alt="Avaliados pelo Médico"
                     className="w-32 h-32 mx-auto mb-4 object-cover rounded-lg"
                     width={128}
                     height={128}
@@ -868,9 +845,9 @@ export default function NursingDashboardPage() {
                     >
                       <div className="flex gap-6 mb-4">
                         <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stable/10">
-                          <Image 
-                            src="https://static.wixstatic.com/media/2621fb_5c338de50c8d4798b7398046ecbbb92c~mv2.png?originWidth=384&originHeight=256" 
-                            alt="Avaliação Médica" 
+                          <Image
+                            src="https://static.wixstatic.com/media/2621fb_5c338de50c8d4798b7398046ecbbb92c~mv2.png?originWidth=384&originHeight=256"
+                            alt="Avaliação Médica"
                             className="w-full h-full object-cover"
                             width={96}
                             height={96}
@@ -918,9 +895,9 @@ export default function NursingDashboardPage() {
                   className="bg-white rounded-2xl overflow-hidden border border-secondary/20 hover:shadow-lg transition-all text-left w-full h-full flex flex-col"
                 >
                   <div className="w-full h-32 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
-                    <Image 
-                      src="https://static.wixstatic.com/media/2621fb_2c1e7369618c4464b97faf4fab8c8180~mv2.png?originWidth=384&originHeight=128" 
-                      alt="Histórico de Avaliações" 
+                    <Image
+                      src="https://static.wixstatic.com/media/2621fb_2c1e7369618c4464b97faf4fab8c8180~mv2.png?originWidth=384&originHeight=128"
+                      alt="Histórico de Avaliações"
                       className="w-full h-full object-cover"
                       width={400}
                       height={128}
