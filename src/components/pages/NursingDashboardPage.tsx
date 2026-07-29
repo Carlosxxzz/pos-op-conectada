@@ -74,7 +74,7 @@ export default function NursingDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'aguardando' | 'encaminhados' | 'avaliados-enfermagem' | 'avaliados-medico' | 'historico'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'aguardando' | 'encaminhados' | 'avaliados-enfermagem'  | 'historico'>('dashboard'); //| 'avaliados-medico'
   const [stats, setStats] = useState<DashboardStats>({
     awaitingEvaluation: 0,
     referredToDoctor: 0,
