@@ -146,37 +146,43 @@ export default function PatientHistoryPage() {
                     <p className="font-paragraph text-sm text-foreground/60">Últimos registros</p>
                   </div>
                 </div>
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ADD8E6" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fill: '#333333', fontSize: 12 }}
-                      stroke="#ADD8E6"
-                    />
-                    <YAxis 
-                      domain={[0, 10]}
-                      tick={{ fill: '#333333', fontSize: 12 }}
-                      stroke="#ADD8E6"
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#FFFFFF', 
-                        border: '1px solid #ADD8E6',
-                        borderRadius: '8px',
-                        fontFamily: 'nunito sans'
-                      }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="dor" 
-                      stroke="#00BFFF" 
-                      strokeWidth={3}
-                      dot={{ fill: '#00BFFF', r: 5 }}
-                      name="Nível de Dor"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="w-full overflow-x-auto">
+                  <ResponsiveContainer width="100%" height={250} minWidth={250}>
+                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ADD8E6" />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fill: '#333333', fontSize: 11 }}
+                        stroke="#ADD8E6"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis 
+                        domain={[0, 10]}
+                        tick={{ fill: '#333333', fontSize: 11 }}
+                        stroke="#ADD8E6"
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#FFFFFF', 
+                          border: '1px solid #ADD8E6',
+                          borderRadius: '8px',
+                          fontFamily: 'nunito sans'
+                        }}
+                        formatter={(value) => `${value} (0-10)`}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="dor" 
+                        stroke="#00BFFF" 
+                        strokeWidth={3}
+                        dot={{ fill: '#00BFFF', r: 5 }}
+                        name="Nível de Dor"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
               {/* Temperature Chart */}
@@ -190,37 +196,43 @@ export default function PatientHistoryPage() {
                     <p className="font-paragraph text-sm text-foreground/60">Últimos registros</p>
                   </div>
                 </div>
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ADD8E6" />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fill: '#333333', fontSize: 12 }}
-                      stroke="#ADD8E6"
-                    />
-                    <YAxis 
-                      domain={[35, 40]}
-                      tick={{ fill: '#333333', fontSize: 12 }}
-                      stroke="#ADD8E6"
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#FFFFFF', 
-                        border: '1px solid #ADD8E6',
-                        borderRadius: '8px',
-                        fontFamily: 'nunito sans'
-                      }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="temperatura" 
-                      stroke="#00BFFF" 
-                      strokeWidth={3}
-                      dot={{ fill: '#00BFFF', r: 5 }}
-                      name="Temperatura (°C)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                <div className="w-full overflow-x-auto">
+                  <ResponsiveContainer width="100%" height={250} minWidth={250}>
+                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ADD8E6" />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fill: '#333333', fontSize: 11 }}
+                        stroke="#ADD8E6"
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis 
+                        domain={[35, 40]}
+                        tick={{ fill: '#333333', fontSize: 11 }}
+                        stroke="#ADD8E6"
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#FFFFFF', 
+                          border: '1px solid #ADD8E6',
+                          borderRadius: '8px',
+                          fontFamily: 'nunito sans'
+                        }}
+                        formatter={(value) => `${value}°C`}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="temperatura" 
+                        stroke="#00BFFF" 
+                        strokeWidth={3}
+                        dot={{ fill: '#00BFFF', r: 5 }}
+                        name="Temperatura (°C)"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
 

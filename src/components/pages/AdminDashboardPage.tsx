@@ -189,7 +189,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Risk Distribution */}
           <div className="bg-white rounded-2xl p-8 border border-secondary/20">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                 <BarChart3 className="w-6 h-6 text-primary" />
               </div>
@@ -198,37 +198,74 @@ export default function AdminDashboardPage() {
                 <p className="font-paragraph text-sm text-foreground/60">Status dos pacientes</p>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={riskDistributionData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {riskDistributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#FFFFFF', 
-                    border: '1px solid #ADD8E6',
-                    borderRadius: '8px',
-                    fontFamily: 'nunito sans'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            
+            {/* Responsive Chart Container */}
+            <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
+              {/* Pie Chart - Centered */}
+              <div className="w-full lg:w-1/2 flex justify-center">
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={riskDistributionData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {riskDistributionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#FFFFFF', 
+                        border: '1px solid #ADD8E6',
+                        borderRadius: '8px',
+                        fontFamily: 'nunito sans'
+                      }}
+                      formatter={(value) => `${value} pacientes`}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              
+              {/* Legend - Side on Desktop, Below on Mobile */}
+              <div className="w-full lg:w-1/2 flex flex-col gap-4">
+                {riskDistributionData.map((item, index) => {
+                  const total = riskDistributionData.reduce((sum, d) => sum + d.value, 0);
+                  const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0';
+                  return (
+                    <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-foreground/5 hover:bg-foreground/10 transition">
+                      <div 
+                        className="w-4 h-4 rounded-full flex-shrink-0" 
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-paragraph text-sm font-medium text-foreground truncate">
+                          {item.name}
+                        </p>
+                        <p className="font-paragraph text-xs text-foreground/60">
+                          {item.value} pacientes
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-heading text-base font-bold text-foreground">
+                          {percentage}%
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Activity Chart */}
           <div className="bg-white rounded-2xl p-8 border border-secondary/20">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Activity className="w-6 h-6 text-primary" />
               </div>
@@ -237,29 +274,35 @@ export default function AdminDashboardPage() {
                 <p className="font-paragraph text-sm text-foreground/60">Total de registros</p>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={activityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ADD8E6" />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fill: '#333333', fontSize: 12 }}
-                  stroke="#ADD8E6"
-                />
-                <YAxis 
-                  tick={{ fill: '#333333', fontSize: 12 }}
-                  stroke="#ADD8E6"
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#FFFFFF', 
-                    border: '1px solid #ADD8E6',
-                    borderRadius: '8px',
-                    fontFamily: 'nunito sans'
-                  }}
-                />
-                <Bar dataKey="value" fill="#00BFFF" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="w-full overflow-x-auto">
+              <ResponsiveContainer width="100%" height={300} minWidth={250}>
+                <BarChart data={activityData} margin={{ top: 20, right: 30, left: 0, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ADD8E6" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fill: '#333333', fontSize: 11 }}
+                    stroke="#ADD8E6"
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#333333', fontSize: 11 }}
+                    stroke="#ADD8E6"
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#FFFFFF', 
+                      border: '1px solid #ADD8E6',
+                      borderRadius: '8px',
+                      fontFamily: 'nunito sans'
+                    }}
+                    formatter={(value) => `${value} registros`}
+                  />
+                  <Bar dataKey="value" fill="#00BFFF" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
