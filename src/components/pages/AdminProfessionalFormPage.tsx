@@ -13,6 +13,7 @@ import PasswordInput from '@/components/PasswordInput';
 import PasswordConfirmation from '@/components/PasswordConfirmation';
 import { validatePassword, validatePasswordMatch, type PasswordValidationResult } from '@/lib/passwordValidator';
 import { useProfessionalsStore } from '@/hooks/useProfessionalsStore';
+import { checkProfessionalUniqueness } from '@/lib/uniquenessValidator';
 
 // Utility functions for formatting
 const formatCPF = (value: string) => {
@@ -193,7 +194,7 @@ export default function AdminProfessionalFormPage() {
     }
   };
 
-  const validateForm = () => {
+  const validateForm = async () => {
     if (!formData.fullName.trim()) {
       setErrorMessage('Nome completo é obrigatório');
       return false;
@@ -234,6 +235,19 @@ export default function AdminProfessionalFormPage() {
       setErrorMessage('CPF inválido');
       return false;
     }
+
+    // Check global uniqueness for CPF and email (only for new professionals or if values changed)
+    const uniquenessCheck = await checkProfessionalUniqueness(
+      formData.cpf,
+      formData.email,
+      id // Pass current professional ID to exclude from uniqueness check
+    );
+
+    if (!uniquenessCheck.isUnique) {
+      setErrorMessage(uniquenessCheck.message || 'Erro ao validar dados únicos.');
+      return false;
+    }
+
     return true;
   };
 
@@ -258,7 +272,7 @@ export default function AdminProfessionalFormPage() {
     setErrorMessage('');
     setSuccessMessage('');
 
-    if (!validateForm()) return;
+    if (!await validateForm()) return;
 
     setIsSaving(true);
     try {
