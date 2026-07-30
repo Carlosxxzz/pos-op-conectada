@@ -1,21 +1,31 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  Activity, ArrowLeft, AlertCircle, CheckCircle, Clock, Search, Filter, Eye,
-  User, Building2, Calendar, FileText, LogOut, Stethoscope
-} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { BaseCrudService } from '@/integrations';
-import type {
-  ChecklistsDirios, Pacientes, Profissionais, AvaliaesdeEnfermagem,
-  EncaminhamentosMdicos, AvaliaesMdicas
-} from '@/entities';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import { motion } from 'framer-motion';
-import { logger } from '@/lib/logger';
-import { useSessionPersistence } from '@/hooks/useSessionPersistence';
-import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
 import { Image } from '@/components/ui/image';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import type {
+  AvaliaesdeEnfermagem,
+  AvaliaesMdicas,
+  ChecklistsDirios,
+  EncaminhamentosMdicos,
+  Pacientes, Profissionais
+} from '@/entities';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import { BaseCrudService } from '@/integrations';
+import { logger } from '@/lib/logger';
+import { motion } from 'framer-motion';
+import {
+  Activity,
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle,
+  Eye,
+  FileText,
+  Filter,
+  LogOut,
+  Search,
+  User
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface EvaluationHistoryItem {
   patient: Pacientes;
@@ -111,8 +121,8 @@ export default function NursingEvaluationHistoryPage() {
       });
 
       // Sort by date descending
-      history.sort((a, b) => 
-        new Date(b.nursingEval.checklistDate || 0).getTime() - 
+      history.sort((a, b) =>
+        new Date(b.nursingEval.checklistDate || 0).getTime() -
         new Date(a.nursingEval.checklistDate || 0).getTime()
       );
 
