@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 import { Plus, Search, Edit2, Trash2, Eye, ToggleRight, ToggleLeft } from 'lucide-react';
 import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
 import { Image } from '@/components/ui/image';
+import { useProfessionalsStore } from '@/hooks/useProfessionalsStore';
 
 interface ProfessionalWithDetails extends Profissionais {
   hospitalName?: string;
@@ -32,6 +33,7 @@ export default function AdminProfessionalsPage() {
   const [hospitals, setHospitals] = useState<Hospitais[]>([]);
   const [setores, setSetores] = useState<Setores[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidades[]>([]);
+  const { professionals: storedProfessionals, setProfessionals: setStoredProfessionals } = useProfessionalsStore();
 
   useEffect(() => {
     loadData();
@@ -40,6 +42,25 @@ export default function AdminProfessionalsPage() {
   useEffect(() => {
     filterAndSearchProfessionals();
   }, [professionals, searchTerm, filterType, filterStatus]);
+
+  useEffect(() => {
+    // If there are new professionals in the store, add them to the list
+    if (storedProfessionals.length > 0) {
+      const newProfessionals = storedProfessionals.filter(
+        sp => !professionals.some(p => p._id === sp._id)
+      );
+      if (newProfessionals.length > 0) {
+        const enrichedNewProfessionals = newProfessionals.map(prof => ({
+          ...prof,
+          hospitalName: prof.hospital,
+          setorName: setores.find(s => s._id === prof.specialty)?.name,
+          especialidadeName: prof.specialty,
+        }));
+        setProfessionals(prev => [...enrichedNewProfessionals, ...prev]);
+        setStoredProfessionals([]); // Clear the store after adding
+      }
+    }
+  }, [storedProfessionals, setores, setStoredProfessionals]);
 
   const loadData = async () => {
     try {

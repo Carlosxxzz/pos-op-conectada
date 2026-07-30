@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { verifyProfessionalHospitalAccess } from '@/lib/hospitalFilter';
 import PasswordInput from '@/components/PasswordInput';
 import PasswordConfirmation from '@/components/PasswordConfirmation';
 import { validatePassword, validatePasswordMatch, type PasswordValidationResult } from '@/lib/passwordValidator';
+import { useProfessionalsStore } from '@/hooks/useProfessionalsStore';
+import { checkProfessionalUniqueness } from '@/lib/uniquenessValidator';
 
 // Utility functions for formatting
 const formatCPF = (value: string) => {
@@ -71,6 +73,9 @@ export default function AdminProfessionalFormPage() {
   const [hospitals, setHospitals] = useState<Hospitais[]>([]);
   const [setores, setSetores] = useState<Setores[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidades[]>([]);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const { addProfessional } = useProfessionalsStore();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -189,47 +194,60 @@ export default function AdminProfessionalFormPage() {
     }
   };
 
-  const validateForm = () => {
+  const validateForm = async () => {
     if (!formData.fullName.trim()) {
-      alert('Nome completo é obrigatório');
+      setErrorMessage('Nome completo é obrigatório');
       return false;
     }
     if (!formData.email.trim()) {
-      alert('Email é obrigatório');
+      setErrorMessage('Email é obrigatório');
       return false;
     }
     if (!formData.profile) {
-      alert('Tipo de profissional é obrigatório');
+      setErrorMessage('Tipo de profissional é obrigatório');
       return false;
     }
     if (!formData.hospital) {
-      alert('Hospital é obrigatório');
+      setErrorMessage('Hospital é obrigatório');
       return false;
     }
     if (!id && !formData.password) {
-      alert('Senha é obrigatória para novo profissional');
+      setErrorMessage('Senha é obrigatória para novo profissional');
       return false;
     }
     if (!id && !passwordValidation.isValid) {
-      alert('A senha não atende aos requisitos de segurança.');
+      setErrorMessage('A senha não atende aos requisitos de segurança.');
       return false;
     }
     if (!id && !validatePasswordMatch(formData.password, formData.confirmPassword).isMatch) {
-      alert('As senhas não coincidem');
+      setErrorMessage('As senhas não coincidem');
       return false;
     }
     if (id && formData.password && !passwordValidation.isValid) {
-      alert('A nova senha não atende aos requisitos de segurança.');
+      setErrorMessage('A nova senha não atende aos requisitos de segurança.');
       return false;
     }
     if (id && formData.password && !validatePasswordMatch(formData.password, formData.confirmPassword).isMatch) {
-      alert('As senhas não coincidem');
+      setErrorMessage('As senhas não coincidem');
       return false;
     }
     if (formData.cpf && !validateCPF(formData.cpf)) {
-      alert('CPF inválido');
+      setErrorMessage('CPF inválido');
       return false;
     }
+
+    // Check global uniqueness for CPF and email (only for new professionals or if values changed)
+    const uniquenessCheck = await checkProfessionalUniqueness(
+      formData.cpf,
+      formData.email,
+      id // Pass current professional ID to exclude from uniqueness check
+    );
+
+    if (!uniquenessCheck.isUnique) {
+      setErrorMessage(uniquenessCheck.message || 'Erro ao validar dados únicos.');
+      return false;
+    }
+
     return true;
   };
 
@@ -251,8 +269,10 @@ export default function AdminProfessionalFormPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
 
-    if (!validateForm()) return;
+    if (!await validateForm()) return;
 
     setIsSaving(true);
     try {
@@ -287,20 +307,29 @@ export default function AdminProfessionalFormPage() {
           dataToSave.password = formData.password;
         }
         await BaseCrudService.update('profissionais', dataToSave);
+        setSuccessMessage('Profissional atualizado com sucesso!');
+        setTimeout(() => {
+          navigate('/admin-professionals');
+        }, 1500);
       } else {
         // Create new
         dataToSave._id = crypto.randomUUID();
         dataToSave.password = formData.password;
         dataToSave.criadoPor = adminUser?.fullName || 'Sistema';
         dataToSave.ultimoAcesso = new Date();
-        await BaseCrudService.create('profissionais', dataToSave);
+        const createdProfessional = await BaseCrudService.create('profissionais', dataToSave);
+        
+        // Add to store for immediate update in dashboard
+        addProfessional(dataToSave);
+        
+        setSuccessMessage('Profissional criado com sucesso!');
+        setTimeout(() => {
+          navigate('/admin-professionals');
+        }, 1500);
       }
-
-      alert(id ? 'Profissional atualizado com sucesso!' : 'Profissional criado com sucesso!');
-      navigate('/admin-professionals');
     } catch (error) {
       console.error('Error saving professional:', error);
-      alert('Erro ao salvar profissional');
+      setErrorMessage('Erro ao salvar profissional. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
@@ -348,6 +377,30 @@ export default function AdminProfessionalFormPage() {
             </p>
           </div>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-stable/10 border border-stable/30 rounded-lg flex items-center gap-3"
+          >
+            <CheckCircle className="w-5 h-5 text-stable flex-shrink-0" />
+            <p className="font-paragraph text-stable">{successMessage}</p>
+          </motion.div>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-destructive/10 border border-destructive/30 rounded-lg flex items-center gap-3"
+          >
+            <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+            <p className="font-paragraph text-destructive">{errorMessage}</p>
+          </motion.div>
+        )}
 
         {/* Form */}
         <motion.form
