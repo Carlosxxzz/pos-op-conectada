@@ -24,7 +24,6 @@ import {
 import PasswordInput from '@/components/PasswordInput';
 import PasswordConfirmation from '@/components/PasswordConfirmation';
 import { validatePassword, validatePasswordMatch, type PasswordValidationResult } from '@/lib/passwordValidator';
-import { checkPatientUniqueness } from '@/lib/uniquenessValidator';
 
 export default function PatientLoginPage() {
   const navigate = useNavigate();
@@ -194,22 +193,6 @@ export default function PatientLoginPage() {
 
     try {
       logger.info('PatientLogin', 'handleRegister', 'Attempting patient registration', { email: formData.email });
-
-      // Check global uniqueness for CPF, SUS number, and email
-      const uniquenessCheck = await checkPatientUniqueness(
-        formData.cpf,
-        formData.susNumber,
-        formData.email
-      );
-
-      if (!uniquenessCheck.isUnique) {
-        setError(uniquenessCheck.message || 'Erro ao validar dados únicos.');
-        logger.warn('PatientLogin', 'handleRegister', 'Uniqueness validation failed', {
-          duplicateField: uniquenessCheck.duplicateField,
-        });
-        setIsLoading(false);
-        return;
-      }
 
       const newPatient: Pacientes = {
         _id: crypto.randomUUID(),
