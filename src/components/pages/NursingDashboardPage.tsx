@@ -1,43 +1,28 @@
-import NotificationPanel from '@/components/NotificationPanel';
-import { Button } from '@/components/ui/button';
-import { Image } from '@/components/ui/image';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-import type {
-  AvaliaesdeEnfermagem,
-  AvaliaesMdicas,
-  ChecklistsDirios,
-  EncaminhamentosMdicos,
-  Pacientes, Profissionais
-} from '@/entities';
-import { useNotifications } from '@/hooks/useNotifications';
-import { useSessionPersistence } from '@/hooks/useSessionPersistence';
-import { BaseCrudService } from '@/integrations';
-import { logger } from '@/lib/logger';
-import { motion } from 'framer-motion';
-import {
-  Activity,
-  AlertCircle,
-  AlertTriangle,
-  ArrowRight,
-  BarChart3,
-  CheckCircle,
-  ClipboardCheck,
-  Clock,
-  Eye,
-  FileText,
-  Filter,
-  LogOut,
-  Search,
-  Stethoscope,
-  User,
-  UserCheck,
-  Users
-} from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  Activity, Users, AlertCircle, CheckCircle, Clock, ArrowRight, Filter, Eye,
+  Bell, Search, TrendingUp, Calendar, BarChart3, FileText, Zap, Clipboard, Heart, Stethoscope, TrendingDown,
+  ClipboardCheck, UserCheck, AlertTriangle, ClipboardList, LogOut, User
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BaseCrudService } from '@/integrations';
+import type {
+  ChecklistsDirios, Pacientes, Profissionais, AvaliaesdeEnfermagem,
+  EncaminhamentosMdicos, AvaliaesMdicas
+} from '@/entities';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { motion } from 'framer-motion';
+import { logger } from '@/lib/logger';
+import { useSessionPersistence } from '@/hooks/useSessionPersistence';
+import NotificationPanel from '@/components/NotificationPanel';
+import ProfilePhotoDisplay from '@/components/ProfilePhotoDisplay';
+import { Image } from '@/components/ui/image';
+import { useNotifications } from '@/hooks/useNotifications';
+import ProfessionalProfileHeader from '@/components/ProfessionalProfileHeader';
 
 type EvaluationStatus = 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'CONCLUIDO';
-type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'PRIORITARIOS' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS' | 'REFERIDO_MEDICO' | 'AVALIADO_MEDICO_COMPLETO';
+type FilterType = 'TODOS' | 'AGUARDANDO_ENFERMAGEM' | 'AVALIADO_ENFERMAGEM' | 'ENCAMINHADO_MEDICO' | 'AVALIADO_MEDICO' | 'URGENTE' | 'ULTIMOS_7_DIAS' | 'ULTIMOS_30_DIAS' | 'REFERIDO_MEDICO' | 'AVALIADO_MEDICO_COMPLETO';
 
 interface PatientEvaluationData {
   patient: Pacientes;
@@ -74,7 +59,7 @@ export default function NursingDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'aguardando' | 'encaminhados' | 'avaliados-enfermagem'| 'avaliados-medico' | 'historico'>('dashboard'); //
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'prioritarios' | 'aguardando' | 'encaminhados' | 'avaliados-enfermagem' | 'avaliados-medico' | 'historico'>('dashboard');
   const [stats, setStats] = useState<DashboardStats>({
     awaitingEvaluation: 0,
     referredToDoctor: 0,
@@ -263,7 +248,7 @@ export default function NursingDashboardPage() {
 
     if (filterType === 'TODOS') {
       return result;
-    } else if (filterType === 'PRIORITARIOS') {
+    } else if (filterType === 'URGENTE') {
       return result.filter(item => item.isPriority);
     } else if (filterType === 'ULTIMOS_7_DIAS') {
       const sevenDaysAgo = new Date();
@@ -309,10 +294,10 @@ export default function NursingDashboardPage() {
   }, [allPatients]);
 
   const colorMap = {
-    primary: { bg: 'bg-primary/10', text: 'text-primary', icon: 'text-primary-foreground', bgIcon: 'bg-primary' },
-    attention: { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-foreground', bgIcon: 'bg-attention' },
-    'attention-foreground': { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-foreground', bgIcon: 'bg-attention' },
-    stable: { bg: 'bg-stable/10', text: 'text-stable', icon: 'text-stable-foreground', bgIcon: 'bg-stable' },
+    primary: { bg: 'bg-primary/10', text: 'text-primary', icon: 'text-primary', bgIcon: 'bg-primary' },
+    attention: { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-attention-foreground', bgIcon: 'bg-attention' },
+    'attention-foreground': { bg: 'bg-attention/10', text: 'text-attention-foreground', icon: 'text-attention-foreground', bgIcon: 'bg-attention' },
+    stable: { bg: 'bg-stable/10', text: 'text-stable', icon: 'text-stable', bgIcon: 'bg-stable' },
   };
 
   const getStatusBadge = (status: EvaluationStatus) => {
@@ -459,7 +444,7 @@ export default function NursingDashboardPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
               {[
-                { label: 'Prioritários', value: allPatients.filter(p => p.isPriority && p.status === 'AGUARDANDO_ENFERMAGEM').length, icon: AlertTriangle, colorKey: 'attention', filterId: 'PRIORITARIOS' as FilterType },
+                { label: 'Prioritários', value: allPatients.filter(p => p.isPriority && p.status === 'AGUARDANDO_ENFERMAGEM').length, icon: AlertTriangle, colorKey: 'attention', filterId: 'URGENTE' as FilterType },
                 { label: 'Encaminhados ao Médico', value: stats.referredToDoctor, icon: Stethoscope, colorKey: 'attention', filterId: 'ENCAMINHADO_MEDICO' as FilterType },
                 { label: 'Avaliados pela Enfermagem', value: stats.evaluatedByNurse, icon: ClipboardCheck, colorKey: 'stable', filterId: 'AVALIADO_ENFERMAGEM' as FilterType },
                 { label: 'Avaliados pelo Médico', value: stats.evaluatedByDoctor, icon: ClipboardCheck, colorKey: 'primary', filterId: 'AVALIADO_MEDICO_COMPLETO' as FilterType },
@@ -509,7 +494,7 @@ export default function NursingDashboardPage() {
                   { value: 'AVALIADO_ENFERMAGEM', label: 'Avaliado Enfermagem' },
                   { value: 'ENCAMINHADO_MEDICO', label: 'Encaminhado Médico' },
                   { value: 'AVALIADO_MEDICO', label: 'Avaliado Médico' },
-                  { value: 'PRIORITARIOS', label: 'Prioritários' },
+                  { value: 'URGENTE', label: 'Urgente' },
                   { value: 'ULTIMOS_7_DIAS', label: 'Últimos 7 dias' },
                   { value: 'ULTIMOS_30_DIAS', label: 'Últimos 30 dias' },
                 ].map(filter => (
@@ -794,9 +779,9 @@ export default function NursingDashboardPage() {
             <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Avaliados pela Enfermagem</h2>
             {evaluatedByNursePatients.length === 0 ? (
               <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
-                <Image
-                  src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256"
-                  alt="Avaliados pela Enfermagem"
+                <Image 
+                  src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256" 
+                  alt="Avaliados pela Enfermagem" 
                   className="w-32 h-32 mx-auto mb-4 object-cover rounded-lg"
                   width={128}
                   height={128}
@@ -816,9 +801,9 @@ export default function NursingDashboardPage() {
                   >
                     <div className="flex gap-6 mb-4">
                       <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stable/10">
-                        <Image
-                          src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256"
-                          alt="Avaliação de Enfermagem"
+                        <Image 
+                          src="https://static.wixstatic.com/media/2621fb_e8cec05bf0f24238b9bff19dd42a14a0~mv2.png?originWidth=384&originHeight=256" 
+                          alt="Avaliação de Enfermagem" 
                           className="w-full h-full object-cover"
                           width={96}
                           height={96}
@@ -861,9 +846,9 @@ export default function NursingDashboardPage() {
               <h2 className="font-heading text-3xl font-bold text-foreground mb-8">Pacientes Avaliados pelo Médico</h2>
               {evaluatedByDoctor.length === 0 ? (
                 <div className="text-center py-16 bg-white rounded-2xl border border-secondary/20">
-                  <Image
-                    src="https://static.wixstatic.com/media/2621fb_5c338de50c8d4798b7398046ecbbb92c~mv2.png?originWidth=384&originHeight=256"
-                    alt="Avaliados pelo Médico"
+                  <Image 
+                    src="https://static.wixstatic.com/media/2621fb_5c338de50c8d4798b7398046ecbbb92c~mv2.png?originWidth=384&originHeight=256" 
+                    alt="Avaliados pelo Médico" 
                     className="w-32 h-32 mx-auto mb-4 object-cover rounded-lg"
                     width={128}
                     height={128}
@@ -883,9 +868,9 @@ export default function NursingDashboardPage() {
                     >
                       <div className="flex gap-6 mb-4">
                         <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stable/10">
-                          <Image
-                            src="https://static.wixstatic.com/media/2621fb_5c338de50c8d4798b7398046ecbbb92c~mv2.png?originWidth=384&originHeight=256"
-                            alt="Avaliação Médica"
+                          <Image 
+                            src="https://static.wixstatic.com/media/2621fb_5c338de50c8d4798b7398046ecbbb92c~mv2.png?originWidth=384&originHeight=256" 
+                            alt="Avaliação Médica" 
                             className="w-full h-full object-cover"
                             width={96}
                             height={96}
@@ -933,9 +918,9 @@ export default function NursingDashboardPage() {
                   className="bg-white rounded-2xl overflow-hidden border border-secondary/20 hover:shadow-lg transition-all text-left w-full h-full flex flex-col"
                 >
                   <div className="w-full h-32 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
-                    <Image
-                      src="https://static.wixstatic.com/media/2621fb_2c1e7369618c4464b97faf4fab8c8180~mv2.png?originWidth=384&originHeight=128"
-                      alt="Histórico de Avaliações"
+                    <Image 
+                      src="https://static.wixstatic.com/media/2621fb_2c1e7369618c4464b97faf4fab8c8180~mv2.png?originWidth=384&originHeight=128" 
+                      alt="Histórico de Avaliações" 
                       className="w-full h-full object-cover"
                       width={400}
                       height={128}
