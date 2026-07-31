@@ -28,6 +28,7 @@ import AdminProfilePage from '@/components/pages/AdminProfilePage';
 import AdminProfessionalsPage from '@/components/pages/AdminProfessionalsPage';
 import AdminProfessionalFormPage from '@/components/pages/AdminProfessionalFormPage';
 import AdminProfessionalViewPage from '@/components/pages/AdminProfessionalViewPage';
+import WixPage from '@/components/pages/WixPage';
 import { ProfessionalProtectedRoute } from '@/components/ProfessionalProtectedRoute';
 
 // Layout component that includes ScrollToTop
@@ -220,6 +221,10 @@ const router = createBrowserRouter([
             <AdminProfessionalViewPage />
           </ProfessionalProtectedRoute>
         ),
+      },
+      {
+        path: "wix",
+        element: <WixPage />,
       },
       {
         path: "*",
