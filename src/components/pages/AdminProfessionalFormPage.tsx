@@ -12,6 +12,7 @@ import { verifyProfessionalHospitalAccess } from '@/lib/hospitalFilter';
 import PasswordInput from '@/components/PasswordInput';
 import PasswordConfirmation from '@/components/PasswordConfirmation';
 import { validatePassword, validatePasswordMatch, type PasswordValidationResult } from '@/lib/passwordValidator';
+import { checkProfessionalUniqueness } from '@/lib/uniquenessValidator';
 
 // Utility functions for formatting
 const formatCPF = (value: string) => {
@@ -200,7 +201,7 @@ export default function AdminProfessionalFormPage() {
     };
   }, [id, navigate]);
 
-  const validateForm = () => {
+  const validateForm = async () => {
     if (!formData.fullName.trim()) {
       alert('Nome completo é obrigatório');
       return false;
@@ -241,6 +242,19 @@ export default function AdminProfessionalFormPage() {
       alert('CPF inválido');
       return false;
     }
+
+    // Check uniqueness of CPF and email
+    const uniquenessCheck = await checkProfessionalUniqueness(
+      formData.cpf,
+      formData.email,
+      id // Pass current professional ID to exclude from uniqueness check
+    );
+
+    if (!uniquenessCheck.isUnique) {
+      alert(uniquenessCheck.message || 'Não foi possível salvar o profissional. Um ou mais dados informados já pertencem a outro usuário cadastrado no sistema.');
+      return false;
+    }
+
     return true;
   };
 
@@ -263,7 +277,7 @@ export default function AdminProfessionalFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    if (!await validateForm()) return;
 
     setIsSaving(true);
     try {

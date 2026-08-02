@@ -24,6 +24,7 @@ import {
 import PasswordInput from '@/components/PasswordInput';
 import PasswordConfirmation from '@/components/PasswordConfirmation';
 import { validatePassword, validatePasswordMatch, type PasswordValidationResult } from '@/lib/passwordValidator';
+import { checkPatientUniqueness } from '@/lib/uniquenessValidator';
 
 export default function PatientLoginPage() {
   const navigate = useNavigate();
@@ -193,6 +194,22 @@ export default function PatientLoginPage() {
 
     try {
       logger.info('PatientLogin', 'handleRegister', 'Attempting patient registration', { email: formData.email });
+
+      // Check uniqueness of CPF, SUS number, and email
+      const uniquenessCheck = await checkPatientUniqueness(
+        formData.cpf,
+        formData.susNumber,
+        formData.email
+      );
+
+      if (!uniquenessCheck.isUnique) {
+        logger.warn('PatientLogin', 'handleRegister', 'Uniqueness validation failed', { 
+          duplicateField: uniquenessCheck.duplicateField 
+        });
+        setError(uniquenessCheck.message || 'Não foi possível criar a conta. Um ou mais dados informados já pertencem a outro usuário cadastrado no sistema.');
+        setIsLoading(false);
+        return;
+      }
 
       const newPatient: Pacientes = {
         _id: crypto.randomUUID(),
