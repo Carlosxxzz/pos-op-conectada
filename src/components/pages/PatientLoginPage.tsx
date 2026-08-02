@@ -618,7 +618,7 @@ export default function PatientLoginPage() {
 
           <div className="text-center mt-6 pb-4">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="font-paragraph text-base text-primary hover:underline font-bold cursor-pointer bg-transparent border-none"
             >
               ← Voltar
