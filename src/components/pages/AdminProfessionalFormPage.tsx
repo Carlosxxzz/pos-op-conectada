@@ -334,8 +334,9 @@ export default function AdminProfessionalFormPage() {
         {/* Header */}
         <div className="mb-8 flex items-center gap-4">
           <button
-            onClick={() => navigate('/admin-professionals')}
+            onClick={() => navigate('/admin-dashboard')}
             className="p-2 hover:bg-primary/10 rounded-lg transition"
+            aria-label="Voltar para o Dashboard do Administrador"
           >
             <ArrowLeft className="w-6 h-6 text-primary" />
           </button>
