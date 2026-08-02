@@ -113,81 +113,92 @@ export default function AdminProfessionalFormPage() {
   const [passwordMatchError, setPasswordMatchError] = useState('');
 
   useEffect(() => {
-    loadData();
-  }, []);
+    let isMounted = true;
 
-  const loadData = async () => {
-    try {
-      const adminId = localStorage.getItem('professionalId');
-      if (!adminId) {
-        navigate('/professional-login');
-        return;
-      }
+    const loadDataAsync = async () => {
+      try {
+        const adminId = localStorage.getItem('professionalId');
+        if (!adminId) {
+          if (isMounted) navigate('/professional-login');
+          return;
+        }
 
-      const adminData = await BaseCrudService.getById<Profissionais>('profissionais', adminId);
-      setAdminUser(adminData);
+        const adminData = await BaseCrudService.getById<Profissionais>('profissionais', adminId);
+        if (!isMounted) return;
+        setAdminUser(adminData);
 
-      // Load all hospitals from database - use them exactly as they exist
-      const { items: hospList } = await BaseCrudService.getAll<Hospitais>('hospitais');
+        // Load all hospitals from database - use them exactly as they exist
+        const { items: hospList } = await BaseCrudService.getAll<Hospitais>('hospitais');
 
-      const { items: setorList } = await BaseCrudService.getAll<Setores>('setores');
-      const { items: espList } = await BaseCrudService.getAll<Especialidades>('especialidades');
+        const { items: setorList } = await BaseCrudService.getAll<Setores>('setores');
+        const { items: espList } = await BaseCrudService.getAll<Especialidades>('especialidades');
 
-      setHospitals(hospList);
-      setSetores(setorList);
-      setEspecialidades(espList);
+        if (!isMounted) return;
+        setHospitals(hospList);
+        setSetores(setorList);
+        setEspecialidades(espList);
 
-      if (id) {
-        const profData = await BaseCrudService.getById<Profissionais>('profissionais', id);
-        if (profData) {
-          // Verify that the professional belongs to the admin's hospital
-          if (!verifyProfessionalHospitalAccess(profData)) {
-            alert('Você não tem permissão para editar este profissional');
-            navigate('/admin-professionals');
-            return;
+        if (id) {
+          const profData = await BaseCrudService.getById<Profissionais>('profissionais', id);
+          if (!isMounted) return;
+          if (profData) {
+            // Verify that the professional belongs to the admin's hospital
+            if (!verifyProfessionalHospitalAccess(profData)) {
+              alert('Você não tem permissão para editar este profissional');
+              if (isMounted) navigate('/admin-professionals');
+              return;
+            }
+            setFormData({
+              fullName: profData.fullName || '',
+              email: profData.email || '',
+              password: '',
+              confirmPassword: '',
+              profile: profData.profile || 'Médico',
+              hospital: profData.hospital || '',
+              specialty: profData.specialty || '',
+              registroProfissional: profData.registroProfissional || '',
+              cpf: profData.cpf || '',
+              dataNascimento: profData.dataNascimento ? new Date(profData.dataNascimento).toISOString().split('T')[0] : '',
+              sexo: profData.sexo || '',
+              telefone: profData.telefone || '',
+              whatsapp: profData.whatsapp || '',
+              cep: profData.cep || '',
+              estado: profData.estado || '',
+              cidade: profData.cidade || '',
+              endereco: profData.endereco || '',
+              numero: profData.numero || '',
+              complemento: profData.complemento || '',
+              turno: profData.turno || '',
+              cargaHoraria: profData.cargaHoraria || '',
+              dataAdmissao: profData.dataAdmissao ? new Date(profData.dataAdmissao).toISOString().split('T')[0] : '',
+              status: profData.status || 'Ativo',
+            });
           }
-          setFormData({
-            fullName: profData.fullName || '',
-            email: profData.email || '',
-            password: '',
-            confirmPassword: '',
-            profile: profData.profile || 'Médico',
-            hospital: profData.hospital || '',
-            specialty: profData.specialty || '',
-            registroProfissional: profData.registroProfissional || '',
-            cpf: profData.cpf || '',
-            dataNascimento: profData.dataNascimento ? new Date(profData.dataNascimento).toISOString().split('T')[0] : '',
-            sexo: profData.sexo || '',
-            telefone: profData.telefone || '',
-            whatsapp: profData.whatsapp || '',
-            cep: profData.cep || '',
-            estado: profData.estado || '',
-            cidade: profData.cidade || '',
-            endereco: profData.endereco || '',
-            numero: profData.numero || '',
-            complemento: profData.complemento || '',
-            turno: profData.turno || '',
-            cargaHoraria: profData.cargaHoraria || '',
-            dataAdmissao: profData.dataAdmissao ? new Date(profData.dataAdmissao).toISOString().split('T')[0] : '',
-            status: profData.status || 'Ativo',
-          });
+        } else {
+          // For new professionals, set hospital to admin's hospital
+          if (adminData?.hospital) {
+            setFormData(prev => (
+              {
+                ...prev,
+                hospital: adminData.hospital || '',
+              }
+            ));
+          }
         }
-      } else {
-        // For new professionals, set hospital to admin's hospital
-        if (adminData?.hospital) {
-          setFormData(prev => ({
-            ...prev,
-            hospital: adminData.hospital || '',
-          }));
-        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        if (isMounted) alert('Erro ao carregar dados');
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading data:', error);
-      alert('Erro ao carregar dados');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    loadDataAsync();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, navigate]);
 
   const validateForm = () => {
     if (!formData.fullName.trim()) {
