@@ -390,7 +390,15 @@ export interface Pacientes {
   _createdDate?: Date;
   _updatedDate?: Date;
   /** @wixFieldType text */
+  dischargeObservations?: string;
+  /** @wixFieldType text */
   fullName?: string;
+  /** @wixFieldType text */
+  dischargeDoctor?: string;
+  /** @wixFieldType datetime */
+  dischargeDate?: Date | string;
+  /** @wixFieldType text */
+  dischargeStatus?: string;
   /** @wixFieldType array_string */
   pushTokens?: any;
   /** @wixFieldType text */

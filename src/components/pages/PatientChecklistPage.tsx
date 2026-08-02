@@ -13,7 +13,7 @@ import { logger } from '@/lib/logger';
 import { useSessionPersistence } from '@/hooks/useSessionPersistence';
 import MedicationSection from '@/components/MedicationSection';
 import TemperatureInput from '@/components/TemperatureInput';
-import { validateChecklistSubmission, getTimeUntilNextRelease } from '@/lib/checklistValidator';
+import { validateChecklistSubmission, getTimeUntilNextRelease, isPatientDischarged } from '@/lib/checklistValidator';
 
 interface MedicationEntry {
   id: string;

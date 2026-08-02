@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Activity, ArrowLeft, FileText, AlertCircle, Clock, User, Building2, Calendar, Pill, Thermometer, Heart, Eye } from 'lucide-react';
+import { Activity, ArrowLeft, FileText, AlertCircle, Clock, User, Building2, Calendar, Pill, Thermometer, Heart, Eye, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { BaseCrudService } from '@/integrations';
 import type { Pacientes, ChecklistsDirios, AvaliaesdeEnfermagem, AvaliaesMdicas, Profissionais } from '@/entities';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Image } from '@/components/ui/image';
 import ResponsiveImageDisplay from '@/components/ResponsiveImageDisplay';
+import DischargeInfoCard from '@/components/DischargeInfoCard';
 import { motion } from 'framer-motion';
 
 export default function MedicalEvaluationHistoryPage() {

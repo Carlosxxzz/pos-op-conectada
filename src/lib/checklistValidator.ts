@@ -69,10 +69,30 @@ export const getTodayChecklist = async (patientId: string): Promise<ChecklistsDi
 };
 
 /**
+ * Check if patient has been discharged (ALTA_MEDICA)
+ */
+export const isPatientDischarged = async (patientId: string): Promise<boolean> => {
+  try {
+    const patient = await BaseCrudService.getById<Pacientes>('pacientes', patientId);
+    if (!patient) return false;
+    
+    // Check if patient has discharge status set to ALTA_MEDICA
+    return patient.dischargeStatus === 'ALTA_MEDICA';
+  } catch (error) {
+    logger.error('checklistValidator', 'isPatientDischarged', 'Error checking discharge status', error);
+    return false;
+  }
+};
+
+/**
  * Check if patient's follow-up has ended (discharge)
  */
 export const isFollowUpEnded = async (patientId: string): Promise<boolean> => {
   try {
+    // First check if patient has been discharged
+    const isDischarged = await isPatientDischarged(patientId);
+    if (isDischarged) return true;
+    
     const { items } = await BaseCrudService.getAll<any>('statusacompanhamentopaciente');
     
     const patientStatus = items.find(status => {

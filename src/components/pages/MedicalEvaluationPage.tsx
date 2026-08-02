@@ -31,6 +31,7 @@ export default function MedicalEvaluationPage() {
     patientRecommendations: '',
     needsFollowUp: true,
     medicalObservations: '',
+    dischargeObservations: '',
   });
 
   const [professional, setProfessional] = useState<Profissionais | null>(null);
@@ -176,12 +177,22 @@ export default function MedicalEvaluationPage() {
 
       await BaseCrudService.update('checklistsdiarios', updateChecklistData);
 
-      // Update patient follow-up status
-      await BaseCrudService.update('pacientes', {
+      // Update patient follow-up status and discharge info if granting discharge
+      const patientUpdateData: any = {
         _id: id,
         followUpStatus: formData.needsFollowUp ? 'Ativo' : 'Alta',
         lastMedicalEvaluationId: medicalEvaluationId,
-      });
+      };
+
+      // If granting discharge, add discharge information
+      if (!formData.needsFollowUp) {
+        patientUpdateData.dischargeStatus = 'ALTA_MEDICA';
+        patientUpdateData.dischargeDate = now;
+        patientUpdateData.dischargeDoctor = professional.fullName || professional.email || '';
+        patientUpdateData.dischargeObservations = formData.dischargeObservations || formData.medicalObservations;
+      }
+
+      await BaseCrudService.update('pacientes', patientUpdateData);
 
       // Update the referral record to mark as CONCLUIDO (completed)
       await BaseCrudService.update('encaminhamentosmedicos', {
@@ -704,6 +715,21 @@ export default function MedicalEvaluationPage() {
                       </div>
                     </RadioGroup>
                   </div>
+
+                  {/* Discharge Observations - Only show if not continuing follow-up */}
+                  {!formData.needsFollowUp && (
+                    <div>
+                      <Label className="font-paragraph text-sm font-semibold text-foreground mb-2 block">
+                        Observações da Alta Médica
+                      </Label>
+                      <Textarea
+                        value={formData.dischargeObservations}
+                        onChange={(e) => setFormData({ ...formData, dischargeObservations: e.target.value })}
+                        className="font-paragraph min-h-[80px]"
+                        placeholder="Motivo da alta, recomendações finais, orientações pós-alta..."
+                      />
+                    </div>
+                  )}
 
                   {/* Medical Observations */}
                   <div>
